@@ -175,6 +175,7 @@ class ProductController extends Controller
         $customViews = [
             'autotradex' => 'products.autotradex',
             'spiderx' => 'products.spiderx',
+            // CluadeX — the product page; /cluadex redirects here
             'cluadex-ai-coding-assistant' => 'products.xcluadeagent',
             'phonex-manager' => 'products.phonexmanager',
             'winx-tools' => 'products.winxtools',
@@ -193,6 +194,12 @@ class ProductController extends Controller
             'macdock' => 'products.macdock',
             // Reverse X — the app's "ซื้อ Pro" opens this page: three terms through the cart + the public download
             'reverse-x' => 'products.reversex',
+            // GPUxMINE — a free GPU worker: the client download + how payouts reach the XMAN wallet
+            'gpuxmine' => 'products.gpuxmine',
+            // PostXAgent, Live x Shop Pro, XcluadeAgent — Coming Soon apps: what the code does today, no purchase until they open
+            'postx-agent' => 'products.postxagent',
+            'livexshop-pro' => 'products.livexshoppro',
+            'xcluade-agent' => 'products.xcluade-agent',
         ];
 
         $viewKey = $product->licenseSlug();

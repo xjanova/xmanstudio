@@ -1,0 +1,60 @@
+/* GigGok mock-ups — drawn to the app's own "Liquid Glass" tokens (lib/theme/tokens.dart in xjanova/videogirl,
+   taken from the Claude Design artboard "Mind Android Liquid"). The nav icons and wordmark are the app's own
+   assets (assets/brand/), and she is a still of the app's own avatar stage (assets/avatar/index.html, minde.vrm)
+   rendered headless. Everything else is HTML with made-up data.
+   A phone screen is 390×845 drawn at 2× (780×1690) so the picture stays sharp on retina screens. */
+@font-face { font-family: Thai; src: url(../_fonts/NotoSansThai-500.ttf); font-weight: 400 500; }
+@font-face { font-family: Thai; src: url(../_fonts/NotoSansThai-600.ttf); font-weight: 600; }
+@font-face { font-family: Thai; src: url(../_fonts/NotoSansThai-700.ttf); font-weight: 700; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 780px; height: 1690px; overflow: hidden; background: #f1e9ff; }
+.phone { zoom: 2; width: 390px; height: 845px; position: relative; overflow: hidden; font-family: Thai, sans-serif; font-size: 13px; color: #23204a;
+    background: linear-gradient(165deg, #fff2e4 0%, #f1e9ff 46%, #e2f8ff 100%); }
+.phone.cal { background: linear-gradient(170deg, #eaf7ff 0%, #f2ecff 46%, #ffeef6 100%); }
+.phone.tl { background: linear-gradient(170deg, #f4f0ff 0%, #eaf9f4 50%, #fff4ea 100%); }
+.phone.set { background: linear-gradient(170deg, #ffeef5 0%, #f1ecff 48%, #e9f9ff 100%); }
+.phone.call { background: linear-gradient(168deg, #ffe9f2 0%, #f3e9ff 44%, #e6f9ff 100%); }
+.orb { position: absolute; border-radius: 50%; filter: blur(26px); pointer-events: none; }
+.orb.pink { background: radial-gradient(circle, #ffb0d8 0%, rgba(255, 176, 216, 0) 70%); }
+.orb.mint { background: radial-gradient(circle, #7fedd6 0%, rgba(127, 237, 214, 0) 70%); }
+.orb.lilac { background: radial-gradient(circle, #b0a8ff 0%, rgba(176, 168, 255, 0) 70%); }
+
+/* Android status bar */
+.sb { position: relative; z-index: 5; height: 28px; display: flex; align-items: center; padding: 0 18px; font-size: 12px; font-weight: 600; color: #23204a; }
+.sb .r { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+.sb .r i { display: inline-block; width: 14px; height: 9px; border-radius: 2px; border: 1.5px solid #23204a; position: relative; }
+.sb .r i::after { content: ""; position: absolute; left: 1px; top: 1px; bottom: 1px; width: 8px; background: #23204a; border-radius: 1px; }
+.sb .r b { width: 12px; height: 9px; background: linear-gradient(45deg, transparent 50%, #23204a 50%); }
+
+/* glass */
+.glass { background: rgba(255, 255, 255, .62); border: 1px solid rgba(255, 255, 255, .9); box-shadow: 0 10px 30px rgba(90, 70, 180, .12); backdrop-filter: blur(16px) saturate(1.5); }
+.card { border-radius: 24px; padding: 14px; }
+.over { font-size: 11px; font-weight: 600; letter-spacing: 1.1px; color: rgba(35, 32, 74, .55); text-transform: uppercase; }
+.title { font-size: 15px; font-weight: 600; letter-spacing: -.1px; }
+.display { font-size: 26px; font-weight: 700; letter-spacing: -.4px; line-height: 1.24; }
+.body { font-size: 13.5px; line-height: 1.52; color: rgba(35, 32, 74, .75); }
+.cap { font-size: 12px; line-height: 1.44; color: rgba(35, 32, 74, .55); }
+.pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 99px; font-size: 11px; background: rgba(255, 255, 255, .75); border: 1px solid rgba(255, 255, 255, .9); color: rgba(35, 32, 74, .75); box-shadow: 0 3px 10px rgba(90, 70, 180, .08); }
+.work { --acc: #00a894; --grad: linear-gradient(135deg, #00c2a8, #7c6cff); --soft: rgba(0, 168, 148, .35); }
+.love { --acc: #e0357a; --grad: linear-gradient(135deg, #ff6fa8, #b06cff); --soft: rgba(224, 53, 122, .35); }
+
+/* screen header (widgets/screen_header.dart) */
+.hdr { position: relative; z-index: 3; padding: 6px 16px 10px; }
+.hdr .over { margin-bottom: 4px; }
+
+/* bottom nav: four glass items + her face in the notch (widgets/mind_nav_bar.dart) */
+.nav { position: absolute; left: 0; right: 0; bottom: 0; height: 74px; z-index: 6; display: flex; align-items: flex-end; padding: 0 8px 10px;
+    background: rgba(255, 255, 255, .72); border-radius: 24px 24px 0 0; box-shadow: 0 -2px 40px rgba(90, 70, 180, .14); backdrop-filter: blur(20px);
+    -webkit-mask: radial-gradient(circle 38px at 50% -6px, transparent 98%, #000 100%); mask: radial-gradient(circle 38px at 50% -6px, transparent 98%, #000 100%); }
+.nav a { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 10.5px; color: rgba(35, 32, 74, .55); text-decoration: none; }
+.nav a img { width: 30px; height: 30px; }
+.nav a.on { color: var(--acc); font-weight: 600; }
+.nav a.gap { visibility: hidden; }
+.face-btn { position: absolute; z-index: 7; left: 50%; bottom: 36px; width: 64px; height: 64px; margin-left: -32px; border-radius: 50%; padding: 3px; background: var(--grad); box-shadow: 0 8px 24px var(--soft); }
+.face-btn span { display: block; width: 100%; height: 100%; border-radius: 50%; background: #f5efff center / cover no-repeat; border: 2px solid #fff; }
+.face-lbl { position: absolute; z-index: 7; left: 0; right: 0; bottom: 10px; text-align: center; font-size: 10.5px; color: rgba(35, 32, 74, .55); }
+.face-lbl.on { color: var(--acc); font-weight: 600; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 40px; padding: 0 16px; border-radius: 14px; font-size: 14px; font-weight: 600; color: #fff; background: var(--grad); box-shadow: 0 6px 18px var(--soft); }
+.btn.ghost { color: #23204a; background: rgba(255, 255, 255, .8); border: 1px solid rgba(255, 255, 255, .95); box-shadow: 0 3px 10px rgba(90, 70, 180, .08); }
+.tag { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 99px; font-size: 10.5px; font-weight: 600; }

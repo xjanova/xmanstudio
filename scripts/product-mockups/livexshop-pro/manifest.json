@@ -1,0 +1,48 @@
+{
+  "out_dir": "images/products/livexshop-pro/v2",
+  "screens": [
+    {
+      "name": "dashboard",
+      "html": "dashboard.html"
+    },
+    {
+      "name": "live",
+      "html": "live.html"
+    },
+    {
+      "name": "cf",
+      "html": "cf.html"
+    },
+    {
+      "name": "orders",
+      "html": "orders.html"
+    },
+    {
+      "name": "connect",
+      "html": "connect.html",
+      "w": 390,
+      "h": 845,
+      "width": 780
+    },
+    {
+      "name": "art-hero",
+      "src": "D:/Code/xmanstudio-campaign-media/product-pages/livexshop-pro/art-hero.png",
+      "width": 1536,
+      "quality": 82
+    },
+    {
+      "name": "art-2",
+      "src": "D:/Code/xmanstudio-campaign-media/product-pages/livexshop-pro/art-2.png",
+      "width": 1536,
+      "quality": 82
+    },
+    {
+      "name": "og",
+      "ext": "jpg",
+      "w": 1200,
+      "h": 630,
+      "width": 1200,
+      "html": "../_shared/og.html?art=file%3A%2F%2F%2FD%3A%2FCode%2Fxmanstudio-campaign-media%2Fproduct-pages%2Flivexshop-pro%2Fart-hero.png&name=Live+x+Shop+Pro&glow=Pro&line=%E0%B8%A3%E0%B8%B0%E0%B8%9A%E0%B8%9A%E0%B8%AB%E0%B8%A5%E0%B8%B1%E0%B8%87%E0%B8%9A%E0%B9%89%E0%B8%B2%E0%B8%99%7C%E0%B8%AA%E0%B8%B3%E0%B8%AB%E0%B8%A3%E0%B8%B1%E0%B8%9A%E0%B9%84%E0%B8%A5%E0%B8%9F%E0%B9%8C%E0%B8%82%E0%B8%B2%E0%B8%A2%E0%B8%82%E0%B8%AD%E0%B8%87&sub=Live+Commerce+%C2%B7+Coming+Soon&c1=6c63ff&c2=ff6b9d&c3=fbbf24"
+    }
+  ]
+}

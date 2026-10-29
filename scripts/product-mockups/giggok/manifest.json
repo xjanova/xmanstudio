@@ -1,0 +1,15 @@
+{
+  "out_dir": "images/products/giggok/v2",
+  "screens": [
+    { "name": "home", "html": "home.html", "w": 780, "h": 1690, "width": 780 },
+    { "name": "call", "html": "call.html", "w": 780, "h": 1690, "width": 780 },
+    { "name": "timeline", "html": "timeline.html", "w": 780, "h": 1690, "width": 780 },
+    { "name": "brain", "html": "brain.html", "w": 780, "h": 1690, "width": 780 },
+    { "name": "shop", "html": "shop.html", "w": 780, "h": 1690, "width": 780 },
+    { "name": "studio", "html": "studio.html", "w": 780, "h": 1690, "width": 780 },
+    { "name": "art-hero", "src": "D:/Code/xmanstudio-campaign-media/product-pages/giggok/art-hero.png", "width": 1536, "quality": 82 },
+    { "name": "art-2", "src": "D:/Code/xmanstudio-campaign-media/product-pages/giggok/art-2.png", "width": 1536, "quality": 82 },
+    { "name": "og", "ext": "jpg", "w": 1200, "h": 630, "width": 1200,
+      "html": "../_shared/og.html?art=file%3A%2F%2F%2FD%3A%2FCode%2Fxmanstudio-campaign-media%2Fproduct-pages%2Fgiggok%2Fart-hero.png&name=GigGok&glow=Gok&line=%E0%B9%80%E0%B8%A5%E0%B8%82%E0%B8%B2%E0%B8%AA%E0%B8%B2%E0%B8%A7+3D%7C%E0%B8%9A%E0%B8%99%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%96%E0%B8%B7%E0%B8%AD&sub=%E0%B9%83%E0%B8%8A%E0%B9%89%E0%B8%9F%E0%B8%A3%E0%B8%B5+%C2%B7+Android+%C2%B7+%E0%B8%84%E0%B8%B4%E0%B8%94%E0%B9%84%E0%B8%94%E0%B9%89%E0%B9%83%E0%B8%99%E0%B9%80%E0%B8%84%E0%B8%A3%E0%B8%B7%E0%B9%88%E0%B8%AD%E0%B8%87&c1=2dd4bf&c2=a855f7&c3=f472b6" }
+  ]
+}

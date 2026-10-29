@@ -1,0 +1,66 @@
+/* Anti X mock-ups — drawn to match the app's "Night" theme (design/screens/night-*.png in the AntiX repo).
+   The title bar, logo and nav icons are crops of a real capture; everything in the content area is HTML. */
+@font-face { font-family: Kanit; src: url(../_fonts/Kanit-Bold.ttf); font-weight: 700; }
+@font-face { font-family: NotoThai; src: url(../_fonts/NotoSansThai-500.ttf); font-weight: 500; }
+@font-face { font-family: NotoThai; src: url(../_fonts/NotoSansThai-600.ttf); font-weight: 600; }
+@font-face { font-family: NotoThai; src: url(../_fonts/NotoSansThai-700.ttf); font-weight: 700; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1440px; height: 900px; overflow: hidden; }
+body { font-family: NotoThai, sans-serif; font-weight: 500; color: #dfe9ff; font-size: 13px;
+    background:
+        radial-gradient(ellipse 60% 50% at 78% 92%, rgba(40, 140, 255, .45), transparent 70%),
+        radial-gradient(ellipse 50% 40% at 30% 100%, rgba(0, 200, 255, .25), transparent 70%),
+        radial-gradient(ellipse 70% 60% at 60% 20%, rgba(30, 70, 170, .55), transparent 75%),
+        linear-gradient(180deg, #071330 0%, #0a1a44 55%, #0b2a66 100%); }
+body::before { content: ""; position: absolute; inset: 40px 0 0 0; opacity: .22;
+    background: repeating-linear-gradient(115deg, transparent 0 46px, rgba(120, 200, 255, .14) 47px, transparent 49px),
+                repeating-linear-gradient(25deg, transparent 0 80px, rgba(120, 200, 255, .09) 81px, transparent 83px); }
+.titlebar { position: absolute; left: 0; top: 0; width: 1440px; height: 40px; background: url(assets/titlebar.png); }
+.side { position: absolute; left: 15px; top: 54px; width: 255px; height: 832px; border-radius: 16px;
+    background: linear-gradient(180deg, rgba(10, 22, 52, .92), rgba(7, 16, 40, .95)); border: 1px solid rgba(110, 160, 255, .28); }
+.side .logo { display: block; margin: 8px auto 0; width: 225px; height: 206px; background: url(assets/logo.png); }
+.side hr { border: 0; height: 1px; margin: 8px 22px 12px; background: linear-gradient(90deg, transparent, rgba(255, 200, 80, .6), transparent); }
+.nav { list-style: none; padding: 0 10px; }
+.nav li { display: flex; align-items: center; gap: 12px; height: 50px; padding: 0 12px; margin-bottom: 4px; border-radius: 12px; font-family: Kanit; font-size: 15px; color: #eaf2ff; }
+.nav li i { width: 40px; height: 40px; flex: none; background-size: cover; background-position: center; border-radius: 10px; }
+.nav li .emo { font-style: normal; font-size: 26px; display: inline-flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 6px rgba(80, 180, 255, .7)); }
+.nav li.on { background: linear-gradient(180deg, #6fe0ff, #2a9fe0); color: #04203a; box-shadow: 0 0 0 2px rgba(255, 220, 120, .55), 0 0 22px rgba(80, 200, 255, .55); }
+.nav li b { margin-left: auto; font-size: 11px; padding: 1px 9px; border-radius: 9px; background: #2bb5f0; color: #fff; }
+.nav li b.red { background: #e9405a; }
+.side .ver { position: absolute; left: 18px; bottom: 16px; font-size: 11px; color: #8fa3c8; }
+.side .ver strong { display: block; font-family: Kanit; font-size: 13px; color: #ffcc55; }
+.main { position: absolute; left: 288px; top: 54px; width: 1136px; height: 832px; }
+.hdr { display: flex; align-items: center; gap: 12px; height: 52px; }
+.hdr .ico { width: 48px; height: 48px; display: inline-flex; align-items: center; justify-content: center; font-size: 30px; filter: drop-shadow(0 0 8px rgba(80, 180, 255, .8)); }
+.hdr h1 { font-family: Kanit; font-size: 26px; color: #fff; line-height: 1; }
+.hdr p { font-size: 11px; color: #8fa3c8; margin-top: 4px; }
+.hdr .pills { margin-left: auto; display: flex; gap: 10px; }
+.pill-pro { width: 195px; height: 40px; background: url(assets/pro-pill.png); }
+.pill-guard { width: 124px; height: 40px; background: url(assets/guard-pill.png); }
+.panel { border-radius: 16px; background: linear-gradient(180deg, rgba(16, 34, 78, .82), rgba(9, 20, 50, .88)); border: 1px solid rgba(120, 170, 255, .32);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08); padding: 14px 18px; }
+.panel h2 { font-family: Kanit; font-size: 16px; color: #fff; display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.panel h2 small { margin-left: auto; font-family: NotoThai; font-size: 11px; font-weight: 500; color: #8fa3c8; }
+.field { height: 36px; border-radius: 10px; background: rgba(5, 12, 32, .7); border: 1px solid rgba(120, 170, 255, .3); padding: 0 12px; display: flex; align-items: center; color: #cfe0ff; font-size: 12px; }
+.field.dd::after { content: "⌄"; margin-left: auto; color: #8fa3c8; }
+.btn { height: 34px; padding: 0 16px; border-radius: 17px; display: inline-flex; align-items: center; gap: 6px; font-family: Kanit; font-size: 13px; color: #fff;
+    background: linear-gradient(180deg, #3a5a9a, #1d3263); border: 1px solid rgba(160, 200, 255, .45); }
+.btn.cy { background: linear-gradient(180deg, #6fe0ff, #2a9fe0); color: #04203a; border-color: rgba(255, 220, 120, .6); }
+.btn.gr { background: linear-gradient(180deg, #5ef08f, #19b45a); color: #04230f; }
+.btn.rd { background: linear-gradient(180deg, #ff6b7d, #d8233d); }
+.btn.am { background: linear-gradient(180deg, #ffd56b, #f09a1a); color: #2b1600; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font-weight: 500; font-size: 12px; color: #9fb4da; padding: 9px 10px; border-bottom: 1px solid rgba(120, 170, 255, .25); }
+td { padding: 9px 10px; font-size: 12.5px; border-bottom: 1px solid rgba(120, 170, 255, .1); white-space: nowrap; }
+tr:nth-child(even) td { background: rgba(255, 255, 255, .025); }
+.mono { font-family: Consolas, "Cascadia Mono", monospace; font-size: 13px; color: #f2f6ff; letter-spacing: .02em; }
+.tag { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 10px; border-radius: 11px; font-size: 11.5px; border: 1px solid; }
+.tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.t-red { color: #ff6b7d; border-color: rgba(255, 107, 125, .6); background: rgba(255, 60, 90, .1); }
+.t-amb { color: #ffc35a; border-color: rgba(255, 195, 90, .6); background: rgba(255, 180, 60, .08); }
+.t-grn { color: #5ef08f; border-color: rgba(94, 240, 143, .55); background: rgba(60, 220, 120, .08); }
+.t-cy { color: #6fe0ff; border-color: rgba(111, 224, 255, .5); background: rgba(80, 200, 255, .08); }
+.sev { font-family: Kanit; font-size: 12.5px; }
+.red { color: #ff6b7d; } .amb { color: #ffc35a; } .grn { color: #5ef08f; } .cy { color: #6fe0ff; } .mut { color: #8fa3c8; }
+.flag { display: inline-block; width: 20px; height: 13px; border-radius: 2px; margin-right: 8px; vertical-align: -2px; }
+.big { font-family: Kanit; font-size: 34px; line-height: 1.1; }

@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .cols { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+    .cfg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .cfg p { color: #9ca3af; font-size: 13px; } .cfg b { font-weight: 500; }
+    label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+    .ta { display: block; background: #111827; border: 1px solid #374151; border-radius: 8px; padding: 10px 12px; font-size: 13px; color: #fca5a5; line-height: 1.5; }
+    .note p { font-size: 14px; line-height: 1.55; }
+    .fail { padding: 12px; background: #1f2937; border-radius: 8px; margin-bottom: 12px; }
+    .fail .t { display: flex; justify-content: space-between; margin-bottom: 4px; } .fail .t span:last-child { font-size: 12px; color: #6b7280; }
+    .fail p { font-size: 13px; color: #f87171; }
+    .mode { display: flex; justify-content: space-between; padding: 8px 0; border-top: 1px solid #374151; font-size: 13px; }
+    .mode:first-of-type { border-top: 0; }
+</style></head>
+<body data-on="ai">
+<div class="main">
+<div class="page" style="gap:18px">
+    <div class="top">
+        <div><h1>AI Assistant</h1><p>Analyze errors and get AI-powered fix suggestions</p></div>
+        <span class="pill bg-g g4" style="border-radius:9999px;padding:4px 12px">🟢 AI Available</span>
+    </div>
+
+    <div class="cols">
+        <div style="display:flex;flex-direction:column;gap:18px">
+            <div class="card p4">
+                <h2 style="margin-bottom:12px">AI Configuration</h2>
+                <div class="cfg">
+                    <div><p>Provider</p><b>Ollama</b></div>
+                    <div><p>Model</p><b class="mono" style="font-size:13px">qwen2.5-coder:7b</b></div>
+                    <div><p>GPU</p><b class="dim">CPU Only</b></div>
+                    <div><p>Budget Used</p><b>0%</b></div>
+                </div>
+            </div>
+            <div class="card p4">
+                <h2 style="margin-bottom:12px">Analyze Error</h2>
+                <label>Project</label><span class="input" style="display:block;margin-bottom:12px">api-gateway</span>
+                <label>Error Message</label>
+                <span class="ta mono">Health check failed: GET https://api.example.com/health returned 500. Rolled back to previous version.</span>
+                <div style="display:flex;gap:16px;margin-top:14px"><span class="btn-primary" style="flex:1;justify-content:center">🔍 Analyze Error</span><span class="btn-secondary" style="flex:1;justify-content:center">💡 Get Fix Suggestion</span></div>
+            </div>
+            <div class="card p4">
+                <div class="row" style="margin-bottom:12px"><h2>Analysis Result</h2><span class="mut" style="font-size:13px">via Ollama • 812 tokens</span></div>
+                <div style="display:flex;flex-direction:column;gap:12px">
+                    <div class="note b"><h3 class="b4">Summary</h3><p>v1.13.0 starts, but every request to /health fails because the app cannot reach its database.</p></div>
+                    <div class="note y"><h3 class="y4">Root Cause</h3><p>The release reads DB_HOST from a new variable name, and the server's .env (kept out of the sync) still uses the old one.</p></div>
+                    <div class="note g" style="border-color:rgba(34,197,94,.3)"><h3 class="g4">Recommended Action</h3><p>Add the new variable to .env on the server, then sync v1.13.0 again.</p></div>
+                </div>
+            </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:18px">
+            <div class="card p4">
+                <h2 style="margin-bottom:14px">Recent Failed Syncs</h2>
+                <div class="fail"><div class="t"><span>api-gateway</span><span>18m ago</span></div><p>Health check failed: GET https://api.example.com/health returned 500…</p></div>
+                <div class="fail"><div class="t"><span>docs-site</span><span>3d ago</span></div><p>Pre-sync commands failed</p></div>
+            </div>
+            <div class="card p4">
+                <h2 style="margin-bottom:10px">AI Modes</h2>
+                <div class="mode"><span>Off - AI Disabled</span><span class="pill bg-gr dim" style="font-size:12px">None</span></div>
+                <div class="mode"><span>Level 1: Alert Only</span><span class="pill bg-g g4" style="font-size:12px">Very Low</span></div>
+                <div class="mode"><span>Level 2: Suggest Fix</span><span class="pill bg-b b4" style="font-size:12px">Low</span></div>
+                <div class="mode"><span>Level 3: Fix + Review</span><span class="pill bg-y y4" style="font-size:12px">Medium</span></div>
+                <div class="mode"><span>Level 4: Auto-Fix Sandbox</span><span class="pill bg-y y4" style="font-size:12px">Medium</span></div>
+                <div class="mode"><span>Level 5: Full Auto-Fix</span><span class="pill bg-r r4" style="font-size:12px">HIGH</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+<script src="chrome.js"></script>
+</body></html>

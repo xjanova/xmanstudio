@@ -1,0 +1,49 @@
+{
+  "out_dir": "images/products/phonex-manager/v2",
+  "screens": [
+    {
+      "name": "device",
+      "html": "device.html"
+    },
+    {
+      "name": "setup",
+      "html": "setup.html"
+    },
+    {
+      "name": "romsearch",
+      "html": "romsearch.html"
+    },
+    {
+      "name": "tools",
+      "html": "tools.html"
+    },
+    {
+      "name": "mirror",
+      "html": "mirror.html"
+    },
+    {
+      "name": "hex",
+      "html": "hex.html"
+    },
+    {
+      "name": "art-hero",
+      "src": "D:/Code/xmanstudio-campaign-media/product-pages/phonex-manager/art-hero.png",
+      "width": 1536,
+      "quality": 82
+    },
+    {
+      "name": "art-2",
+      "src": "D:/Code/xmanstudio-campaign-media/product-pages/phonex-manager/art-2.png",
+      "width": 1536,
+      "quality": 82
+    },
+    {
+      "name": "og",
+      "ext": "jpg",
+      "w": 1200,
+      "h": 630,
+      "width": 1200,
+      "html": "../_shared/og.html?art=file%3A%2F%2F%2FD%3A%2FCode%2Fxmanstudio-campaign-media%2Fproduct-pages%2Fphonex-manager%2Fart-hero.png&name=PhoneX+Manager&glow=X&line=%E0%B8%8A%E0%B8%B8%E0%B8%94%E0%B9%80%E0%B8%84%E0%B8%A3%E0%B8%B7%E0%B9%88%E0%B8%AD%E0%B8%87%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%8A%E0%B9%88%E0%B8%B2%E0%B8%87%E0%B8%8B%E0%B9%88%E0%B8%AD%E0%B8%A1%7C%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%96%E0%B8%B7%E0%B8%AD+Android&sub=ADB+%C2%B7+Fastboot+%C2%B7+Samsung+%C2%B7+Qualcomm+EDL+%C2%B7+MediaTek+BROM&c1=00d4ff&c2=818cf8&c3=c084fc"
+    }
+  ]
+}

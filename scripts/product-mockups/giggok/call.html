@@ -1,0 +1,49 @@
+<!doctype html>
+<!-- She answers a call (widgets/call_panel.dart): "มายด์กำลังคุยสายนี้", live words both ways, type for her, take over, hang up.
+     Labels from i18n/strings.dart (callOnAir, callListening, callSayHint, callBargeIn, callHangUp, callGreeting).
+     The caller, the number and what is said are made up. -->
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .who { position: relative; z-index: 3; text-align: center; padding: 8px 20px 0; }
+    .who .name { font-size: 22px; font-weight: 700; letter-spacing: -.3px; }
+    .who .num { font-size: 12px; color: rgba(35, 32, 74, .55); margin-top: 2px; }
+    .her { position: relative; z-index: 2; width: 170px; height: 170px; margin: 14px auto 0; border-radius: 50%; padding: 4px; background: var(--grad); box-shadow: 0 14px 40px var(--soft); }
+    .her span { display: block; width: 100%; height: 100%; border-radius: 50%; border: 3px solid #fff; background: #f5efff center / cover no-repeat; }
+    .halo { position: absolute; z-index: 1; left: 50%; top: 104px; width: 220px; height: 220px; margin-left: -110px; border-radius: 50%; border: 1.5px solid var(--soft); }
+    .halo.h2 { transform: scale(1.22); opacity: .5; }
+    .onair { position: relative; z-index: 3; display: flex; justify-content: center; gap: 6px; margin-top: 14px; }
+    .onair .tag { background: rgba(255, 255, 255, .8); border: 1px solid rgba(255, 255, 255, .95); color: #23204a; height: 24px; padding: 0 11px; }
+    .onair .tag.live { color: #fff; background: #ff4d8d; border-color: #ff4d8d; }
+    .onair .tag.live::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #fff; margin-right: 6px; }
+    .talk { position: absolute; z-index: 4; left: 12px; right: 12px; top: 352px; bottom: 26px; display: flex; flex-direction: column; gap: 8px; padding: 14px 12px 12px; border-radius: 26px;
+        background: rgba(255, 255, 255, .6); border: 1px solid rgba(255, 255, 255, .85); box-shadow: 0 -2px 40px rgba(90, 70, 180, .14); backdrop-filter: blur(20px); }
+    .line { max-width: 88%; padding: 8px 12px; border-radius: 16px; font-size: 12.5px; line-height: 1.55; }
+    .line small { display: block; font-size: 10.5px; font-weight: 600; letter-spacing: .4px; color: rgba(35, 32, 74, .5); margin-bottom: 1px; }
+    .line.caller { align-self: flex-start; background: rgba(255, 255, 255, .9); border: 1px solid #fff; border-radius: 16px 16px 16px 6px; }
+    .line.mai { align-self: flex-end; background: rgba(224, 53, 122, .1); border: 1px solid rgba(224, 53, 122, .25); border-radius: 16px 16px 6px 16px; }
+    .line.mai small { color: #e0357a; }
+    .note { font-size: 11px; color: rgba(35, 32, 74, .5); text-align: center; margin-top: auto; }
+    .say { display: flex; gap: 7px; align-items: center; }
+    .say .in { flex: 1; height: 38px; border-radius: 14px; padding: 0 12px; display: flex; align-items: center; font-size: 12.5px; color: rgba(35, 32, 74, .45); background: rgba(255, 255, 255, .85); border: 1px solid #fff; }
+    .say .send { width: 38px; height: 38px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: #fff; background: var(--grad); }
+    .acts { display: flex; gap: 8px; }
+    .acts .btn { flex: 1; }
+    .acts .btn.end { background: #ff4d6d; box-shadow: 0 6px 18px rgba(255, 77, 109, .35); }
+</style></head>
+<body><div class="phone call love">
+    <div class="orb pink" style="top:-60px;right:-60px;width:260px;height:260px"></div>
+    <div class="orb lilac" style="top:240px;left:-90px;width:280px;height:280px"></div>
+    <div class="sb">14:05<span class="r"><b></b><i></i></span></div>
+    <div class="who"><div class="name">คุณเอ (ตัวอย่าง)</div><div class="num">สายเข้า · ผ่านซิม 1 · 00:48</div></div>
+    <div class="halo"></div><div class="halo h2"></div>
+    <div class="her"><span style="background-image:url(assets/avatar-face.webp)"></span></div>
+    <div class="onair"><span class="tag live">มายด์กำลังคุยสายนี้</span><span class="tag">กำลังฟัง</span></div>
+    <div class="talk">
+        <div class="line mai"><small>น้องมาย</small>สวัสดีค่ะ น้องมายค่ะ เลขาของเจ้าของเบอร์นี้ ตอนนี้เขาไม่สะดวกรับสาย มีอะไรคุยหรือฝากเรื่องไว้กับน้องมายได้เลยนะคะ</div>
+        <div class="line caller"><small>คู่สาย</small>ฝากบอกว่าขอเลื่อนนัดพรุ่งนี้เป็นสิบโมงได้ไหมครับ</div>
+        <div class="line mai"><small>น้องมาย</small>ได้ค่ะ น้องมายจดไว้ให้แล้วนะคะ เลื่อนนัดพรุ่งนี้เป็นสิบโมง จะให้โทรกลับไหมคะ</div>
+        <div class="note">ลำโพงเปิดตลอดระหว่างที่เธอคุย · สรุปลงไทม์ไลน์เมื่อวางสาย</div>
+        <div class="say"><span class="in">พิมพ์ให้เธอพูดเข้าสาย</span><span class="send">➤</span></div>
+        <div class="acts"><span class="btn ghost">แทรกสาย</span><span class="btn end">วางสาย</span></div>
+    </div>
+</div></body></html>

@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .g { display: grid; grid-template-columns: 290px minmax(0, 1fr) 330px; gap: 12px; height: 100%; }
+    .col > .card + .card { margin-top: 10px; }
+    .card { padding: 13px 15px; }
+    .pair { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 10px; background: rgba(255, 255, 255, .04); border: 1px solid rgba(255, 255, 255, .08); margin-top: 6px; font-size: 12px; }
+    .pair.on { border-color: rgba(167, 139, 250, .7); background: rgba(124, 58, 237, .25); }
+    .exc { display: grid; grid-template-columns: 1fr 120px 1fr; gap: 12px; align-items: stretch; }
+    .exbox { border-radius: 14px; padding: 14px 16px; background: rgba(0, 0, 0, .22); border: 1px solid; }
+    .mk { display: flex; gap: 4px; margin: 10px 0; } .mk span { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 6px; background: rgba(255, 255, 255, .06); color: rgba(255, 255, 255, .5); } .mk span.on { background: rgba(124, 58, 237, .5); color: #fff; }
+    .ba { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } .ba div { background: rgba(255, 255, 255, .04); border-radius: 9px; padding: 7px 9px; }
+    .arb { display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 14px; background: linear-gradient(180deg, rgba(124, 58, 237, .35), rgba(37, 99, 235, .25)); border: 1px solid rgba(167, 139, 250, .5); }
+    .steps p { display: flex; align-items: center; gap: 10px; padding: 7px 0; font-size: 12px; border-bottom: 1px solid rgba(255, 255, 255, .05); }
+    .steps i { font-style: normal; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; flex: none; }
+    .ob p { display: grid; grid-template-columns: 1.1fr 1fr .8fr; gap: 6px; font-size: 11.5px; padding: 2.5px 0; position: relative; }
+    .ob p span:nth-child(2), .ob p span:nth-child(3) { text-align: right; }
+    .ob p b.bar { position: absolute; right: 0; top: 1px; bottom: 1px; border-radius: 3px; }
+</style></head>
+<body data-on="Trading">
+<div class="page">
+    <div class="g">
+        <div class="col">
+            <div class="card">
+                <div class="row"><b>🔍 SCANNER</b><span class="badge b-grn sp">Scanning</span></div>
+                <p class="mut" style="font-size:11px;margin-top:6px">Strategy: <b style="color:#fff">💰 Arbitrage</b></p>
+                <div class="row" style="margin-top:8px;gap:6px"><span class="stat" style="flex:1;padding:6px;text-align:center"><b>612</b><br><span class="mut" style="font-size:10px">Scans</span></span><span class="stat" style="flex:1;padding:6px;text-align:center"><b class="grn">7</b><br><span class="mut" style="font-size:10px">Found</span></span><span class="stat" style="flex:1;padding:6px;text-align:center"><b class="pur">0.48%</b><br><span class="mut" style="font-size:10px">Best</span></span></div>
+            </div>
+            <div class="card">
+                <p class="lbl">ACTIVE PAIRS</p>
+                <div class="pair on"><span class="coin" style="background:#F7931A">BTC</span><div><b>BTC/USDT</b><p class="mut" style="font-size:10px">Binance → KuCoin</p></div><b class="grn sp">0.15%</b></div>
+                <div class="pair"><span class="coin" style="background:#627EEA">ETH</span><div><b>ETH/USDT</b><p class="mut" style="font-size:10px">KuCoin → Binance</p></div><b class="dim sp">0.06%</b></div>
+                <div class="pair"><span class="coin" style="background:#9945FF">SOL</span><div><b>SOL/USDT</b><p class="mut" style="font-size:10px">Binance → Bitkub</p></div><b class="grn sp">0.21%</b></div>
+                <div class="pair"><span class="coin" style="background:#23292F">XRP</span><div><b>XRP/USDT</b><p class="mut" style="font-size:10px">Binance → KuCoin</p></div><b class="dim sp">0.04%</b></div>
+            </div>
+            <div class="card">
+                <p class="lbl">QUICK ACTIONS</p>
+                <div class="row" style="margin-top:8px;gap:6px"><span class="btn gh" style="flex:1">↻ Refresh</span><span class="btn gh" style="flex:1">⏸ Pause</span></div>
+                <span class="btn red" style="width:100%;margin-top:8px">🛑 EMERGENCY STOP</span>
+            </div>
+            <div class="card">
+                <p class="lbl">RECENT TRADES</p>
+                <p class="row" style="margin-top:8px;font-size:11.5px"><span class="mono mut">14:32</span><b>BTC/USDT</b><b class="grn sp">+$2.84</b></p>
+                <p class="row" style="margin-top:6px;font-size:11.5px"><span class="mono mut">14:31</span><b>SOL/USDT</b><b class="grn sp">+$1.12</b></p>
+                <p class="row" style="margin-top:6px;font-size:11.5px"><span class="mono mut">14:30</span><b>BTC/USDT</b><b class="grn sp">+$3.40</b></p>
+                <p class="row" style="margin-top:6px;font-size:11.5px"><span class="mono mut">14:18</span><b>ETH/USDT</b><b class="red sp">-$0.84</b></p>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card">
+                <div class="row"><span class="coin" style="background:#F7931A">BTC</span><b style="font-size:16px">BTC/USDT</b><span class="dim">Binance → KuCoin</span><span class="badge b-grn">Spread: 0.15%</span><span class="mut sp">Est: $10.10/trade</span></div>
+                <div class="exc" style="margin-top:12px">
+                    <div class="exbox" style="border-color:rgba(16,185,129,.5)">
+                        <div class="row"><span class="ex" style="background:#F3BA2F">BN</span><b>BINANCE</b><span class="badge b-grn sp">BUY</span></div>
+                        <div class="mk"><span class="on">SPOT</span><span>FUTURES</span><span>MARGIN</span></div>
+                        <p class="big">$67,412.30</p>
+                        <div class="ba" style="margin-top:10px"><div><p class="lbl">BID</p><b class="mono">67,412.10</b></div><div><p class="lbl">ASK</p><b class="mono">67,412.30</b></div></div>
+                        <p class="mut" style="margin-top:10px;font-size:11px">BALANCE <b style="color:#fff">5,000.00 USDT</b></p>
+                    </div>
+                    <div class="arb"><p class="lbl" style="color:#C4B5FD">ARB</p><p class="big">0.15%</p><p style="font-size:20px">⇄</p></div>
+                    <div class="exbox" style="border-color:rgba(239,68,68,.5)">
+                        <div class="row"><span class="ex" style="background:#23AF91">KC</span><b>KUCOIN</b><span class="badge b-red sp">SELL</span></div>
+                        <div class="mk"><span class="on">SPOT</span><span>FUTURES</span><span>MARGIN</span></div>
+                        <p class="big">$67,513.40</p>
+                        <div class="ba" style="margin-top:10px"><div><p class="lbl">BID</p><b class="mono">67,513.40</b></div><div><p class="lbl">ASK</p><b class="mono">67,513.90</b></div></div>
+                        <p class="mut" style="margin-top:10px;font-size:11px">BALANCE <b style="color:#fff">0.0750 BTC</b></p>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="row"><p class="lbl">PROFIT / LOSS</p><span class="mut" style="font-size:10px">(This Session)</span></div>
+                <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:10px">
+                    <div class="stat"><p class="lbl">Session</p><p class="mid grn">+$61.40</p></div>
+                    <div class="stat"><p class="lbl">Today</p><p class="mid grn">+$42.18</p></div>
+                    <div class="stat"><p class="lbl">Trades</p><p class="mid">11</p></div>
+                    <div class="stat"><p class="lbl">USDT</p><p class="mid grn">+61.40</p></div>
+                    <div class="stat"><p class="lbl">BTC</p><p class="mid" style="font-size:15px">+0.00000000</p></div>
+                </div>
+            </div>
+            <div class="card steps" style="border-color:rgba(245,158,11,.45)">
+                <div class="row"><b class="amb">🔄 TRANSFER IN PROGRESS</b><span class="badge b-amb">Transfer Mode · Manual</span><span class="btn gh sp" style="height:26px">Cancel</span></div>
+                <p><i style="background:#10B981">✓</i><b>Buy Order Filled</b><span class="dim">0.05 BTC @ $67,412</span></p>
+                <p><i style="background:#F59E0B">⏳</i><b>Withdrawal</b><span class="dim">Pending... · คุณโอนเองจากหน้าเว็บ exchange</span></p>
+                <p><i style="background:rgba(255,255,255,.15)">○</i><b>Blockchain Transfer</b><span class="dim">0/2 confirms</span></p>
+                <p><i style="background:rgba(255,255,255,.15)">○</i><b>Deposit &amp; Sell</b><span class="dim">Waiting...</span></p>
+                <div class="row" style="margin-top:10px"><span class="dim">Buy: <b style="color:#fff">$67,412</b> · Current: <b style="color:#fff">$67,520</b> · Fee: <b style="color:#fff">0.0002 BTC</b></span><span class="btn grn sp">✓ I've Transferred / ฉันโอนแล้ว</span></div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card">
+                <p class="lbl">TRADE AMOUNT</p>
+                <div class="row" style="margin-top:8px"><span class="field" style="flex:1">1,000</span><span class="btn pur" style="height:32px">USDT</span><span class="btn gh" style="height:32px">BTC</span></div>
+                <p class="grn" style="font-size:11px;margin-top:8px">Est. Profit: $1.01</p>
+                <div class="row" style="margin-top:10px"><span class="btn grn" style="flex:1;height:38px">Execute Trade</span><span class="badge b-pur">Auto: ON</span></div>
+            </div>
+            <div class="card ob">
+                <p class="lbl">ORDER BOOK</p>
+                <p class="mut" style="font-size:10px;margin-top:6px">ASKS</p>
+                <div id="asks"></div>
+                <p style="display:block;text-align:center;padding:6px 0;font-weight:700" class="pur">SPREAD $0.50 (0.00%)</p>
+                <p class="mut" style="font-size:10px">BIDS</p>
+                <div id="bids"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="chrome.js"></script>
+<script>
+    (function () {
+        var s = 3; function rnd() { s = (s * 9301 + 49297) % 233280; return s / 233280; }
+        function rows(base, step, col, n) {
+            var h = [];
+            for (var i = 0; i < n; i++) {
+                var p = base + step * i, q = (rnd() * .9 + .05).toFixed(4), w = Math.round(20 + rnd() * 70);
+                h.push('<p><b class="bar" style="width:' + w + '%;background:' + col + '"></b><span class="mono" style="color:' + (step > 0 ? '#EF4444' : '#10B981') + '">' + p.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '</span><span class="mono">' + q + '</span><span class="mono dim">' + (p * q / 1000).toFixed(1) + 'k</span></p>');
+            }
+            return h;
+        }
+        document.getElementById('asks').innerHTML = rows(67513.9, 0.6, 'rgba(239,68,68,.12)', 11).reverse().join('');
+        document.getElementById('bids').innerHTML = rows(67513.4, -0.6, 'rgba(16,185,129,.12)', 11).join('');
+    })();
+</script>
+</body></html>

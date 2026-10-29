@@ -1,0 +1,45 @@
+{
+  "out_dir": "images/products/skidrow-killer/v2",
+  "screens": [
+    {
+      "name": "home",
+      "html": "home.html"
+    },
+    {
+      "name": "scan",
+      "html": "scan.html"
+    },
+    {
+      "name": "threats",
+      "html": "threats.html"
+    },
+    {
+      "name": "intel",
+      "html": "intel.html"
+    },
+    {
+      "name": "ransomware",
+      "html": "ransomware.html"
+    },
+    {
+      "name": "art-hero",
+      "src": "D:/Code/xmanstudio-campaign-media/product-pages/skidrow-killer/art-hero.png",
+      "width": 1536,
+      "quality": 82
+    },
+    {
+      "name": "art-2",
+      "src": "D:/Code/xmanstudio-campaign-media/product-pages/skidrow-killer/art-2.png",
+      "width": 1536,
+      "quality": 82
+    },
+    {
+      "name": "og",
+      "ext": "jpg",
+      "w": 1200,
+      "h": 630,
+      "width": 1200,
+      "html": "../_shared/og.html?art=file%3A%2F%2F%2FD%3A%2FCode%2Fxmanstudio-campaign-media%2Fproduct-pages%2Fskidrow-killer%2Fart-hero.png&name=Skidrow+Killer&glow=Killer&line=%E0%B8%AA%E0%B9%81%E0%B8%81%E0%B8%99%E0%B9%81%E0%B8%A5%E0%B8%B0%E0%B8%81%E0%B8%B3%E0%B8%88%E0%B8%B1%E0%B8%94%E0%B8%A1%E0%B8%B1%E0%B8%A5%E0%B9%81%E0%B8%A7%E0%B8%A3%E0%B9%8C%7C%E0%B8%9A%E0%B8%99+Windows&sub=%E0%B8%94%E0%B8%B9%E0%B8%96%E0%B8%B6%E0%B8%87%E0%B9%80%E0%B8%99%E0%B8%B7%E0%B9%89%E0%B8%AD%E0%B9%84%E0%B8%9F%E0%B8%A5%E0%B9%8C+%C2%B7+%E0%B8%81%E0%B8%B1%E0%B8%81%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B9%81%E0%B8%A5%E0%B9%89%E0%B8%A7%E0%B8%84%E0%B8%B7%E0%B8%99%E0%B9%84%E0%B8%94%E0%B9%89+%C2%B7+%E0%B9%84%E0%B8%A1%E0%B9%88%E0%B8%9B%E0%B8%B4%E0%B8%94+Defender&c1=f43f5e&c2=c084fc&c3=4dd0e1"
+    }
+  ]
+}

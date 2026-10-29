@@ -1,438 +1,315 @@
 @extends($publicLayout ?? 'layouts.app')
+{{--
+    SmsChecker (แอป Android) — หน้าหลักของสินค้า slug `smschecker` · /smschecker (และ /products/smschecker redirect มาที่นี่)
+    ปุ่ม "ซื้อ" ในแอปพามาที่ /smschecker/buy → pricing → checkout ของตัวเอง (ผูกคีย์กับเครื่องจาก machine_id)
+
+    ไม่ใช่ตัวเดียวกับ /products/sms-payment-checker — นั่นคือปลั๊กอิน WordPress/WooCommerce (สินค้าอีกตัว ขายผ่านตะกร้า)
+
+    ข้อเท็จจริงทุกข้อมาจากโค้ดแอป D:/Code/SmsChecker (v2.0.x):
+      ทดลอง 24 ชม. = ProductLicenseController::TRIAL_DAYS (ไม่ได้ตั้ง → 1 วัน) + LicenseManager LOCAL_TRIAL_DURATION_MS
+      หมดทดลอง/หมดอายุ = ทั้งแอปขึ้นหน้า LicenseGateScreen (ไม่มีรุ่นฟรี)
+      จำนวนเครื่อง = SmsCheckerController: lifetime 3 เครื่อง อื่น ๆ 1 เครื่อง
+--}}
 {{-- Coming Soon = ปุ่มดาวน์โหลดเป็นป้าย (กฎเจ้าของ 2026-10-12) --}}
 @php $csDownload = \App\Models\Product::slugIsComingSoon('smschecker'); @endphp
 
-@section('title', 'SmsChecker - ระบบตรวจสอบ SMS อัตโนมัติ')
-@section('meta_description', 'SmsChecker SmsChecker ระบบตรวจจับ SMS ธนาคารอัตโนมัติ รองรับ 14+ ธนาคารไทย ตรวจสอบยอดชำระ อนุมัติออเดอร์ Real-time')
+@section('title', 'SmsChecker — ยืนยันยอดโอนจาก SMS ธนาคารอัตโนมัติ · แอป Android · ทดลองฟรี 24 ชม. | XMAN Studio')
+@section('meta_description', 'SmsChecker แอป Android อ่าน SMS และการแจ้งเตือนจากแอปธนาคารไทย 14 แห่ง พร้อมเพย์ เป๋าตัง ถุงเงิน LINE Pay แล้วส่งให้เว็บร้านจับคู่บิลจากยอดทศนิยมเฉพาะ อนุมัติออเดอร์อัตโนมัติหรือกดเองในแอป ไม่ต้อง Root ทดลองฟรี 24 ชั่วโมง · Confirms bank transfers from your shop phone\'s bank SMS.')
+@section('og_image', asset('images/products/smschecker/v2/og.jpg'))
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-gray-900 via-indigo-900 to-gray-900">
+@php
+    // ราคาทุกแผนมาจาก config/licenses.php 'plans.smschecker' ผ่าน SmsCheckerController::pricedPlans() — ห้ามเขียนตัวเลขราคาลงหน้านี้
+    $prices = collect($pricing)->map(fn ($plan) => (int) $plan['price'])->all();
+    $monthly = isset($prices['monthly']) ? number_format($prices['monthly']) : null;
+    $fromPrice = $prices ? number_format(min($prices)) : null;
+    $yearlySaving = \App\Support\LicensePlans::yearlySaving('smschecker');
 
-    {{-- ============================================================ --}}
-    {{-- HERO SECTION --}}
-    {{-- ============================================================ --}}
-    <section class="relative py-24 lg:py-32 overflow-hidden">
-        <x-page-art art="card-smschecker" :opacity="40" />
-        {{-- Background decoration --}}
-        <div class="absolute inset-0 opacity-10">
-            <div class="absolute inset-0" style="background-image: radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.4) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.4) 0%, transparent 50%), radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.2) 0%, transparent 70%);"></div>
-        </div>
-        <div class="absolute top-20 left-10 w-72 h-72 bg-violet-500/10 rounded-full blur-3xl"></div>
-        <div class="absolute bottom-10 right-10 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
+    // ส่วนลดจ่ายด้วย Wallet — ค่าคงที่ใน SmsCheckerController (อ่านจากที่นั่น ไม่เขียนซ้ำ)
+    $walletDiscount = (new \ReflectionClassConstant(\App\Http\Controllers\SmsCheckerController::class, 'WALLET_DISCOUNT_PERCENT'))->getValue();
 
+    // ซื้อไม่ได้ระหว่าง Coming Soon (ComingSoonPurchase ปฏิเสธที่ checkout อยู่แล้ว — หน้านี้ไม่ชวนกดด้วย)
+    $csBuy = $product?->isComingSoon() ?? false;
+
+    $shot = fn (string $file) => asset('images/products/smschecker/v2/' . $file);
+
+    // จำนวนเครื่องต่อคีย์: SmsCheckerController (max_activations: lifetime 3, อื่น ๆ 1)
+    $plans = [
+        'monthly' => ['unit' => '/ เดือน', 'note' => 'ซื้อทีละ 30 วัน ไม่ตัดเงินอัตโนมัติ', 'days' => '30 วัน', 'devices' => 1],
+        'yearly' => ['unit' => '/ ปี', 'note' => $yearlySaving ? 'ถูกกว่ารายเดือน ' . $yearlySaving . '%' : 'จ่ายครั้งเดียวใช้ทั้งปี', 'days' => '365 วัน', 'devices' => 1],
+        'lifetime' => ['unit' => 'ครั้งเดียว', 'note' => 'จ่ายครั้งเดียว ใช้ได้ตลอด', 'days' => 'ไม่หมดอายุ', 'devices' => 3],
+    ];
+
+    // หน้าจอหลักของแอป — สตริงและการทำงานจาก ui/smshistory, ui/orders, ui/qrscanner ของแอป
+    $coreRows = [
+        [
+            'img' => $shot('sms.webp'), 'mock' => true, 'phone' => true, 'name' => 'อ่านยอดเงินเข้าให้เอง', 'eyebrow' => 'Bank SMS + bank-app alerts',
+            'th' => 'อ่าน SMS เงินเข้าและเงินออกจากธนาคารไทย 14 แห่งและพร้อมเพย์ รวมถึงการแจ้งเตือนจากแอปธนาคาร เป๋าตัง ถุงเงิน และ LINE Pay แยกยอดเงิน ธนาคาร และเวลาออกมาเป็นรายการ แล้วส่งให้เว็บร้านทันที',
+            'en' => 'Reads incoming and outgoing bank SMS (14 Thai banks and PromptPay) plus notifications from banking apps, Pao Tang, Thung Ngern and LINE Pay.',
+            'points' => ['SMS จากผู้ส่งที่แอปไม่รู้จัก กำหนดเองได้ว่าเป็นธนาคารไหน', 'ทำงานเบื้องหลังตลอด เปิดเครื่องใหม่ก็กลับมาทำงานเอง', 'เลขบัญชีแสดงแบบปิดบางหลัก'],
+            'alt' => 'ภาพตัวอย่างหน้าข้อความ SMS ของ SmsChecker: รายการเงินเข้าเงินออกจากหลายธนาคาร พร้อมป้ายจับคู่และชื่อเว็บ',
+        ],
+        [
+            'img' => $shot('orders.webp'), 'mock' => true, 'phone' => true, 'name' => 'จับคู่บิล อนุมัติออเดอร์', 'eyebrow' => 'Order approval',
+            'th' => 'เว็บร้านให้ลูกค้าโอนยอดที่มีเศษสตางค์เฉพาะของแต่ละบิล เมื่อ SMS เงินเข้าตรงยอด บิลนั้นถูกจับคู่ทันที เลือกได้ว่าจะให้อนุมัติเอง หรือรอคุณกดในแอป',
+            'en' => 'Each bill gets its own satang amount. When a matching transfer lands, the bill is matched — approved for you, or waiting for your tap.',
+            'points' => ['3 โหมด: อนุมัติอัตโนมัติ · ตรวจสอบด้วยตนเอง · โหมดอัจฉริยะ (ชัดเจนอนุมัติ ไม่ชัดเจนรอตรวจ)', 'อนุมัติ ปฏิเสธ หรืออนุมัติทั้งหมดจากในแอป และแตะดูสลิปที่ใช้อนุมัติได้', 'ค้นหาเลขบิล ชื่อสินค้า หรือชื่อลูกค้า'],
+            'alt' => 'ภาพตัวอย่างหน้าจัดการออเดอร์ของ SmsChecker: บิลรอจับคู่พร้อมยอดทศนิยมเฉพาะ ปุ่มอนุมัติ และบิลที่อนุมัติผ่าน SMS แล้ว',
+        ],
+        [
+            'img' => $shot('qr.webp'), 'mock' => true, 'phone' => true, 'name' => 'เชื่อมเว็บด้วยการสแกน QR', 'eyebrow' => 'Pair in one scan',
+            'th' => 'เปิดหน้าแอดมินของเว็บร้าน กดแสดง QR ของอุปกรณ์ แล้วสแกนด้วยแอป ที่อยู่เว็บ คีย์ และรหัสลับถูกตั้งให้เอง ไม่ต้องพิมพ์ และเพิ่มได้หลายเว็บในมือถือเครื่องเดียว',
+            'en' => 'Scan the device QR in your shop\'s admin page: address and keys are set for you. One phone can serve several sites.',
+            'points' => ['รับเฉพาะเว็บที่เป็น HTTPS', 'ใส่รหัสด้วยตนเองก็ได้ ถ้าสแกนไม่สะดวก'],
+            'alt' => 'ภาพตัวอย่างหน้าเชื่อมต่ออุปกรณ์ของ SmsChecker: ช่องสแกน QR และการเชื่อมต่อที่เข้ารหัส AES-256-GCM กับ HMAC-SHA256',
+        ],
+    ];
+
+    $tools = [
+        [
+            'key' => 'sites', 'name' => 'หลายเว็บ บัญชีเดียว', 'short' => 'บอกว่ายอดนี้ของเว็บไหน',
+            'th' => 'มือถือเครื่องเดียวรับยอดให้หลายเว็บได้ ทุกรายการมีป้ายบอกว่าเป็นของเว็บไหน และถ้ายอดหนึ่งตรงกับบิลของหลายเว็บพร้อมกัน แอปเตือนให้ตรวจก่อน',
+            'en' => 'One phone, several sites: every credit is tagged with its site, and a credit that matches bills on two sites is flagged for you.',
+            'points' => ['การ์ดบิลบอกชื่อเว็บที่บิลนั้นมา', 'กราฟรายได้บิลแยกตามเซิร์ฟเวอร์'],
+        ],
+        [
+            'key' => 'realtime', 'name' => 'แจ้งทันที แม้ปิดจอ', 'short' => 'WebSocket · Push · คิวออฟไลน์',
+            'th' => 'เชื่อมเว็บแบบสดผ่าน WebSocket และรับ Push เมื่อมีบิลใหม่ ถ้าเน็ตหลุด รายการถูกเก็บในคิวออฟไลน์แล้วส่งให้เองเมื่อกลับมาออนไลน์',
+            'en' => 'Live sync over WebSocket with push for new bills. Offline, items wait in a queue and go out when the phone is back online.',
+            'points' => [],
+        ],
+        [
+            'key' => 'tts', 'name' => 'อ่านยอดออกเสียง', 'short' => '"เงินเข้า … จำนวน … บาท"',
+            'th' => 'เปิดให้แอปพูดยอดเงินเข้าเงินออกได้ เช่น "เงินเข้า กสิกรไทย จำนวน 1,250 บาท" และบอกเลขออเดอร์เมื่อจับคู่ได้ เลือกพูดไทยหรืออังกฤษ',
+            'en' => 'Speaks every credit and debit aloud, with the order it matched — in Thai or English.',
+            'points' => ['ถ้าเครื่องยังไม่มีเสียงภาษาไทย แอปพาไปดาวน์โหลดให้'],
+        ],
+        [
+            'key' => 'orphans', 'name' => 'ยอดที่หาบิลไม่เจอ', 'short' => 'ช่วยหาบิลที่น่าจะใช่',
+            'th' => 'เงินเข้าที่ไม่ตรงบิลไหนเลย (ลูกค้าโอนไม่ตรงเศษสตางค์) ไม่หายไปไหน กด "หาบิลที่ตรงกัน" ให้แอปถามเว็บหาบิลที่น่าจะใช่ แล้วคุณยืนยันผูกเข้าบิลเอง',
+            'en' => 'A credit that matched nothing is kept. Ask the site for likely bills and confirm the match yourself.',
+            'points' => [],
+        ],
+        [
+            'key' => 'stats', 'name' => 'กราฟรายได้', 'short' => '7 วัน · 30 วัน · 1 ปี · กำหนดเอง',
+            'th' => 'ดูเงินเข้าเงินออกย้อนหลังเป็นกราฟ แตะแต่ละจุดเพื่อดูรายละเอียด แยกรายได้บิลตามเซิร์ฟเวอร์ และเทียบกับยอดดิบจาก SMS ธนาคาร',
+            'en' => 'Income and outgoings over a week, a month, a year or your own range — bill income per server beside the raw bank SMS.',
+            'points' => [],
+        ],
+        [
+            'key' => 'health', 'name' => 'สุขภาพระบบ', 'short' => 'ตรวจเอง ซ่อมเอง',
+            'th' => 'หน้าสุขภาพระบบบอกสถานะการรับ SMS การเชื่อมเว็บ และเสียงแจ้งเตือน มีปุ่มทดสอบเสียงและรีสตาร์ทบริการ และแอปเฝ้าบริการของตัวเองให้กลับมาทำงานเองถ้าถูกปิด',
+            'en' => 'A health page for SMS intake, server links and the voice, with a service watchdog that restarts what the phone stops.',
+            'points' => ['อัปเดตแอปได้จากในแอป ไฟล์มาจาก xman4289.com'],
+        ],
+    ];
+
+    $ld = [
+        '@context' => 'https://schema.org',
+        '@type' => 'SoftwareApplication',
+        'name' => 'SmsChecker',
+        'operatingSystem' => 'Android 8.0+',
+        'applicationCategory' => 'BusinessApplication',
+        'inLanguage' => ['th', 'en'],
+        'description' => 'แอป Android อ่าน SMS และการแจ้งเตือนจากแอปธนาคารไทย แล้วส่งให้เว็บร้านจับคู่บิลและอนุมัติออเดอร์อัตโนมัติ',
+        'image' => asset('images/products/smschecker/v2/og.jpg'),
+        'url' => route('smschecker.detail'),
+        'publisher' => ['@type' => 'Organization', 'name' => 'XMAN Studio', 'url' => url('/')],
+        'offers' => collect($pricing)->map(fn ($plan) => ['@type' => 'Offer', 'name' => 'SmsChecker ' . $plan['name'], 'price' => (string) $plan['price'], 'priceCurrency' => 'THB'])->values()->all(),
+    ];
+    if ($version) {
+        $ld['softwareVersion'] = $version->version;
+    }
+@endphp
+<x-xp.page a="#5ce98a" b="#5ec8d6" c="#5ec8d6" glow="94 200 214" g1="#5ce98a" g2="#5ec8d6" g3="#f2dd9a">
+
+    {{-- ============================ HERO ============================ --}}
+    <x-xp.hero :art="$shot('art-hero.webp')"
+               tagline="ยืนยันยอดโอนจาก SMS ธนาคาร อัตโนมัติ"
+               tagline-en="Confirms bank transfers from your shop phone, automatically."
+               lead="แอป Android บนมือถือที่รับเงินของร้าน อ่าน SMS และการแจ้งเตือนจากแอปธนาคาร แล้วส่งให้เว็บร้านจับคู่กับบิลที่รอชำระ อนุมัติออเดอร์ให้เอง หรือรอคุณกดยืนยันจากในแอป ไม่ต้องนั่งเช็กสลิปทีละใบ"
+               lead-en="It reads the bank SMS and banking-app alerts on the phone that receives your money and hands them to your site to match against open bills.">
+        <x-slot:chips>
+            <span class="xp-chip"><i></i>{{ $version ? 'SmsChecker v' . $version->version : 'SmsChecker' }}</span>
+            <span class="xp-chip">Android 8.0+</span>
+        </x-slot:chips>
+        <x-slot:title>Sms<span class="xp-text-glow">Checker</span></x-slot:title>
+        <x-slot:actions>
+            <x-xp.download :href="route('smschecker.download')" :coming-soon="$csDownload" th="ดาวน์โหลด · ทดลองฟรี 24 ชม." en="Free 24-hour trial" />
+            @unless($csBuy || ! $fromPrice)
+                <a href="#pricing" class="xp-btn-pro inline-flex items-center px-6 py-4 rounded-xl font-extrabold transition">ซื้อ License — เริ่ม ฿{{ $fromPrice }}{{ $monthly ? '/เดือน' : '' }}</a>
+            @endunless
+        </x-slot:actions>
+        <x-slot:notes>
+            <p class="mt-4 text-sm text-gray-400">
+                @if($version)เวอร์ชันล่าสุด v{{ $version->version }} · @endif
+                ไฟล์ .apk จาก xman4289.com โดยตรง · Android 8.0 ขึ้นไป
+            </p>
+        </x-slot:notes>
+        <x-slot:badges>
+            <li class="flex items-center gap-2 text-gray-300"><span class="xp-dot"></span> ทดลองฟรี 24 ชม.</li>
+            <li class="flex items-center gap-2 text-gray-300"><span class="xp-dot"></span> ไม่ต้อง Root</li>
+            <li class="flex items-center gap-2 text-gray-300"><span class="xp-dot"></span> เข้ารหัส AES-256-GCM</li>
+        </x-slot:badges>
+        <x-slot:visual>
+            <div class="max-w-xs mx-auto w-full">
+                <x-xp.screen phone :src="$shot('dashboard.webp')" :eager="true" :mock="true" :width="390" :height="845"
+                             alt="ภาพตัวอย่างแดชบอร์ดของ SmsChecker: เงินเข้าวันนี้ กราฟ 7 วัน ตัวเลขซิงค์และรอตรวจสอบ ธนาคารยอดนิยม และรายการล่าสุด" />
+            </div>
+            <div class="xp-float absolute -left-1 sm:left-0 bottom-10 xp-card backdrop-blur-md px-4 py-3 shadow-2xl hidden sm:block">
+                <p class="text-[11px] tracking-widest uppercase text-gray-400">ยอดที่ต้องโอน · Unique amount</p>
+                <p class="text-white font-extrabold text-lg leading-tight">฿1,250<span class="text-emerald-300">.37</span><br><span class="text-gray-400 text-sm font-normal">เศษสตางค์บอกว่าเป็นบิลไหน</span></p>
+            </div>
+            <div class="xp-float-2 absolute right-0 top-24 xp-card backdrop-blur-md px-4 py-3 shadow-2xl hidden sm:block">
+                <p class="text-[11px] tracking-widest uppercase text-gray-400">อ่านจาก · Reads</p>
+                <p class="text-white font-bold leading-tight">SMS + แอปธนาคาร<br><span class="text-gray-400 text-sm font-normal">เป๋าตัง · ถุงเงิน · LINE Pay</span></p>
+            </div>
+        </x-slot:visual>
+    </x-xp.hero>
+
+    {{-- ========================== CORE ========================== --}}
+    <section class="relative py-20" id="features">
+        <div class="xp-glow w-[34rem] h-[34rem] -right-40 top-10" style="background: rgb(var(--xp-glow) / .12)"></div>
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center">
-                {{-- Badge --}}
-                <div class="inline-flex items-center px-4 py-2 bg-violet-500/20 rounded-full text-violet-300 text-sm mb-8 backdrop-blur-sm border border-violet-500/30">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                    SMS Payment Checker for Android
-                </div>
-
-                {{-- Title --}}
-                <h1 class="text-5xl sm:text-6xl lg:text-7xl font-black text-white mb-6 tracking-tight">
-                    Sms<span class="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-purple-400 to-blue-400">Checker</span>
-                </h1>
-
-                {{-- Tagline --}}
-                <p class="text-xl sm:text-2xl text-gray-300 max-w-3xl mx-auto mb-4 leading-relaxed">
-                    ระบบตรวจสอบ SMS อัตโนมัติ
-                </p>
-                <p class="text-base text-gray-400 max-w-2xl mx-auto mb-10">
-                    ตรวจจับ SMS ธนาคาร อนุมัติออเดอร์อัตโนมัติ
-                    ด้วย SMS Payment Checker for Android
-                </p>
-
-                {{-- CTA Buttons --}}
-                <div class="flex flex-col sm:flex-row justify-center gap-4 mb-12">
-                    @if($csDownload)
-                        <span class="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-violet-500/25 text-lg" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
-                    @else
-                    <a href="{{ route('smschecker.download') }}"
-                       class="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-violet-500/25 text-lg">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                        ดาวน์โหลด ทดลองฟรี 24 ชม.
-                    </a>
-                    @endif
-                    <a href="{{ route('smschecker.pricing') }}"
-                       class="inline-flex items-center justify-center px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-all backdrop-blur-sm border border-white/20 text-lg">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
-                        ดูราคา
-                    </a>
-                </div>
-
-                {{-- Feature badges --}}
-                <div class="flex flex-wrap justify-center gap-3 text-sm">
-                    <span class="px-4 py-2 bg-white/5 rounded-full border border-white/10 text-gray-400">SMS Detection</span>
-                    <span class="px-4 py-2 bg-white/5 rounded-full border border-white/10 text-gray-400">Bank Parser</span>
-                    <span class="px-4 py-2 bg-white/5 rounded-full border border-white/10 text-gray-400">Real-time Sync</span>
-                    <span class="px-4 py-2 bg-white/5 rounded-full border border-white/10 text-gray-400">Multi-Server</span>
-                    <span class="px-4 py-2 bg-white/5 rounded-full border border-white/10 text-gray-400">14+ Banks</span>
-                </div>
-            </div>
+            <x-xp.head class="mb-16" eyebrow="How it works" title="เงินเข้า SMS เด้ง" title2="บิลอนุมัติให้เอง"
+                       sub="มือถือที่ผูกบัญชีรับเงินของร้านเป็นตัวรับ SMS ส่วนเว็บร้านเป็นตัวจับคู่บิล แอปเชื่อมสองฝั่งนี้เข้าด้วยกัน"
+                       en="The phone that receives the money reads the SMS; your site matches the bill; SmsChecker links the two." />
+            <x-xp.rows :items="$coreRows" />
         </div>
     </section>
 
-    {{-- ============================================================ --}}
-    {{-- FEATURES SECTION (6 cards) --}}
-    {{-- ============================================================ --}}
-    <section class="py-20 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-7xl mx-auto">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">ฟีเจอร์หลัก</h2>
-                <p class="text-gray-400 max-w-2xl mx-auto">SmsChecker ออกแบบมาเพื่อตรวจจับ SMS การชำระเงินจากธนาคารไทยอัตโนมัติ</p>
-            </div>
-
-            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {{-- Feature 1: SMS Detection --}}
-                <div class="group bg-gray-800/40 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 hover:border-violet-500/50 transition-all duration-300">
-                    <div class="w-14 h-14 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-3">SMS Detection</h3>
-                    <p class="text-gray-400 leading-relaxed">ตรวจจับ SMS จากธนาคารไทยอัตโนมัติ แยกยอดเงิน ชื่อผู้โอน เลขอ้างอิง และวันที่ ส่งข้อมูลไปเซิร์ฟเวอร์ทันที</p>
-                </div>
-
-                {{-- Feature 2: Bank Parser --}}
-                <div class="group bg-gray-800/40 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 hover:border-blue-500/50 transition-all duration-300">
-                    <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-3">Bank Parser</h3>
-                    <p class="text-gray-400 leading-relaxed">ตรวจจับ SMS จากธนาคารไทย 14+ ธนาคาร แยกยอด ชื่อ เลขอ้างอิงอัตโนมัติ แจ้งเตือน Real-time</p>
-                </div>
-
-                {{-- Feature 3: Multi-Server --}}
-                <div class="group bg-gray-800/40 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 hover:border-emerald-500/50 transition-all duration-300">
-                    <div class="w-14 h-14 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-3">Multi-Server</h3>
-                    <p class="text-gray-400 leading-relaxed">เชื่อมต่อหลายเซิร์ฟเวอร์พร้อมกัน จัดการร้านค้าหลายร้านจากมือถือเครื่องเดียว ตั้งค่าผ่าน QR Code</p>
-                </div>
-
-                {{-- Feature 4: Real-time Sync --}}
-                <div class="group bg-gray-800/40 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 hover:border-sky-500/50 transition-all duration-300">
-                    <div class="w-14 h-14 bg-gradient-to-br from-sky-500 to-blue-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-3">Real-time Sync</h3>
-                    <p class="text-gray-400 leading-relaxed">เชื่อมต่อเซิร์ฟเวอร์ผ่าน WebSocket + FCM Push แจ้งเตือนยอดโอนเข้าทันทีแม้ปิดจอ ไม่พลาดทุกรายการ</p>
-                </div>
-
-                {{-- Feature 5: 14+ Banks --}}
-                <div class="group bg-gray-800/40 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 hover:border-orange-500/50 transition-all duration-300">
-                    <div class="w-14 h-14 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-3">14+ Banks</h3>
-                    <p class="text-gray-400 leading-relaxed">รองรับธนาคารไทย 14+ ธนาคาร ทั้ง KBANK SCB KTB BBL GSB BAY TTB PromptPay และอื่นๆ</p>
-                </div>
-
-                {{-- Feature 6: SMS Monitoring Service --}}
-                <div class="group bg-gray-800/40 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 hover:border-pink-500/50 transition-all duration-300">
-                    <div class="w-14 h-14 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-3">SMS Monitoring Service</h3>
-                    <p class="text-gray-400 leading-relaxed">ทำงาน Background ตลอด 24 ชม. แม้เครื่องหลับ ข้อมูลเข้ารหัส AES-256 ปลอดภัย</p>
-                </div>
-            </div>
+    {{-- =========================== MORE TOOLS =========================== --}}
+    <section class="relative py-20 isolate">
+        <x-xp.art :src="$shot('art-2.webp')" class="top-0 w-[130%] opacity-35 right-[-30%] lg:right-[-16%] lg:w-[68%] lg:opacity-80" />
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-xp.head align="left" class="mb-10" eyebrow="Built for a busy shop" title="ไม่พลาดยอด" title2="แม้วันที่ยุ่งที่สุด"
+                       sub="ทุกอย่างในรายการนี้รวมอยู่ใน License ทุกแผน และเปิดให้ลองครบระหว่างทดลอง 24 ชั่วโมง"
+                       en="Everything here comes with every plan, and with the 24-hour trial." />
+            <x-xp.explorer id="tools" label="เครื่องมือของ SmsChecker" :tools="$tools" />
         </div>
     </section>
 
-    {{-- ============================================================ --}}
-    {{-- HOW IT WORKS (3 steps) --}}
-    {{-- ============================================================ --}}
-    <section class="py-20 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-5xl mx-auto">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">เริ่มใช้งานง่ายๆ 3 ขั้นตอน</h2>
-                <p class="text-gray-400">ไม่ต้อง Root เครื่อง ติดตั้งง่าย ใช้งานได้ทันที</p>
-            </div>
-
-            <div class="grid md:grid-cols-3 gap-8">
-                {{-- Step 1 --}}
-                <div class="relative text-center">
-                    <div class="w-20 h-20 bg-gradient-to-br from-violet-600 to-purple-700 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-violet-500/20">
-                        <span class="text-3xl font-black text-white">1</span>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-3">ดาวน์โหลดแอพ</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed">ดาวน์โหลด SmsChecker APK จากเว็บไซต์ แล้วติดตั้งบนมือถือ Android ของคุณ</p>
-                    {{-- Connector arrow (hidden on mobile) --}}
-                    <div class="hidden md:block absolute top-10 -right-4 w-8 text-gray-600">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                    </div>
-                </div>
-
-                {{-- Step 2 --}}
-                <div class="relative text-center">
-                    <div class="w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-500/20">
-                        <span class="text-3xl font-black text-white">2</span>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-3">สแกน QR เชื่อมเซิร์ฟเวอร์</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed">สแกน QR Code จากเว็บร้านค้า เพื่อเชื่อมต่อแอพกับเซิร์ฟเวอร์ของคุณ</p>
-                    {{-- Connector arrow --}}
-                    <div class="hidden md:block absolute top-10 -right-4 w-8 text-gray-600">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                    </div>
-                </div>
-
-                {{-- Step 3 --}}
-                <div class="text-center">
-                    <div class="w-20 h-20 bg-gradient-to-br from-emerald-600 to-green-700 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-500/20">
-                        <span class="text-3xl font-black text-white">3</span>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-3">ใช้งานได้เลย</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed">SmsChecker จะตรวจจับ SMS ธนาคารอัตโนมัติ ส่งข้อมูลไปเซิร์ฟเวอร์ และอนุมัติออเดอร์ได้ทันที</p>
-                </div>
-            </div>
-
-            <div class="text-center mt-12">
-                <a href="{{ route('smschecker.download') }}"
-                   class="inline-flex items-center text-violet-400 hover:text-violet-300 font-medium transition-colors">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-                    อ่านคู่มือติดตั้งแบบละเอียด
-                </a>
-            </div>
+    {{-- ============================ TRUST ============================ --}}
+    <section class="relative py-20">
+        <div class="xp-glow w-[36rem] h-[24rem] left-1/2 -translate-x-1/2 top-24" style="background: rgb(var(--xp-glow) / .1)"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-xp.head class="mb-12" eyebrow="Safe by design" title="ยอดเงินของร้าน" title2="ส่งถึงเว็บอย่างปลอดภัย"
+                       sub="ข้อมูลยอดเงินวิ่งระหว่างมือถือกับเว็บของคุณเท่านั้น และถูกเข้ารหัสทุกครั้ง"
+                       en="Transactions travel between your phone and your own site, encrypted every time." />
+            <x-xp.cards :items="[
+                ['icon' => 'lock', 'title' => 'เข้ารหัสทุกครั้ง', 'body' => 'ข้อมูลระหว่างแอปกับเว็บเข้ารหัสด้วย AES-256-GCM และเซ็นด้วย HMAC-SHA256 แยกคีย์เข้ารหัสกับคีย์เซ็นออกจากกัน', 'en' => 'AES-256-GCM with HMAC-SHA256 signatures'],
+                ['icon' => 'globe', 'title' => 'HTTPS เท่านั้น', 'body' => 'QR ที่ชี้ไปเว็บแบบ http ธรรมดา หรือคีย์ที่สั้นเกินไป ถูกแอปปฏิเสธตั้งแต่ตอนสแกน', 'en' => 'Insecure links are refused at the scan'],
+                ['icon' => 'user', 'title' => 'ไม่ต้อง Root', 'body' => 'ใช้สิทธิ์อ่าน SMS และสิทธิ์อ่านการแจ้งเตือนมาตรฐานของ Android เท่านั้น', 'en' => 'Standard Android permissions, no root'],
+                ['icon' => 'eye', 'title' => 'ปิดเลขบัญชีบางหลัก', 'body' => 'รายการในแอปแสดงเลขบัญชีแบบปิดบางหลัก คนที่เห็นหน้าจอไม่ได้เลขบัญชีเต็มไปด้วย', 'en' => 'Account numbers shown masked'],
+                ['icon' => 'power', 'title' => 'ทำงานตลอด 24 ชม.', 'body' => 'รับ SMS เป็นบริการเบื้องหลัง เปิดเครื่องใหม่ก็กลับมาเอง และมีตัวเฝ้าบริการคอยรีสตาร์ทถ้าระบบปิดไป', 'en' => 'A background service with a watchdog'],
+                ['icon' => 'key', 'title' => 'คีย์ผูกกับเครื่อง', 'body' => 'License ผูกกับมือถือที่ใช้งาน ซื้อจากปุ่มในแอปแล้วคีย์ผูกกับเครื่องนั้นให้เอง', 'en' => 'Each key is bound to its phone'],
+            ]" />
         </div>
     </section>
 
-    {{-- ============================================================ --}}
-    {{-- USE CASES --}}
-    {{-- ============================================================ --}}
-    <section class="py-20 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-7xl mx-auto">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">เหมาะกับใคร?</h2>
-                <p class="text-gray-400 max-w-2xl mx-auto">SmsChecker ช่วยให้ร้านค้าออนไลน์ตรวจสอบการชำระเงินได้อัตโนมัติ</p>
+    {{-- =========================== PRICING =========================== --}}
+    <section class="relative py-20 scroll-mt-20" id="pricing">
+        <div class="xp-glow w-[40rem] h-[26rem] left-1/2 -translate-x-1/2 top-32 bg-amber-500/10"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-xp.head class="mb-12" eyebrow="Pricing" title="ลองฟรี 24 ชั่วโมง" title2="ถูกใจค่อยซื้อ License"
+                       sub="ไฟล์เดียวกันทั้งทดลองและใช้จริง · หมดทดลองแล้วแอปขอ License ก่อนใช้งานต่อ · แผนรายเดือนและรายปีใช้ได้ 1 เครื่อง ตลอดชีพใช้ได้ 3 เครื่อง"
+                       en="One app for trial and paid use. After the trial it asks for a licence. Monthly and yearly run on one phone, lifetime on three." />
+
+            <div class="grid md:grid-cols-2 xl:grid-cols-4 gap-5 max-w-6xl mx-auto">
+                <div class="xp-card p-7 flex flex-col">
+                    <div class="flex items-center justify-between mb-1">
+                        <h3 class="text-2xl font-black text-white">ทดลองฟรี</h3>
+                        <x-xp.badge tier="free" label="24 ชม." />
+                    </div>
+                    <p class="text-gray-400 text-sm mb-6"><x-bi th="ทุกฟีเจอร์ ครั้งเดียวต่อเครื่อง" en="Everything, once per phone" /></p>
+                    <div class="mb-6"><span class="text-5xl font-black text-white">฿0</span></div>
+                    <x-xp.ticks class="!space-y-2.5 text-sm mb-8 flex-1" :items="['ใช้ได้ทุกฟีเจอร์ 24 ชั่วโมง', 'เริ่มเองตอนเปิดแอปครั้งแรก', 'ไม่ต้องสมัคร ไม่ต้องผูกบัตร']" />
+                    <x-xp.download block :href="route('smschecker.download')" :coming-soon="$csDownload" th="ดาวน์โหลดแอป" en="Download" />
+                </div>
+
+                @foreach($plans as $term => $plan)
+                    @continue(! isset($pricing[$term]))
+                    @php($featured = $term === 'yearly')
+                    <div class="{{ $featured ? 'xp-featured' : 'xp-card' }}">
+                        <div class="p-7 flex flex-col h-full">
+                            @if($featured)
+                                <div class="absolute -top-3 left-1/2 -translate-x-1/2"><x-xp.badge tier="pro" label="คุ้มที่สุด · BEST VALUE" class="shadow-lg" /></div>
+                            @endif
+                            <div class="flex items-center justify-between mb-1">
+                                <h3 class="text-2xl font-black text-white">{{ $pricing[$term]['name_th'] }}</h3>
+                                <x-xp.badge tier="pro" :label="strtoupper($pricing[$term]['name'])" />
+                            </div>
+                            <p class="text-amber-100/80 text-sm mb-6">{{ $plan['note'] }}</p>
+                            <div class="mb-6 flex items-baseline gap-2">
+                                <span class="text-5xl font-black text-white">฿{{ number_format($pricing[$term]['price']) }}</span>
+                                <span class="text-gray-300">{{ $plan['unit'] }}</span>
+                            </div>
+                            <x-tpix-price variant="detail" :thb="$pricing[$term]['price']" class="-mt-4 mb-6" />
+                            <x-xp.ticks pro class="!space-y-2.5 text-sm mb-8 flex-1" :items="['ทุกฟีเจอร์ในแอป', 'ใช้ได้ ' . $plan['devices'] . ' เครื่อง', 'อายุ License: ' . $plan['days']]" />
+                            @if($csBuy)
+                                <span class="xp-btn-ghost xp-btn-off block w-full py-3.5 text-center rounded-xl font-extrabold" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดขาย</span>
+                            @else
+                                {{-- หน้าราคาของแอปเอง: เก็บ machine_id ที่แอปส่งมา แล้วไป checkout ของแผนนั้น --}}
+                                <a href="{{ route('smschecker.pricing') }}" class="{{ $featured ? 'xp-btn-pro' : 'xp-btn-ghost' }} block w-full py-3.5 text-center rounded-xl font-extrabold transition">
+                                    ซื้อ{{ $pricing[$term]['name_th'] }} — ฿{{ number_format($pricing[$term]['price']) }}
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
             </div>
 
-            <div class="grid md:grid-cols-3 gap-8">
-                {{-- Use Case 1 --}}
-                <div class="bg-gradient-to-br from-gray-800/60 to-gray-800/30 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50">
-                    <div class="w-12 h-12 bg-violet-500/20 rounded-xl flex items-center justify-center mb-6">
-                        <svg class="w-6 h-6 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-3">ตรวจสอบการชำระเงิน</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed">ลูกค้าโอนเงินมา SMS เข้า ระบบตรวจจับทันที แยกยอดเงิน ชื่อ เลขอ้างอิง จับคู่กับออเดอร์อัตโนมัติ</p>
-                </div>
-
-                {{-- Use Case 2 --}}
-                <div class="bg-gradient-to-br from-gray-800/60 to-gray-800/30 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50">
-                    <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mb-6">
-                        <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-3">ร้านค้าออนไลน์</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed">เจ้าของร้านออนไลน์ที่ต้องตรวจสอบสลิปการโอนเงินทุกวัน SmsChecker ช่วยตรวจจับอัตโนมัติ ลดข้อผิดพลาด</p>
-                </div>
-
-                {{-- Use Case 3 --}}
-                <div class="bg-gradient-to-br from-gray-800/60 to-gray-800/30 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50">
-                    <div class="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center mb-6">
-                        <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-3">ระบบอนุมัติออเดอร์</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed">ตรวจสอบยอดชำระจาก SMS ธนาคารอัตโนมัติ อนุมัติออเดอร์ได้ทันทีจากแอพ ลดเวลาตรวจสอบ</p>
-                </div>
-            </div>
+            <p class="text-center text-xs text-gray-500 mt-8">จ่ายได้ทั้ง PromptPay โอนผ่านธนาคาร หรือ Wallet ของเว็บ (จ่ายด้วย Wallet ลดเพิ่ม {{ $walletDiscount }}% และได้คีย์ทันที) · ต้องเข้าสู่ระบบก่อนชำระเงิน · ได้ License key ในหน้าบัญชีของฉัน แล้วใส่ในแอปได้เลย</p>
         </div>
     </section>
 
-    {{-- ============================================================ --}}
-    {{-- PRICING PREVIEW --}}
-    {{-- ============================================================ --}}
-    <section class="py-20 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-5xl mx-auto">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">แพ็กเกจ</h2>
-                <p class="text-gray-400">เริ่มทดลองฟรี 24 ชั่วโมง จากนั้นเลือกแพ็กเกจที่เหมาะกับคุณ</p>
-            </div>
+    <x-xp.setup
+        :specs="[
+            ['มือถือ Android 8.0 ขึ้นไป', 'เครื่องที่ใส่ซิมเบอร์ที่ผูกกับบัญชีรับเงินของร้าน หรือเครื่องที่ลงแอปธนาคารของบัญชีนั้น', 'Android 8.0+ on the phone that gets the bank alerts'],
+            ['สิทธิ์ในเครื่อง', 'อ่าน SMS · อ่านการแจ้งเตือน (สำหรับแอปธนาคาร) · กล้อง (สแกน QR) · ไม่จำกัดแบตให้แอป', 'SMS, notification access, camera, no battery limits'],
+            ['เว็บร้านที่รองรับ', 'เว็บต้องติดตั้งตัวเชื่อม SmsChecker ฝั่งเซิร์ฟเวอร์ ที่มีหน้าแอดมินออก QR ให้สแกน และต้องเป็น HTTPS', 'A site running the SmsChecker server side, over HTTPS'],
+            ['อินเทอร์เน็ต', 'ใช้ส่งยอดให้เว็บ รับบิลใหม่ และตรวจ License · เน็ตหลุดรายการจะรอในคิวแล้วส่งให้ทีหลัง', 'Online to sync and check the licence'],
+        ]"
+        :steps="[
+            ['ดาวน์โหลด APK แล้วติดตั้ง', 'ไฟล์มาจาก xman4289.com โดยตรง ใช้ไฟล์เดียวกันทั้งทดลองและใช้จริง', 'Download and install the APK'],
+            ['เปิดแอป ให้สิทธิ์ แล้วเริ่มทดลอง', 'ให้สิทธิ์อ่าน SMS และการแจ้งเตือน แอปเริ่มทดลองฟรี 24 ชั่วโมงให้เอง', 'Grant permissions; the 24-hour trial starts'],
+            ['สแกน QR จากหน้าแอดมินของเว็บ', 'แอปตั้งค่าเว็บให้เอง แล้วเริ่มส่งยอดเงินเข้าให้เว็บจับคู่บิลทันที', 'Scan your site\'s QR and you are live'],
+        ]" />
+    @unless($csDownload)
+        <p class="text-center -mt-10 mb-6 relative">
+            <a href="{{ route('smschecker.download') }}" class="xp-link text-sm font-semibold">อ่านคู่มือติดตั้งแบบละเอียด →</a>
+        </p>
+    @endunless
 
-            <div class="grid md:grid-cols-3 gap-6">
-                {{-- Monthly --}}
-                <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-700 hover:border-blue-500/50 transition-all text-center">
-                    <h3 class="text-lg font-bold text-white mb-2">{{ $pricing['monthly']['name_th'] }}</h3>
-                    <div class="text-4xl font-black text-white mb-1">
-                        <span class="text-lg font-normal text-gray-400">฿</span>{{ number_format($pricing['monthly']['price']) }}
-                    </div>
-                    <x-tpix-price variant="detail" :thb="$pricing['monthly']['price'] ?? null" class="-mt-1 mb-2" />
-                    <p class="text-gray-500 text-sm mb-6">{{ $pricing['monthly']['duration_days'] }} วัน</p>
-                    <ul class="space-y-2 mb-8 text-sm text-left">
-                        @foreach($pricing['monthly']['features'] as $feature)
-                        <li class="flex items-center text-gray-300">
-                            <svg class="w-4 h-4 mr-2 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                            {{ $feature }}
-                        </li>
-                        @endforeach
-                    </ul>
-                    <a href="{{ route('smschecker.pricing') }}" class="block w-full text-center py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors">
-                        เลือกแพ็กเกจนี้
-                    </a>
-                </div>
+    <x-xp.faq :items="[
+        ['SmsChecker คืออะไร?', 'แอป Android ที่อ่าน SMS และการแจ้งเตือนจากแอปธนาคารบนมือถือที่รับเงินของร้าน แล้วส่งยอดเงินเข้าให้เว็บร้านจับคู่กับบิลที่รอชำระ อนุมัติออเดอร์อัตโนมัติหรือให้คุณกดอนุมัติเองในแอป'],
+        ['รองรับธนาคารไหนบ้าง?', 'SMS และแอปของกสิกรไทย ไทยพาณิชย์ กรุงไทย กรุงเทพ ออมสิน กรุงศรีอยุธยา ทีทีบี ซีไอเอ็มบีไทย เกียรตินาคินภัทร แลนด์ แอนด์ เฮ้าส์ ทิสโก้ ยูโอบี ไอซีบีซี (ไทย) ธ.ก.ส. และพร้อมเพย์ รวมถึงการแจ้งเตือนจากเป๋าตัง ถุงเงิน และ LINE Pay · ผู้ส่ง SMS ที่แอปไม่รู้จัก กำหนดเองได้ว่าเป็นธนาคารไหน'],
+        ['ต้อง Root เครื่องไหม?', 'ไม่ต้อง แอปใช้สิทธิ์อ่าน SMS และสิทธิ์อ่านการแจ้งเตือนมาตรฐานของ Android'],
+        ['ทดลองฟรีได้นานแค่ไหน?', 'ทดลองได้ทุกฟีเจอร์ 24 ชั่วโมง ครั้งเดียวต่อเครื่อง เริ่มเองตอนเปิดแอปครั้งแรก ไม่ต้องสมัครหรือผูกบัตร หมดเวลาแล้วแอปขอ License ก่อนใช้งานต่อ'],
+        ['ราคาเท่าไร ใช้ได้กี่เครื่อง?', collect($pricing)->map(fn ($p) => $p['name_th'] . ' ฿' . number_format($p['price']))->implode(' · ') . ' — แผนรายเดือนและรายปีใช้ได้ 1 เครื่อง แผนตลอดชีพใช้ได้สูงสุด 3 เครื่อง'],
+        ['ชำระเงินอย่างไร?', 'PromptPay (สแกน QR) โอนผ่านธนาคาร หรือ Wallet บนเว็บ จ่ายด้วย Wallet ลดเพิ่ม ' . $walletDiscount . '% และได้คีย์ทันที ส่วนการโอนรอแอดมินตรวจยอดก่อนออกคีย์'],
+        ['ใช้กับเว็บของฉันได้ไหม?', 'ได้ถ้าเว็บติดตั้งตัวเชื่อม SmsChecker ฝั่งเซิร์ฟเวอร์ (มีหน้าแอดมินที่ออก QR ให้แอปสแกน และเว็บเป็น HTTPS) ถ้ายังไม่มี ทักทีมงานให้ช่วยประเมินได้จากหน้าขอใบเสนอราคา'],
+        ['ข้อมูลยอดเงินไปที่ไหน?', 'แอปส่งรายการไปเฉพาะเว็บที่คุณสแกน QR เพิ่มไว้ เข้ารหัสด้วย AES-256-GCM และเซ็นด้วย HMAC-SHA256 ทุกครั้ง ส่วนการติดต่อ xman4289.com มีไว้ตรวจ License และเช็กอัปเดตแอป'],
+    ]" />
 
-                {{-- Yearly (Recommended) --}}
-                <div class="relative bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border-2 border-violet-500 hover:border-violet-400 transition-all text-center">
-                    <div class="absolute -top-3 left-1/2 -translate-x-1/2">
-                        <span class="bg-gradient-to-r from-violet-500 to-purple-500 text-white text-xs font-bold px-4 py-1 rounded-full shadow-lg">แนะนำ</span>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">{{ $pricing['yearly']['name_th'] }}</h3>
-                    <div class="text-4xl font-black text-violet-400 mb-1">
-                        <span class="text-lg font-normal text-gray-400">฿</span>{{ number_format($pricing['yearly']['price']) }}
-                    </div>
-                    <x-tpix-price variant="detail" :thb="$pricing['yearly']['price'] ?? null" class="-mt-1 mb-2" />
-                    <p class="text-gray-500 text-sm mb-1">{{ $pricing['yearly']['duration_days'] }} วัน</p>
-                    <span class="inline-block text-xs font-bold text-green-400 bg-green-400/10 px-3 py-1 rounded-full mb-6">ประหยัด {{ \App\Support\LicensePlans::yearlySaving('smschecker') }}%</span>
-                    <ul class="space-y-2 mb-8 text-sm text-left">
-                        @foreach($pricing['yearly']['features'] as $feature)
-                        <li class="flex items-center text-gray-300">
-                            <svg class="w-4 h-4 mr-2 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                            {{ $feature }}
-                        </li>
-                        @endforeach
-                    </ul>
-                    <a href="{{ route('smschecker.pricing') }}" class="block w-full text-center py-3 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-semibold rounded-xl transition-all shadow-lg shadow-violet-500/25">
-                        เลือกแพ็กเกจนี้
-                    </a>
-                </div>
+    {{-- =========================== FINAL CTA =========================== --}}
+    <x-xp.cta :art="$shot('art-hero.webp')" title="เลิกนั่งเช็กสลิป" glow="ให้ SMS ทำงานแทน"
+              :sub="'ดาวน์โหลดแล้วลองฟรี 24 ชั่วโมง ถูกใจค่อยซื้อ License' . ($fromPrice ? ' เริ่มเพียง ฿' . $fromPrice . ($monthly ? ' ต่อเดือน' : '') : '')"
+              en="Stop checking slips by hand.">
+        <x-xp.download :href="route('smschecker.download')" :coming-soon="$csDownload" class="!px-8" th="ดาวน์โหลดแอป" en="Free 24-hour trial" />
+        @unless($csBuy)
+            <a href="{{ route('smschecker.pricing') }}" class="xp-btn-pro inline-flex items-center px-8 py-4 rounded-xl font-extrabold text-lg transition">ดูราคาแพ็กเกจ</a>
+        @endunless
+        <a href="{{ route('quote.index') }}" class="xp-btn-ghost inline-flex items-center px-6 py-4 rounded-xl font-semibold transition">ให้ทีมงานช่วยเชื่อมเว็บ</a>
+        <x-slot:footnote>
+            <p class="text-gray-500 text-sm mt-7">
+                Android 8.0+ · ไม่ต้อง Root · ทดลองฟรี 24 ชม.
+                @if($version) · เวอร์ชันล่าสุด v{{ $version->version }}@endif
+            </p>
+        </x-slot:footnote>
+    </x-xp.cta>
 
-                {{-- Lifetime --}}
-                <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-700 hover:border-emerald-500/50 transition-all text-center">
-                    <h3 class="text-lg font-bold text-white mb-2">{{ $pricing['lifetime']['name_th'] }}</h3>
-                    <div class="text-4xl font-black text-emerald-400 mb-1">
-                        <span class="text-lg font-normal text-gray-400">฿</span>{{ number_format($pricing['lifetime']['price']) }}
-                    </div>
-                    <x-tpix-price variant="detail" :thb="$pricing['lifetime']['price'] ?? null" class="-mt-1 mb-2" />
-                    <p class="text-yellow-400 text-sm mb-6">ไม่มีวันหมดอายุ</p>
-                    <ul class="space-y-2 mb-8 text-sm text-left">
-                        @foreach($pricing['lifetime']['features'] as $feature)
-                        <li class="flex items-center text-gray-300">
-                            <svg class="w-4 h-4 mr-2 text-yellow-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                            {{ $feature }}
-                        </li>
-                        @endforeach
-                    </ul>
-                    <a href="{{ route('smschecker.pricing') }}" class="block w-full text-center py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-colors">
-                        เลือกแพ็กเกจนี้
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
+</x-xp.page>
 
-    {{-- ============================================================ --}}
-    {{-- FAQ --}}
-    {{-- ============================================================ --}}
-    <section class="py-20 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-3xl mx-auto">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">คำถามที่พบบ่อย</h2>
-            </div>
-
-            <div class="space-y-4" x-data="{ openFaq: null }">
-                {{-- FAQ 1 --}}
-                <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden">
-                    <button @click="openFaq = openFaq === 1 ? null : 1" class="w-full flex items-center justify-between p-6 text-left">
-                        <span class="font-semibold text-white">SmsChecker คืออะไร?</span>
-                        <svg class="w-5 h-5 text-gray-400 transition-transform" :class="{ 'rotate-180': openFaq === 1 }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                    </button>
-                    <div x-show="openFaq === 1" x-collapse class="px-6 pb-6">
-                        <p class="text-gray-400 text-sm leading-relaxed">SmsChecker เป็นแอพ Android ที่ตรวจจับ SMS การชำระเงินจากธนาคารไทย 14+ ธนาคาร แยกยอด ชื่อผู้โอน เลขอ้างอิงอัตโนมัติ เหมาะสำหรับร้านค้าออนไลน์ที่ต้องตรวจสอบการชำระเงิน</p>
-                    </div>
-                </div>
-
-                {{-- FAQ 2 --}}
-                <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden">
-                    <button @click="openFaq = openFaq === 2 ? null : 2" class="w-full flex items-center justify-between p-6 text-left">
-                        <span class="font-semibold text-white">ต้อง Root เครื่องไหม?</span>
-                        <svg class="w-5 h-5 text-gray-400 transition-transform" :class="{ 'rotate-180': openFaq === 2 }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                    </button>
-                    <div x-show="openFaq === 2" x-collapse class="px-6 pb-6">
-                        <p class="text-gray-400 text-sm leading-relaxed">ไม่ต้อง Root เครื่อง SmsChecker ใช้สิทธิ์ RECEIVE_SMS มาตรฐานของ Android แค่ให้สิทธิ์รับ SMS ก็พร้อมใช้งานได้เลย</p>
-                    </div>
-                </div>
-
-                {{-- FAQ 3 --}}
-                <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden">
-                    <button @click="openFaq = openFaq === 3 ? null : 3" class="w-full flex items-center justify-between p-6 text-left">
-                        <span class="font-semibold text-white">ใช้ได้กี่เครื่อง?</span>
-                        <svg class="w-5 h-5 text-gray-400 transition-transform" :class="{ 'rotate-180': openFaq === 3 }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                    </button>
-                    <div x-show="openFaq === 3" x-collapse class="px-6 pb-6">
-                        <p class="text-gray-400 text-sm leading-relaxed">แพ็กเกจรายเดือนและรายปีใช้ได้ 1 เครื่อง แพ็กเกจตลอดชีพสามารถใช้ได้สูงสุด 3 เครื่องพร้อมกัน</p>
-                    </div>
-                </div>
-
-                {{-- FAQ 4 --}}
-                <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden">
-                    <button @click="openFaq = openFaq === 4 ? null : 4" class="w-full flex items-center justify-between p-6 text-left">
-                        <span class="font-semibold text-white">ชำระเงินอย่างไร?</span>
-                        <svg class="w-5 h-5 text-gray-400 transition-transform" :class="{ 'rotate-180': openFaq === 4 }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                    </button>
-                    <div x-show="openFaq === 4" x-collapse class="px-6 pb-6">
-                        <p class="text-gray-400 text-sm leading-relaxed">รองรับ PromptPay (สแกน QR Code), โอนเงินผ่านธนาคาร, และชำระผ่าน Wallet บนเว็บไซต์ ชำระผ่าน Wallet จะได้รับส่วนลดเพิ่ม 10%</p>
-                    </div>
-                </div>
-
-                {{-- FAQ 5 --}}
-                <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden">
-                    <button @click="openFaq = openFaq === 5 ? null : 5" class="w-full flex items-center justify-between p-6 text-left">
-                        <span class="font-semibold text-white">ข้อมูลของฉันปลอดภัยไหม?</span>
-                        <svg class="w-5 h-5 text-gray-400 transition-transform" :class="{ 'rotate-180': openFaq === 5 }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                    </button>
-                    <div x-show="openFaq === 5" x-collapse class="px-6 pb-6">
-                        <p class="text-gray-400 text-sm leading-relaxed">ข้อมูลทั้งหมดถูกเข้ารหัสและเก็บไว้อย่างปลอดภัย ข้อมูลที่ซิงค์ผ่านคลาวด์เป็นข้อมูลเฉพาะของคุณเท่านั้น ไม่มีใครอื่นสามารถเข้าถึงได้</p>
-                    </div>
-                </div>
-
-                {{-- FAQ 6 --}}
-                <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden">
-                    <button @click="openFaq = openFaq === 6 ? null : 6" class="w-full flex items-center justify-between p-6 text-left">
-                        <span class="font-semibold text-white">ทดลองใช้ฟรีได้ไหม?</span>
-                        <svg class="w-5 h-5 text-gray-400 transition-transform" :class="{ 'rotate-180': openFaq === 6 }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                    </button>
-                    <div x-show="openFaq === 6" x-collapse class="px-6 pb-6">
-                        <p class="text-gray-400 text-sm leading-relaxed">ได้ครับ ทุกคนสามารถทดลองใช้ SmsChecker ฟรี 24 ชั่วโมงเต็มโดยไม่ต้องผูกบัตรเครดิต ดาวน์โหลดแอพแล้วใช้งานได้ทันที</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    {{-- ============================================================ --}}
-    {{-- FINAL CTA --}}
-    {{-- ============================================================ --}}
-    <section class="py-24 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-4xl mx-auto text-center">
-            <div class="bg-gradient-to-r from-violet-600/20 to-purple-600/20 backdrop-blur-sm rounded-3xl p-12 border border-violet-500/30">
-                <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">พร้อมใช้ SmsChecker แล้วหรือยัง?</h2>
-                <p class="text-gray-300 mb-8 max-w-xl mx-auto">ดาวน์โหลดฟรี ทดลองใช้ 24 ชั่วโมง ไม่ต้องผูกบัตร ไม่ต้อง Root เครื่อง</p>
-                <div class="flex flex-col sm:flex-row justify-center gap-4">
-                    @if($csDownload)
-                        <span class="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-violet-500/25 text-lg" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
-                    @else
-                    <a href="{{ route('smschecker.download') }}"
-                       class="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-violet-500/25 text-lg">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                        ดาวน์โหลดแอพ
-                    </a>
-                    @endif
-                    <a href="{{ route('smschecker.pricing') }}"
-                       class="inline-flex items-center justify-center px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-all backdrop-blur-sm border border-white/20 text-lg">
-                        ดูราคาแพ็กเกจ
-                    </a>
-                </div>
-
-                @if($version)
-                <p class="text-gray-500 text-sm mt-6">
-                    เวอร์ชั่นล่าสุด: v{{ $version->version }}
-                    @if($version->release_date)
-                        ({{ $version->release_date->format('d/m/Y') }})
-                    @endif
-                </p>
-                @endif
-            </div>
-        </div>
-    </section>
-
-</div>
+<script type="application/ld+json">{!! json_encode($ld, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) !!}</script>
 @endsection

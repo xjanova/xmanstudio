@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    /* Views/SettingsView.xaml: pairing with XMAN Studio, WEEKLY SCHEDULE, POWER TARIFF, start-up and notifications */
+    .grid { display: grid; grid-template-columns: 1fr 380px; gap: 14px; flex: 1; }
+    .col { display: flex; flex-direction: column; gap: 14px; }
+    .note { font-size: 12px; color: #6b737d; line-height: 1.55; margin-top: 8px; }
+    .code { display: flex; gap: 10px; margin-top: 10px; }
+    .code .in { flex: 1; height: 40px; border-radius: 6px; border: 1px solid #8a929b; background: #fff; display: flex; align-items: center; padding: 0 14px; font-size: 20px; letter-spacing: .3em; }
+    .sched { display: grid; grid-template-columns: 44px repeat(24, 1fr); gap: 3px; margin-top: 10px; font-size: 11px; }
+    .sched span { text-align: right; padding-right: 6px; color: #4e565f; font-weight: bold; line-height: 26px; }
+    .sched i { height: 26px; border-radius: 3px; border: 1px solid #8d6f18; background: linear-gradient(#f4e2ab, #c0952c); }
+    .sched i.b { border-color: #4f86c6; background: linear-gradient(#cfe4ff, #7ba3cf); }
+    .sched i.n { border-color: #9aa3ad; background: linear-gradient(#eef1f5, #c6ccd4); }
+    .hrs { display: grid; grid-template-columns: 44px repeat(4, 1fr); font-size: 11px; color: #6b737d; margin-top: 4px; }
+    .kv { display: grid; grid-template-columns: 1fr auto; row-gap: 10px; font-size: 13px; align-items: center; }
+    .row { display: flex; align-items: center; gap: 12px; }
+    .row > div { flex: 1; }
+</style></head>
+<body data-on="settings">
+<main class="content">
+    <div class="grid">
+        <div class="col">
+            <section class="chrome">
+                <div class="lbl">ลงทะเบียนเครื่องกับ XMAN Studio</div>
+                <p style="font-size:13px">เข้าเว็บ XMAN Studio → เครื่องของฉัน → กดขอรหัสจับคู่ แล้วพิมพ์รหัส 8 ตัวที่ได้ลงในช่องนี้</p>
+                <div class="code"><div class="in mono">K7Q4-M2XP</div><span class="btn gold" style="height:40px">ลงทะเบียน</span><span class="btn" style="height:40px">เปิดหน้าเครื่องของฉัน</span></div>
+            </section>
+            <section class="chrome" style="flex:1">
+                <div class="lbl">Weekly schedule</div>
+                <div class="sched" id="sched"></div>
+                <div class="hrs"><b></b><span>00</span><span>06</span><span>12</span><span>18</span></div>
+                <p class="note">ช่องทองคือชั่วโมงที่แชร์ ช่องฟ้าคือแชร์ในช่วงไฟถูก ช่องเทาคือเวลาของคุณ — คลิกเพื่อสลับ</p>
+                <div style="display:flex;gap:18px;margin-top:8px;font-size:12px">
+                    <span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:linear-gradient(#f4e2ab,#c0952c);vertical-align:-1px"></i> sharing</span>
+                    <span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:linear-gradient(#cfe4ff,#7ba3cf);vertical-align:-1px"></i> cheap power window</span>
+                    <span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:linear-gradient(#eef1f5,#c6ccd4);vertical-align:-1px"></i> my time</span>
+                </div>
+            </section>
+        </div>
+        <div class="col">
+            <section class="chrome">
+                <div class="lbl">Node</div>
+                <div class="kv">
+                    <span class="muted">node id</span><span class="mono">gxm-7f3a2c91d0e4</span>
+                    <span class="muted">machine</span><span class="mono">DESKTOP-EXAMPLE</span>
+                    <span class="muted">relay</span><span class="mono">relay.example.com</span>
+                    <span class="muted">client</span><span class="mono">v0.1.18</span>
+                    <span class="muted">sharing</span><span class="mono green" style="color:#2f8a2b">ลงทะเบียนแล้ว</span>
+                </div>
+            </section>
+            <section class="chrome">
+                <div class="lbl">Power tariff</div>
+                <div class="kv">
+                    <span>Rate per kWh</span><span class="mono">฿ 4.20</span>
+                    <span>Off-peak rate</span><span class="mono">฿ 2.60</span>
+                    <span>Off-peak window</span><span class="mono">22 – 08</span>
+                </div>
+                <p class="note">ใช้คำนวณค่าไฟในหน้า Power — ค่าไฟจริงของคุณดูได้จากบิล</p>
+            </section>
+            <section class="chrome" style="flex:1;display:grid;gap:12px;align-content:start">
+                <div class="row"><div><b>Start with Windows</b><p class="note" style="margin-top:2px">เปิดพร้อม Windows แล้วแชร์ต่อจากที่ค้างไว้ (เขียนคีย์ Run ของผู้ใช้ปัจจุบัน)</p></div><i class="tog"></i></div>
+                <div class="row"><div><b>Payout &amp; warning notifications</b><p class="note" style="margin-top:2px">ยอดตัดเข้ากระเป๋า โหนดหลุด อุณหภูมิถึงเพดาน</p></div><i class="tog"></i></div>
+                <div class="row"><div><b>ไม่ประสงค์ออกนามในทำเนียบผู้บริจาค</b><p class="note" style="margin-top:2px">ยอดแชร์ฟรีของคุณจะแสดงเป็น 'ผู้ไม่ประสงค์ออกนาม'</p></div><i class="tog off"></i></div>
+            </section>
+        </div>
+    </div>
+</main>
+<script>
+    // NodeSettings.DefaultSchedule: everything but 18–21 every day and 10–17 at the weekend; 22–08 is the cheap-power window
+    var days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'], html = '';
+    days.forEach(function (d, day) {
+        html += '<span>' + d + '</span>';
+        for (var h = 0; h < 24; h++) {
+            var off = (h >= 18 && h <= 21) || (day >= 5 && h >= 10 && h <= 17);
+            html += '<i class="' + (off ? 'n' : (h >= 22 || h < 8 ? 'b' : '')) + '"></i>';
+        }
+    });
+    document.getElementById('sched').innerHTML = html;
+</script>
+<script src="chrome.js"></script>
+</body></html>

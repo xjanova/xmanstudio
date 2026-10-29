@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .content { padding: 14px 16px 0; overflow: hidden; }
+    .hero { border-radius: 10px; background: linear-gradient(90deg, rgba(0, 212, 255, .12), rgba(123, 44, 191, .14)); border: 1px solid #1E3A5F; padding: 12px 18px; margin-bottom: 10px; }
+    .hero .t { display: flex; align-items: center; gap: 10px; }
+    .hero .t span { font-size: 26px; }
+    .hero h2 { font-size: 19px; }
+    .hero p { font-size: 12px; }
+    .bar1 { display: flex; gap: 8px; margin-top: 10px; }
+    .bar1 .field { flex: 1; height: 34px; font-size: 13px; }
+    .bar2 { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 12px; }
+    .grid { display: grid; grid-template-columns: 1fr 330px; gap: 12px; }
+    .res { border-radius: 8px; background: rgba(13, 27, 42, .6); padding: 10px 12px; }
+    .res .h { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .res .h h3 { font-size: 15px; }
+    .res .h .f { margin-left: auto; display: flex; gap: 12px; font-size: 12px; }
+    td, th { padding: 6px 10px; font-size: 12px; }
+    .ty { font-size: 10.5px; padding: 2px 8px; border-radius: 8px; font-weight: 600; }
+    .tst { background: rgba(16, 185, 129, .2); color: #34D399; } .cu { background: rgba(0, 212, 255, .16); color: #4DE8FF; } .re { background: rgba(157, 78, 221, .22); color: #C9A0F5; }
+    .side { display: grid; gap: 10px; align-content: start; }
+    .det { border-radius: 8px; background: rgba(13, 27, 42, .6); padding: 12px 14px; }
+    .det dl { display: grid; grid-template-columns: 70px 1fr; gap: 6px 8px; font-size: 12px; margin: 8px 0 12px; }
+    .det dt { color: #8892A0; }
+    .dl p { display: flex; justify-content: space-between; font-size: 11.5px; padding: 6px 8px; border-radius: 5px; background: rgba(27, 40, 56, .53); margin-top: 5px; }
+</style></head>
+<body data-on="ROM Search" data-dev="Samsung Galaxy A54 (R5EXAMPLE0001)" data-brand="Samsung" data-model="Galaxy A54" data-op="Ready" data-down="1.4 MB">
+<div class="hero">
+    <div class="t"><span>🔍</span><div><h2>Smart ROM Finder</h2><p class="mut">Search Samsung, Xiaomi, LineageOS, TWRP, and more - all in one place</p></div></div>
+    <div class="bar1"><span class="field">SM-A546E</span><span class="btn">🔍 Search</span><span class="btn dkb">Cancel</span></div>
+    <div class="bar2"><span class="mut">Quick:</span><span class="btn s dkb">Samsung</span><span class="btn s dkb">Xiaomi</span><span class="btn s dkb">OnePlus</span><span class="btn s dkb">Pixel</span><span class="btn s dkb">GApps</span></div>
+</div>
+<div class="grid">
+    <div class="res">
+        <div class="h"><h3>Search Results</h3><span class="mut">(9 results)</span>
+            <span class="f"><span><span class="chk on"></span> Stock ROM</span><span><span class="chk on"></span> Custom ROM</span><span><span class="chk on"></span> Recovery</span></span></div>
+        <table>
+            <thead><tr><th style="width:150px">Source</th><th>Name</th><th style="width:96px">Model</th><th style="width:110px">Version</th><th style="width:76px">Type</th><th style="width:84px">Action</th></tr></thead>
+            <tbody>
+                <tr class="sel"><td>📱 SamFW</td><td>Galaxy A54 5G SM-A546E</td><td>SM-A546E</td><td>A546EXXS0EXAMPLE</td><td><span class="ty tst">Stock</span></td><td>🌐 📋</td></tr>
+                <tr><td>📱 SamFW</td><td>Galaxy A54 5G SM-A546B</td><td>SM-A546B</td><td>A546BXXS0EXAMPLE</td><td><span class="ty tst">Stock</span></td><td>🌐 📋</td></tr>
+                <tr><td>📲 SamMobile</td><td>Samsung SM-A546E</td><td>SM-A546E</td><td>A546EXXU0EXAMPLE</td><td><span class="ty tst">Stock</span></td><td>🌐 📋</td></tr>
+                <tr><td>🌿 LineageOS</td><td>LineageOS for a54x</td><td>a54x</td><td>21</td><td><span class="ty cu">Custom</span></td><td>🌐 📋</td></tr>
+                <tr><td>🔵 Pixel Experience</td><td>PixelExperience a54x</td><td>a54x</td><td>14</td><td><span class="ty cu">Custom</span></td><td>🌐 📋</td></tr>
+                <tr><td>🔧 TWRP</td><td>TWRP for Galaxy A54</td><td>a54x</td><td>3.7.0</td><td><span class="ty re">Recovery</span></td><td>🌐 📋</td></tr>
+                <tr><td>💬 XDA Forums</td><td>[ROM] Galaxy A54 threads</td><td>a54x</td><td>—</td><td><span class="ty cu">Custom</span></td><td>🌐 📋</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="side">
+        <div class="det">
+            <h3>ROM Details</h3>
+            <dl><dt>Source:</dt><dd>📱 SamFW</dd><dt>Type:</dt><dd>Stock</dd><dt>Model:</dt><dd>SM-A546E</dd><dt>Version:</dt><dd>A546EXXS0EXAMPLE</dd></dl>
+            <span class="btn" style="width:100%">🌐 Open Download Page</span>
+        </div>
+        <div class="det dl">
+            <div style="display:flex;align-items:center"><h3 style="font-size:14px">📁 Downloaded ROMs</h3><span style="margin-left:auto" class="btn s dkb">📂</span><span class="btn s dkb" style="margin-left:4px">🔄</span></div>
+            <p><span>twrp-3.7.0-a54x.img</span><span class="mut">38 MB - 2 days ago</span></p>
+            <p><span>vbmeta_disabled.tar</span><span class="mut">4 KB - 2 days ago</span></p>
+        </div>
+    </div>
+</div>
+<script type="text/plain" id="log">
+[14:20:31] Refreshing device list...
+[14:20:32] Found 1 device(s)
+</script>
+<script src="chrome.js"></script>
+</body></html>

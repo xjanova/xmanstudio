@@ -1,0 +1,136 @@
+{
+  "out_dir": "images/products/localvpn/v2",
+  "screens": [
+    {
+      "name": "home",
+      "src": "D:/Code/xmanstudio/public_html/images/products/localvpn/shots/night-home.webp",
+      "width": 1424,
+      "blur": [
+        [
+          20,
+          818,
+          140,
+          48
+        ]
+      ]
+    },
+    {
+      "name": "network",
+      "src": "D:/Code/xmanstudio/public_html/images/products/localvpn/shots/night-network.webp",
+      "width": 1424,
+      "blur": [
+        [
+          20,
+          818,
+          140,
+          48
+        ]
+      ]
+    },
+    {
+      "name": "networks",
+      "src": "D:/Code/xmanstudio/public_html/images/products/localvpn/shots/sky-networks.webp",
+      "width": 1424,
+      "blur": [
+        [
+          20,
+          818,
+          140,
+          48
+        ]
+      ]
+    },
+    {
+      "name": "files",
+      "src": "D:/Code/xmanstudio/public_html/images/products/localvpn/shots/sky-files.webp",
+      "width": 1424,
+      "blur": [
+        [
+          20,
+          818,
+          140,
+          48
+        ]
+      ]
+    },
+    {
+      "name": "boost",
+      "src": "D:/Code/xmanstudio/public_html/images/products/localvpn/shots/night-boost.webp",
+      "width": 1424,
+      "blur": [
+        [
+          20,
+          818,
+          140,
+          48
+        ]
+      ]
+    },
+    {
+      "name": "tuneup",
+      "src": "D:/Code/xmanstudio/public_html/images/products/localvpn/shots/sky-boost.webp",
+      "width": 1424,
+      "blur": [
+        [
+          20,
+          818,
+          140,
+          48
+        ]
+      ]
+    },
+    {
+      "name": "vpn",
+      "src": "D:/Code/xmanstudio/public_html/images/products/localvpn/shots/sky-vpn.webp",
+      "width": 1424,
+      "crop": [
+        0,
+        0,
+        1424,
+        800
+      ]
+    },
+    {
+      "name": "phone-networks",
+      "src": "D:/Code/xmanstudio/public_html/images/products/localvpn/shots/phone.webp",
+      "width": 396,
+      "crop": [
+        812,
+        38,
+        396,
+        813
+      ]
+    },
+    {
+      "name": "phone-network",
+      "src": "D:/Code/xmanstudio/public_html/images/products/localvpn/shots/phone.webp",
+      "width": 396,
+      "crop": [
+        1218,
+        38,
+        396,
+        813
+      ]
+    },
+    {
+      "name": "art-hero",
+      "src": "D:/Code/xmanstudio-campaign-media/product-pages/localvpn/art-hero.png",
+      "width": 1536,
+      "quality": 82
+    },
+    {
+      "name": "art-2",
+      "src": "D:/Code/xmanstudio-campaign-media/product-pages/localvpn/art-2.png",
+      "width": 1536,
+      "quality": 82
+    },
+    {
+      "name": "og",
+      "ext": "jpg",
+      "w": 1200,
+      "h": 630,
+      "width": 1200,
+      "html": "../_shared/og.html?art=file%3A%2F%2F%2FD%3A%2FCode%2Fxmanstudio-campaign-media%2Fproduct-pages%2Flocalvpn%2Fart-hero.png&name=LocalVPN&glow=VPN&line=LAN+%E0%B9%80%E0%B8%AA%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%99%E0%B8%9C%E0%B9%88%E0%B8%B2%E0%B8%99%E0%B8%AD%E0%B8%B4%E0%B8%99%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%A3%E0%B9%8C%E0%B9%80%E0%B8%99%E0%B9%87%E0%B8%95%7C%E0%B9%80%E0%B8%A5%E0%B9%88%E0%B8%99%E0%B9%80%E0%B8%81%E0%B8%A1+LAN+%E0%B8%82%E0%B9%89%E0%B8%B2%E0%B8%A1%E0%B8%9A%E0%B9%89%E0%B8%B2%E0%B8%99&sub=%E0%B8%9F%E0%B8%A3%E0%B8%B5+5+%E0%B8%84%E0%B8%99%E0%B8%95%E0%B9%88%E0%B8%AD%E0%B8%A7%E0%B8%87+%C2%B7+%E0%B8%97%E0%B8%94%E0%B8%A5%E0%B8%AD%E0%B8%87+Pro+30+%E0%B8%A7%E0%B8%B1%E0%B8%99+%C2%B7+Windows+%2B+Android&c1=38d9f5&c2=60a5fa&c3=f2c75c"
+    }
+  ]
+}

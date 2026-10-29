@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .cols { display: grid; grid-template-columns: 330px 1fr 340px; height: 100%; }
+    .composer { border-right: 1px solid var(--hair); position: relative; }
+    .composer .body { padding: 0 18px; display: flex; flex-direction: column; gap: 14px; }
+    .prompt { padding: 11px 12px; line-height: 1.55; font-size: 12.5px; color: var(--t1); min-height: 104px; }
+    .prompt .tb { display: flex; gap: 6px; margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--hair); }
+    .lineage { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .lineage .thumb { aspect-ratio: 3/4; }
+    .lineage .thumb.on { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), 0 4px 16px rgba(212, 167, 106, .18); }
+    .lineage .thumb span { position: absolute; left: 0; right: 0; bottom: 0; padding: 10px 6px 4px; font-family: Cormorant; font-style: italic; font-size: 11.5px; background: linear-gradient(180deg, transparent, rgba(0, 0, 0, .85)); }
+    .engine { display: flex; align-items: center; gap: 10px; padding: 9px 11px; }
+    .engine .b { width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--line-gold); background: radial-gradient(circle at 35% 30%, rgba(240, 203, 136, .5), transparent 55%), linear-gradient(135deg, #2a1b3d, #1a1124); }
+    .cam { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
+    .cam span { height: 38px; border-radius: 7px; border: 1px solid var(--hair); display: flex; align-items: center; justify-content: center; font-family: PlexMono; font-size: 9px; color: var(--t3); background: rgba(255, 255, 255, .02); }
+    .cam span.on { color: var(--gold-hi); border-color: var(--gold); background: rgba(212, 167, 106, .1); }
+    .composer .foot { position: absolute; left: 18px; right: 18px; bottom: 16px; }
+    .stage { display: grid; grid-template-rows: 46px 1fr 168px; min-width: 0; }
+    .sbar { display: flex; align-items: center; gap: 10px; padding: 0 18px; border-bottom: 1px solid var(--hair); }
+    .crumb { color: var(--t3); font-size: 11.5px; } .crumb b { color: var(--t1); font-weight: 500; }
+    .canvas-wrap { position: relative; display: flex; align-items: center; justify-content: center; padding: 20px 24px; }
+    .canvas-wrap::before { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(212, 167, 106, .03) 1px, transparent 1px), linear-gradient(90deg, rgba(212, 167, 106, .03) 1px, transparent 1px); background-size: 32px 32px;
+        -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%); }
+    .canvas { position: relative; width: 100%; aspect-ratio: 16/9; border-radius: 8px; background: url(assets/empress-wide.jpg) center/cover;
+        box-shadow: 0 0 0 1px rgba(212, 167, 106, .18), 0 0 0 6px rgba(8, 5, 14, .5), 0 0 0 7px rgba(212, 167, 106, .08), 0 30px 80px -20px rgba(212, 167, 106, .18), 0 30px 80px -10px rgba(176, 50, 70, .12); }
+    .canvas .meta { position: absolute; left: 12px; top: 12px; display: flex; gap: 6px; }
+    .canvas .meta span { font-family: PlexMono; font-size: 9.5px; padding: 3px 7px; border-radius: 5px; background: rgba(0, 0, 0, .55); color: var(--t1); }
+    .canvas .wm { position: absolute; right: 14px; top: 12px; font-family: Cormorant; font-style: italic; font-size: 13px; color: rgba(240, 231, 212, .6); }
+    .play { position: absolute; left: 14px; right: 14px; bottom: 14px; height: 42px; border-radius: 10px; background: rgba(8, 5, 14, .7); border: 1px solid var(--hair); display: flex; align-items: center; gap: 12px; padding: 0 12px; }
+    .play .p { width: 36px; height: 28px; border-radius: 7px; background: linear-gradient(135deg, #8b6938, #f0cb88); color: #1a0d05; display: flex; align-items: center; justify-content: center; font-size: 11px; }
+    .play .slider { flex: 1; }
+    .tl { border-top: 1px solid var(--hair); background: rgba(0, 0, 0, .2); padding: 10px 18px; }
+    .track { display: grid; grid-template-columns: 70px 1fr; align-items: center; gap: 8px; margin-top: 8px; }
+    .track .rail2 { height: 32px; border-radius: 6px; background: rgba(255, 255, 255, .02); display: flex; gap: 3px; padding: 3px; position: relative; }
+    .clip { border-radius: 5px; font-size: 10px; padding: 3px 7px; color: var(--t1); overflow: hidden; white-space: nowrap; }
+    .aside { border-left: 1px solid var(--hair); }
+    .tabs { display: flex; gap: 18px; padding: 0 18px; height: 46px; align-items: center; border-bottom: 1px solid var(--hair); }
+    .tabs span { color: var(--t3); font-size: 12px; height: 46px; display: flex; align-items: center; gap: 6px; }
+    .tabs span.on { color: var(--t1); box-shadow: inset 0 -1.5px 0 var(--gold); }
+    .tabs em { font-style: normal; font-family: PlexMono; font-size: 9.5px; padding: 1px 6px; border-radius: 5px; background: rgba(212, 167, 106, .15); color: var(--gold-hi); }
+    .shots { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+    .shot { display: grid; grid-template-columns: 128px 1fr; gap: 11px; padding: 8px; border-radius: 10px; border: 1px solid var(--hair); background: rgba(255, 255, 255, .015); }
+    .shot.cur { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(212, 167, 106, .25), 0 6px 20px rgba(212, 167, 106, .12); }
+    .shot .thumb { aspect-ratio: 16/9; }
+    .shot h4 { font-weight: 500; font-size: 12.5px; margin-bottom: 3px; }
+    .shot p { font-size: 11px; color: var(--t3); line-height: 1.45; }
+    .shot .tags { display: flex; gap: 4px; margin-top: 6px; }
+    .shot .tags span { font-family: PlexMono; font-size: 8.5px; padding: 1px 5px; border-radius: 4px; border: 1px solid var(--hair); color: var(--t3); }
+    .sep { font-family: PlexMono; font-size: 9.5px; letter-spacing: .12em; color: var(--t4); display: flex; align-items: center; gap: 8px; }
+    .sep::before, .sep::after { content: ""; flex: 1; height: 1px; background: var(--hair); }
+</style></head>
+<body data-on="generate">
+<main class="work"><div class="cols">
+    <section class="composer">
+        <div class="panel-h"><h2><span class="s">✦</span>Composer</h2><small>Scene 03 · Shot 02</small></div>
+        <div class="body">
+            <div class="box gold prompt th">นางพญาในชุดไหมแดงยืนกลางห้องบัลลังก์ แสงจันทร์ลอดม่านทอง กล้องค่อย ๆ ดันเข้าหาใบหน้า บรรยากาศลึกลับ หรูหรา
+                <div class="tb"><span class="chip on">cinematic</span><span class="chip cr">silk</span><span class="chip">thai</span><span class="mut" style="margin-left:auto;font-size:13px">✦</span></div>
+            </div>
+            <div>
+                <p class="lbl">Visual lineage</p>
+                <div class="lineage">
+                    <div class="thumb on" style="background-image:url(assets/empress-portrait.jpg)"><span>Empress</span></div>
+                    <div class="thumb" style="background-image:url(assets/empress-tall-1.jpg)"><span>Lunar Veil</span></div>
+                    <div class="thumb" style="background-image:url(assets/empress-fullbody.jpg)"><span>Temple Silk</span></div>
+                    <div class="thumb" style="background-image:url(assets/empress-tall-2.jpg)"><span>Oracle</span></div>
+                </div>
+            </div>
+            <div>
+                <p class="lbl">Route</p>
+                <div class="box engine"><span class="b"></span><div><div style="font-weight:500">Kling AI · Kuaishou</div><div class="mono mut" style="font-size:9.5px">IMAGE + TEXT → VIDEO · 1080P</div></div><span class="mut" style="margin-left:auto">⌄</span></div>
+            </div>
+            <div class="box">
+                <div class="row"><span class="k">Aspect</span><span class="chip">9:16</span><span class="chip">1:1</span><span class="chip on">16:9</span><span class="chip">21:9</span></div>
+                <div class="row"><span class="k">Duration</span><div class="slider" style="width:110px"><b style="width:55%"></b></div><span class="v">5.0s</span></div>
+                <div class="row"><span class="k">Motion</span><div class="slider" style="width:110px"><b style="width:70%"></b></div><span class="v">0.7</span></div>
+                <div class="row"><span class="k">Seed</span><span class="mono g" style="font-size:10.5px">2814 · 9217</span><span class="v">⚂</span></div>
+                <div class="row"><span class="k">HD Upscale 4K</span><span class="tog" style="margin-left:auto"></span></div>
+                <div class="row"><span class="k">Native audio</span><span class="tog off" style="margin-left:auto"></span></div>
+            </div>
+            <div>
+                <p class="lbl">Camera language</p>
+                <div class="cam"><span>LOCKED</span><span>PAN</span><span>TILT</span><span class="on">PUSH</span><span>ORBIT</span><span>DOLLY</span></div>
+            </div>
+        </div>
+        <div class="foot"><div class="cta">✦ Summon Scene</div></div>
+    </section>
+
+    <section class="stage">
+        <div class="sbar">
+            <span class="crumb">Projects › The Empress › <b>Sequence 02 · Lotus Ascent</b></span>
+            <span class="pill"><i></i>Generating · 14s</span>
+            <span style="margin-left:auto" class="btn out">Export</span><span class="btn gold">✦ Render film</span>
+        </div>
+        <div class="canvas-wrap">
+            <div class="canvas">
+                <div class="meta"><span>SHOT 03·02</span><span>00:00:03:12</span><span>16:9 · 1080p</span><span>SEED 2814</span></div>
+                <div class="wm">✦ Chanthra preview</div>
+                <div class="play"><span class="p">▶</span><div class="slider"><b style="width:38%"></b></div><span class="mono mut" style="font-size:10px">00:03 / 00:08</span></div>
+            </div>
+        </div>
+        <div class="tl">
+            <div style="display:flex;align-items:center;gap:10px"><span class="lbl" style="margin:0">Timeline · 24 fps · 1080p</span><span class="mono mut" style="margin-left:auto;font-size:9.5px">00:00 &nbsp; 00:05 &nbsp; 00:10 &nbsp; 00:15 &nbsp; 00:20</span></div>
+            <div class="track"><span class="lbl" style="margin:0">Video</span><div class="rail2">
+                <span class="clip" style="width:24%;background:linear-gradient(180deg,#b03346,#6e1f2c)">Throne reveal</span>
+                <span class="clip" style="width:22%;background:linear-gradient(180deg,#4a2e6a,#2a1b3d)">Veil drop</span>
+                <span class="clip" style="width:28%;background:linear-gradient(180deg,#d4a76a,#8b6938);color:#1a0d05">Lotus ascent</span>
+                <span class="clip" style="width:22%;background:linear-gradient(180deg,#3a2654,#1d1530)">Halo close</span>
+            </div></div>
+            <div class="track"><span class="lbl" style="margin:0">Score</span><div class="rail2"><span class="clip" style="width:100%;background:linear-gradient(90deg,rgba(108,94,133,.35),rgba(108,94,133,.15));color:var(--moon)">♪ moonrise_theme.wav</span></div></div>
+            <div class="track"><span class="lbl" style="margin:0">Caption</span><div class="rail2"><span class="clip th" style="width:20%;margin-left:6%;background:rgba(108,94,133,.25);color:var(--moon)">จันทรา</span><span class="clip" style="width:24%;margin-left:30%;background:rgba(108,94,133,.25);color:var(--moon)">the moon rises</span></div></div>
+        </div>
+    </section>
+
+    <section class="aside">
+        <div class="tabs"><span class="on">Storyboard <em>4</em></span><span>Queue <em>2</em></span><span class="mut" style="margin-left:auto;font-size:11px">⏹ Cancel all</span></div>
+        <div class="shots">
+            <div class="sep">SEQUENCE 02 · LOTUS ASCENT</div>
+            <div class="shot"><div class="thumb" style="background-image:url(assets/empress-portrait.jpg)"><span class="tc">SHOT 01</span><span class="st"></span><span class="du">5.0s</span></div>
+                <div><h4>Throne reveal</h4><p>slow push toward the throne, candles flicker</p><div class="tags"><span>CINE</span><span>WIDE</span></div></div></div>
+            <div class="shot cur"><div class="thumb" style="background-image:url(assets/empress-wide.jpg)"><span class="tc">SHOT 02</span><span class="st gen"></span><span class="du">5.0s</span><span class="pr" style="width:62%"></span></div>
+                <div><h4>Lotus ascent</h4><p>moonlight through gold curtains, push-in on the face</p><div class="tags"><span>CINE</span><span>NIGHT</span></div></div></div>
+            <div class="shot"><div class="thumb" style="background-image:url(assets/empress-tall-1.jpg);background-position:center 30%"><span class="tc">SHOT 03</span><span class="st q"></span><span class="du">4.0s</span></div>
+                <div><h4>Veil drop</h4><p>silk veil falls in slow motion</p><div class="tags"><span>CLOSE</span><span>SLOW</span></div></div></div>
+            <div class="shot"><div class="thumb" style="background-image:url(assets/empress-tall-2.jpg);background-position:center 25%"><span class="tc">SHOT 04</span><span class="st q"></span><span class="du">5.0s</span></div>
+                <div><h4>Halo close</h4><p>gold halo flares, fade to black</p><div class="tags"><span>CLOSE</span><span>GOLD</span></div></div></div>
+        </div>
+    </section>
+</div></main>
+<script src="chrome.js"></script>
+</body></html>

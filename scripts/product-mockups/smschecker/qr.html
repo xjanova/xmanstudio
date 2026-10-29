@@ -1,0 +1,67 @@
+<!doctype html>
+<!-- SmsChecker เชื่อมต่ออุปกรณ์ (ui/qrscanner/QrScannerScreen.kt, "design 05"): the immersive dark-navy radial,
+     the logo coin, the 230dp scanner viewport, the "การเชื่อมต่อที่เข้ารหัส" glass card
+     (เซิร์ฟเวอร์ / การเข้ารหัส AES-256-GCM / ลายเซ็น HMAC-SHA256) and the two gloss buttons.
+     The QR in the viewport is a drawn pattern, not a real code. -->
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .phone { background: radial-gradient(120% 80% at 50% 0%, #2a3a63, #16223f 60%, #06090e 100%); color: #fff; }
+    .phone::before { display: none; }
+    .back { position: absolute; left: 14px; top: 38px; width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, .14); border: 1px solid rgba(255, 255, 255, .3); }
+    .back svg { width: 18px; height: 18px; }
+    .wrap { display: flex; flex-direction: column; align-items: center; padding: 34px 22px 0; }
+    .wrap .logo { width: 62px; height: 62px; font-size: 24px; box-shadow: 0 8px 22px -4px rgba(26, 138, 60, .8); }
+    h1 { margin-top: 12px; font-size: 21px; font-weight: 800; }
+    .sub { margin-top: 2px; font-size: 13px; color: rgba(255, 255, 255, .8); }
+    .vp { position: relative; margin-top: 18px; width: 230px; height: 230px; border-radius: 30px; background: linear-gradient(180deg, #35404f, #232b36); box-shadow: 0 16px 32px rgba(0, 0, 0, .55); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .vp .qr { width: 132px; height: 132px; background: #fff; border-radius: 10px; padding: 9px; display: grid; grid-template-columns: repeat(11, 1fr); gap: 0; }
+    .vp .qr i { background: #16223f; }
+    .vp .qr i.o { background: transparent; }
+    .vp .c { position: absolute; width: 34px; height: 34px; border: 4px solid var(--green-hi); }
+    .vp .tl { left: 24px; top: 24px; border-right: 0; border-bottom: 0; border-radius: 12px 0 0 0; }
+    .vp .tr { right: 24px; top: 24px; border-left: 0; border-bottom: 0; border-radius: 0 12px 0 0; }
+    .vp .bl { left: 24px; bottom: 24px; border-right: 0; border-top: 0; border-radius: 0 0 0 12px; }
+    .vp .br { right: 24px; bottom: 24px; border-left: 0; border-top: 0; border-radius: 0 0 12px 0; }
+    .vp .line { position: absolute; left: 30px; right: 30px; top: 58%; height: 2px; background: linear-gradient(90deg, transparent, var(--green-hi), transparent); box-shadow: 0 0 12px var(--green-hi); }
+    .cfg { width: 100%; margin-top: 24px; padding: 14px 16px; border-radius: 18px; }
+    .cfg .h { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--navy-deep); }
+    .cfg .h svg { width: 16px; height: 16px; color: var(--green-lo); }
+    .cfg .r { display: flex; justify-content: space-between; padding: 9px 0; font-size: 12.5px; }
+    .cfg .r span { color: var(--ink-soft); }
+    .cfg .r b { color: var(--navy-deep); font-weight: 700; font-family: Consolas, monospace; font-size: 12px; }
+    .btns { width: 100%; margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+    .btns .gbtn { height: 48px; font-size: 14.5px; border-radius: 15px; }
+</style></head>
+<body><div class="phone">
+    <div class="sb">09:41<span class="r"><b></b><i></i></span></div>
+    <span class="back"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><path d="m15 5-7 7 7 7"/></svg></span>
+    <div class="wrap">
+        <span class="logo">S</span>
+        <h1>เชื่อมต่ออุปกรณ์</h1>
+        <p class="sub">สแกน QR จากแผงควบคุมเพื่อตั้งค่าอัตโนมัติ</p>
+        <div class="vp">
+            <div class="qr" id="qr"></div>
+            <span class="c tl"></span><span class="c tr"></span><span class="c bl"></span><span class="c br"></span>
+            <span class="line"></span>
+        </div>
+        <div class="glass cfg">
+            <p class="h"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10V8a5 5 0 0 1 10 0v2h1a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zm2 0h6V8a3 3 0 0 0-6 0z"/></svg>การเชื่อมต่อที่เข้ารหัส</p>
+            <div class="r"><span>เซิร์ฟเวอร์</span><b>—</b></div>
+            <div class="div"></div>
+            <div class="r"><span>การเข้ารหัส</span><b>AES-256-GCM</b></div>
+            <div class="div"></div>
+            <div class="r"><span>ลายเซ็น</span><b>HMAC-SHA256</b></div>
+        </div>
+        <div class="btns">
+            <span class="gbtn green">เริ่มสแกน QR Code</span>
+            <span class="gbtn ghost">ใส่รหัสด้วยตนเอง</span>
+        </div>
+    </div>
+</div>
+<script>
+    // a fixed made-up pattern with the three finder squares — decorative, not a readable code
+    var bits = '11111010111100000110111011101010110111011100000101110111010111011011111010101011111000011000000001101101110100011101101111110110000000001010011111110110101000001101010111011100101110111011010111010101000001110101111111010111';
+    var q = document.getElementById('qr');
+    for (var i = 0; i < 121; i++) { var c = document.createElement('i'); if (bits[i % bits.length] !== '1') c.className = 'o'; q.appendChild(c); }
+</script>
+</body></html>

@@ -1,0 +1,74 @@
+<!doctype html>
+<!-- Tping home (ui/screens/HomeScreen.kt): top bar, the trial card, "สถานะสิทธิ์", the floating-button card,
+     "เมนูหลัก" (MainActionCard gradients), quick play and the Cloud Sync card. The device id is made up. -->
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .lic { background: rgba(59, 130, 246, .12); border: 1px solid rgba(59, 130, 246, .35); border-radius: 12px; padding: 12px 14px; }
+    .lic b { color: #3b82f6; font-size: 13px; font-weight: 700; }
+    .lic small { display: block; font-size: 10px; color: rgba(230, 225, 229, .5); margin-top: 1px; }
+    .lic .buy { margin-left: auto; font-size: 12px; font-weight: 700; color: #3b82f6; padding: 5px 10px; border-radius: 8px; background: rgba(59, 130, 246, .14); }
+    .perm { background: rgba(27, 94, 32, .22); border-radius: 16px; padding: 14px 16px; }
+    .perm h3 { font-size: 15px; font-weight: 700; color: #e6e1e5; }
+    .perm li { list-style: none; display: flex; align-items: center; gap: 10px; font-size: 14px; padding: 4px 0; }
+    .float { border-radius: 20px; padding: 18px; background: linear-gradient(90deg, #6750a4, #8b5cf6); display: flex; align-items: center; gap: 14px; color: #fff; box-shadow: 0 6px 18px rgba(103, 80, 164, .45); }
+    .float h3 { font-size: 18px; font-weight: 700; line-height: 1.2; }
+    .float p { font-size: 12px; opacity: .85; }
+    .float small { display: block; font-size: 10px; opacity: .7; margin-top: 2px; }
+    .menu h2 { font-size: 21px; font-weight: 700; margin: 4px 0 -2px; }
+    .act { display: flex; align-items: center; gap: 16px; }
+    .act .g { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; }
+    .act h4 { font-size: 16px; font-weight: 700; }
+    .act p { font-size: 13px; color: rgba(230, 225, 229, .6); }
+    .qp h4 { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .dd { height: 44px; border-radius: 10px; border: 1px solid #49454f; display: flex; align-items: center; padding: 0 12px; font-size: 13.5px; margin-top: 10px; }
+    .dd::after { content: "▾"; margin-left: auto; color: #938f99; }
+    .loops { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 13px; }
+    .loops .pm { width: 30px; height: 30px; border-radius: 50%; background: #2b2930; display: flex; align-items: center; justify-content: center; }
+    .loops .go { margin-left: auto; background: #22c55e; height: 38px; border-radius: 19px; padding: 0 18px; display: flex; align-items: center; gap: 6px; font-weight: 700; color: #fff; }
+    .cl { display: flex; align-items: center; gap: 12px; padding: 12px 16px; }
+    .cl .dot { width: 12px; height: 12px; border-radius: 50%; background: #9ca3af; }
+</style></head>
+<body><div class="phone">
+    <div class="sb" style="background:#4f378b">09:41<span class="r"><b></b><i></i></span></div>
+    <div class="appbar">
+        <div><h1>Tping</h1><p>ช่วยพิมพ์ สำหรับผู้ที่ใช้นิ้วไม่สะดวก</p></div>
+    </div>
+    <div class="list">
+        <div class="lic row">
+            <i data-i="gift" data-s="22" style="color:#3b82f6"></i>
+            <div><b>ทดลองใช้ฟรี — เหลือ 23:41:08</b><small>Device: 0f3a9c21...</small></div>
+            <span class="buy">อัพเกรด</span>
+        </div>
+        <div class="perm">
+            <div class="row" style="margin-bottom:6px"><i data-i="verified" data-s="22" style="color:#22c55e"></i><h3>สถานะสิทธิ์</h3></div>
+            <ul>
+                <li><i data-i="check" style="color:#22c55e"></i>Accessibility Service</li>
+                <li><i data-i="check" style="color:#22c55e"></i>Overlay Permission</li>
+                <li><i data-i="check" style="color:#22c55e"></i>Notification</li>
+            </ul>
+        </div>
+        <div class="float">
+            <i data-i="widgets" data-s="34" style="color:#fff"></i>
+            <div><h3>เปิดปุ่มลอย</h3><p>แตะเพื่อเปิด Overlay แล้วสลับไปเกม/แอพได้เลย</p><small>หรือใช้ "ปุ่มการช่วยเหลือพิเศษ" เปิดได้เลย</small></div>
+        </div>
+        <div class="menu"><h2>เมนูหลัก</h2></div>
+        <div class="card act">
+            <span class="g" style="background:linear-gradient(135deg,#3b82f6,#6366f1)"><i data-i="storage" data-s="26"></i></span>
+            <div><h4>จัดการข้อมูล</h4><p>เพิ่ม/แก้ไข ชุดข้อมูลที่จะกรอก</p></div>
+        </div>
+        <div class="card act">
+            <span class="g" style="background:linear-gradient(135deg,#ef4444,#f97316)"><i data-i="record" data-s="26"></i></span>
+            <div><h4>บันทึกขั้นตอน</h4><p>เรียนรู้ขั้นตอนการกรอกจากการใช้งานจริง</p></div>
+        </div>
+        <div class="card qp">
+            <h4><i data-i="play" style="color:#22c55e"></i>เล่นอัตโนมัติ</h4>
+            <div class="dd">สมัครสมาชิก · 9 ขั้นตอน</div>
+            <div class="dd">บัญชีทดสอบ · 12 ชุด</div>
+            <div class="loops"><span class="mut">จำนวนรอบ</span><span class="pm"><i data-i="remove" data-s="16"></i></span><b style="font-size:16px">12</b><span class="pm"><i data-i="add" data-s="16"></i></span>
+                <span class="go"><i data-i="play" data-s="18"></i>เริ่มเล่น</span></div>
+        </div>
+        <div class="card cl"><span class="dot"></span><b style="font-size:14px">Cloud Sync</b><span class="mut" style="font-size:12px">ยังไม่ได้เชื่อมต่อ</span><i data-i="cloud" style="color:#938f99;margin-left:auto"></i></div>
+    </div>
+    <div class="gb"></div>
+</div>
+<script src="icons.js"></script></body></html>

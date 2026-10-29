@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    /* the cowork room's own look: office/office.css — obsidian panels, a champagne accent */
+    body { background: radial-gradient(ellipse 70% 60% at 40% 40%, #161a24 0%, #0d1016 70%, #0a0c11 100%); color: #f2f0ea; }
+    .room-head { position: absolute; left: 22px; top: 52px; right: 22px; display: flex; align-items: center; gap: 8px; }
+    .room-head .ph { margin: 0; background: linear-gradient(180deg, rgba(34, 39, 50, .88), rgba(16, 19, 26, .88)); border-color: rgba(242, 239, 230, .14); }
+    .room-head .sp { flex: 1; }
+    .chip { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 9px; font-size: 12.5px; color: #b9b6ae;
+        background: linear-gradient(180deg, rgba(34, 39, 50, .88), rgba(16, 19, 26, .88)); border: 1px solid rgba(242, 239, 230, .12); }
+    .chip.on { border-color: rgba(53, 224, 138, .55); color: #bff5d6; }
+    .chip.acc { border-color: rgba(216, 185, 120, .55); color: #f2f0ea; }
+    .obs { border-radius: 14px; border: 1px solid rgba(242, 239, 230, .10);
+        background: linear-gradient(180deg, rgba(32, 37, 48, .80) 0%, rgba(20, 24, 32, .74) 55%, rgba(12, 15, 21, .80) 100%);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, .09), inset 0 -1px 0 rgba(0, 0, 0, .45), 0 12px 30px rgba(0, 0, 0, .5); }
+    .thread { position: absolute; left: 22px; top: 100px; width: 960px; height: 700px; padding: 18px 22px; }
+    .msg { display: grid; grid-template-columns: 40px 1fr; gap: 12px; margin-bottom: 16px; }
+    .msg .av { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #0a0c11; }
+    .msg .n { font-size: 13px; font-weight: 600; }
+    .msg .n small { font-weight: 500; color: #85837d; margin-left: 8px; font-size: 11.5px; }
+    .msg .b { margin-top: 4px; font-size: 13.5px; line-height: 1.6; color: #e2dfd6; }
+    .msg.boss .b { padding: 10px 14px; border-radius: 12px; background: rgba(216, 185, 120, .10); border: 1px solid rgba(216, 185, 120, .35); }
+    .file { display: inline-flex; align-items: center; gap: 8px; margin-top: 8px; padding: 7px 12px; border-radius: 10px; background: rgba(0, 0, 0, .3); border: 1px solid rgba(242, 239, 230, .1); font-size: 12px; color: #b9b6ae; }
+    .compose { position: absolute; left: 22px; right: 22px; bottom: 18px; height: 50px; border-radius: 12px; display: flex; align-items: center; gap: 12px; padding: 0 16px;
+        background: rgba(0, 0, 0, .35); border: 1px solid rgba(216, 185, 120, .45); color: #85837d; font-size: 13.5px; }
+    .compose .send { margin-left: auto; height: 32px; padding: 0 16px; border-radius: 9px; display: inline-flex; align-items: center; background: linear-gradient(180deg, #e8c98f, #c9a463); color: #1a1408; font-weight: 700; font-size: 13px; }
+    .side { position: absolute; left: 1000px; top: 100px; width: 418px; height: 700px; padding: 16px 18px; }
+    .side h3 { font-size: 13px; letter-spacing: .12em; color: #d8b978; margin: 4px 0 10px; font-weight: 700; }
+    .desk { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(242, 239, 230, .06); font-size: 13px; }
+    .desk .av { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #0a0c11; }
+    .desk span.r { margin-left: auto; font-size: 11.5px; color: #85837d; }
+    .decide { margin: 16px 0; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(224, 168, 106, .5); background: rgba(60, 40, 14, .35); }
+    .decide b { display: block; font-size: 13px; color: #f2d3a6; margin-bottom: 4px; }
+    .decide p { font-size: 12.5px; color: #e2dfd6; line-height: 1.55; }
+    .decide .acts { display: flex; gap: 8px; margin-top: 10px; }
+    .decide .acts span { height: 28px; padding: 0 12px; border-radius: 8px; display: inline-flex; align-items: center; font-size: 12px; border: 1px solid rgba(242, 239, 230, .18); }
+    .decide .acts .y { background: linear-gradient(180deg, #e8c98f, #c9a463); color: #1a1408; font-weight: 700; border: 0; }
+    .job { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; padding: 8px 10px; margin-bottom: 7px; border-radius: 10px; background: rgba(0, 0, 0, .25); border-left: 2px solid rgba(53, 224, 138, .7); font-size: 12.5px; }
+    .job small { grid-column: 1 / -1; color: #85837d; font-size: 11.5px; }
+    .job.wait { border-left-color: #e0a86a; }
+</style></head>
+<body data-status="cowork room · 4 at their desks">
+<div class="room-head">
+    <div class="ph"><b>COWORK ROOM</b><span>4 at their desks</span></div>
+    <span class="chip acc">มาย จัดสรรงาน · on</span>
+    <span class="sp"></span>
+    <span class="chip">📋 งาน</span><span class="chip">🕘 ประวัติ</span><span class="chip on">✨ มาย</span><span class="chip">🧠 โมเดล</span><span class="chip">ผังห้อง</span><span class="chip">💡</span><span class="chip">⧉ แยกหน้าต่าง</span>
+</div>
+
+<div class="obs thread">
+    <div class="msg boss"><span class="av" style="background:#d8b978">You</span><div><div class="n">คุณ <small>14:02 · ถึงทุกคน</small></div>
+        <div class="b">ทำปุ่ม Export เป็น PDF ให้เสร็จวันนี้ Codex เขียนตัวส่งออก Claude Code รีวิวและเขียนเทสต์ ภาษาไทยต้องไม่แตก</div></div></div>
+    <div class="msg"><span class="av" style="background:#e8c98f">มาย</span><div><div class="n">มาย <small>14:02 · เลขาห้อง</small></div>
+        <div class="b">รับทราบค่ะ แบ่งงานเป็น 2 ชิ้นแล้ว: “ตัวส่งออก PDF” → Codex · “รีวิว + เทสต์” → Claude Code จะแจ้งเมื่อมีคนติด</div></div></div>
+    <div class="msg"><span class="av" style="background:#5be9e9">CX</span><div><div class="n">Codex <small>14:31</small></div>
+        <div class="b">ตัวส่งออกเสร็จแล้ว ฝังฟอนต์ไทยตัวเดียวกับหน้าจอ สารบัญกดได้ ส่งไฟล์ตัวอย่างไว้ให้ดูครับ</div>
+        <span class="file">📄 sample-export.pdf · 214 KB</span></div></div>
+    <div class="msg"><span class="av" style="background:#9d7bff">CC</span><div><div class="n">Claude Code <small>14:44</small></div>
+        <div class="b">รีวิวแล้ว เจอ 1 จุด: โน้ตที่มีตารางยาวเกินหน้าถูกตัด แก้ให้ขึ้นหน้าใหม่แล้ว เทสต์ผ่าน 12/12 — ขอให้คุณตัดสินเรื่องชื่อไฟล์ก่อน merge</div></div></div>
+    <div class="msg"><span class="av" style="background:#ff7fb8">CL</span><div><div class="n">CluadeX <small>14:46</small></div>
+        <div class="b">เสนอชื่อไฟล์เป็น “ชื่อโน้ต — วันที่.pdf” ตามที่บันทึกไว้ในสมองเมื่อเดือนก่อน</div></div></div>
+    <div class="compose">📎<span>พิมพ์ถึงทุกคนในห้อง… (@ชื่อ = ส่งถึงคนเดียว)</span><span class="send">ส่ง</span></div>
+</div>
+
+<div class="obs side">
+    <h3>ห้องทำงาน</h3>
+    <div class="desk"><span class="av" style="background:#9d7bff">CC</span>Claude Code<span class="r dot">กำลังทำ</span></div>
+    <div class="desk"><span class="av" style="background:#5be9e9">CX</span>Codex<span class="r dot">ว่าง</span></div>
+    <div class="desk"><span class="av" style="background:#ff7fb8">CL</span>CluadeX<span class="r dot">ว่าง</span></div>
+    <div class="desk"><span class="av" style="background:#e8c98f">มาย</span>มาย · เลขา<span class="r dot">ฟังอยู่</span></div>
+
+    <div class="decide"><b>รอคุณตัดสิน · Waiting on you</b>
+        <p>ชื่อไฟล์ PDF: ใช้ “ชื่อโน้ต — วันที่.pdf” ตามที่ CluadeX เสนอ?</p>
+        <div class="acts"><span class="y">ใช่ ใช้แบบนี้</span><span>แก้เอง</span></div></div>
+
+    <h3>บอร์ดงาน</h3>
+    <div class="job"><span>ตัวส่งออก PDF</span><span class="gr">เสร็จ</span><small>Codex · 29 นาที</small></div>
+    <div class="job wait"><span>รีวิว + เทสต์</span><span class="am">รอตัดสิน</span><small>Claude Code · 12/12 ผ่าน</small></div>
+    <div class="job"><span>อัปเดตคู่มือ Export</span><span class="muted">คิวถัดไป</span><small>ยังไม่มีคนรับ</small></div>
+</div>
+</body>
+<script src="chrome.js"></script>
+</html>

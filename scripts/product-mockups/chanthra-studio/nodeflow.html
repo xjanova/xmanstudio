@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .cols { display: grid; grid-template-columns: 250px 1fr 290px; height: 100%; }
+    .pal { border-right: 1px solid var(--hair); }
+    .pal .grp { padding: 0 14px 10px; }
+    .pal .grp p { font-family: PlexMono; font-size: 9px; letter-spacing: .12em; color: var(--t4); margin: 8px 2px 6px; }
+    .pal .it { padding: 6px 10px; border-radius: 7px; font-size: 11.5px; color: var(--t2); display: flex; align-items: center; gap: 8px; }
+    .pal .it i { width: 8px; height: 8px; border-radius: 2px; flex: none; }
+    .pal .it.on { background: rgba(212, 167, 106, .08); color: var(--gold-hi); }
+    .canvas { position: relative; overflow: hidden; border-right: 1px solid var(--hair);
+        background-image: radial-gradient(rgba(212, 167, 106, .09) 1px, transparent 1px); background-size: 22px 22px; }
+    .bar { position: absolute; left: 14px; right: 14px; top: 12px; display: flex; gap: 6px; align-items: center; z-index: 2; }
+    .node { position: absolute; width: 196px; border-radius: 10px; background: rgba(22, 15, 34, .95); border: 1px solid rgba(232, 213, 179, .1); box-shadow: 0 10px 30px rgba(0, 0, 0, .4); z-index: 1; }
+    .node.sel { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(212, 167, 106, .4), 0 10px 30px rgba(212, 167, 106, .15); }
+    .node h5 { font-weight: 500; font-size: 11.5px; padding: 7px 10px; border-bottom: 1px solid var(--hair); display: flex; align-items: center; gap: 7px; border-radius: 10px 10px 0 0; }
+    .node h5 i { width: 8px; height: 8px; border-radius: 2px; }
+    .node .p { display: flex; justify-content: space-between; padding: 4px 10px; font-family: PlexMono; font-size: 9.5px; color: var(--t3); }
+    .node .p b { font-weight: 400; color: var(--gold-hi); max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .node .io { display: flex; justify-content: space-between; padding: 5px 10px 8px; font-size: 9.5px; color: var(--t2); }
+    .c1 { background: #d4a76a; } .c2 { background: #b03346; } .c3 { background: #8a7bb0; } .c4 { background: #6dbf8c; } .c5 { background: #5aa6d0; }
+    svg.wires { position: absolute; inset: 0; z-index: 0; }
+    .mini { position: absolute; right: 14px; bottom: 14px; width: 170px; height: 104px; border-radius: 8px; background: rgba(10, 6, 18, .85); border: 1px solid var(--hair); z-index: 2; }
+    .mini i { position: absolute; height: 9px; border-radius: 2px; background: rgba(212, 167, 106, .55); }
+    .mini b { position: absolute; left: 14px; top: 14px; width: 120px; height: 70px; border: 1px solid var(--gold); border-radius: 3px; }
+    .zoom { position: absolute; left: 14px; bottom: 14px; z-index: 2; display: flex; gap: 6px; align-items: center; }
+    .insp { padding-bottom: 14px; }
+    .insp .body { padding: 0 16px; display: flex; flex-direction: column; gap: 11px; }
+    .fld { padding: 7px 10px; font-family: PlexMono; font-size: 10.5px; color: var(--gold-hi); }
+    .ai { padding: 12px; border-color: var(--line-gold); background: linear-gradient(180deg, rgba(212, 167, 106, .07), rgba(22, 15, 34, .9)); }
+</style></head>
+<body data-on="nodeflow">
+<main class="work"><div class="cols">
+    <section class="pal">
+        <div class="panel-h"><h2>Node Flow</h2></div>
+        <p class="mono mut" style="font-size:9.5px;padding:0 18px 10px">visual graph editor · ComfyUI compat</p>
+        <div class="grp"><p>เทมเพลตพร้อมใช้</p>
+            <div class="it on"><i class="c1"></i>SDXL · text → image</div><div class="it"><i class="c1"></i>FLUX.1 dev · text → image</div>
+            <div class="it"><i class="c2"></i>Wan 2.1 · image → video</div><div class="it"><i class="c2"></i>Hunyuan · text → video</div>
+            <div class="it"><i class="c3"></i>ACE-Step · text → music</div></div>
+        <div class="grp"><p>โหนดทั้งหมด</p>
+            <div class="it"><i class="c1"></i>Load Checkpoint</div><div class="it"><i class="c5"></i>Load LoRA</div><div class="it"><i class="c3"></i>CLIP Text Encode</div>
+            <div class="it"><i class="c2"></i>KSampler</div><div class="it"><i class="c4"></i>VAE Decode</div><div class="it"><i class="c4"></i>Save Image</div>
+            <div class="it"><i class="c5"></i>Empty Latent Image</div><div class="it"><i class="c5"></i>Load Image</div></div>
+    </section>
+
+    <section class="canvas">
+        <div class="bar"><span class="btn">Load</span><span class="btn">Save</span><span class="btn">↶</span><span class="btn">↷</span><span class="btn">⎘ Duplicate</span><span class="btn">✦ Auto-arrange</span><span class="btn">⤢ Fit</span>
+            <span class="btn gold" style="margin-left:auto">▶ Run this graph</span></div>
+        <svg class="wires" viewBox="0 0 836 834" preserveAspectRatio="none">
+            <g fill="none" stroke-width="2" stroke-linecap="round">
+                <path d="M226 181 C 300 181, 290 153, 356 153" stroke="#8a7bb0"/>
+                <path d="M226 181 C 300 181, 290 333, 356 333" stroke="#8a7bb0"/>
+                <path d="M226 181 C 420 181, 420 305, 600 305" stroke="#d4a76a"/>
+                <path d="M226 181 C 300 181, 300 470, 420 520 S 560 501, 600 501" stroke="#6dbf8c" opacity=".7"/>
+                <path d="M552 153 C 590 153, 560 305, 600 305" stroke="#8a7bb0"/>
+                <path d="M552 333 C 590 333, 560 305, 600 305" stroke="#8a7bb0"/>
+                <path d="M226 501 C 420 501, 420 305, 600 305" stroke="#5aa6d0"/>
+                <path d="M796 300 C 850 300, 540 501, 600 501" stroke="#d4a76a" opacity=".9"/>
+                <path d="M796 501 C 850 501, 540 687, 600 687" stroke="#6dbf8c"/>
+            </g>
+        </svg>
+        <div class="node" style="left:30px;top:120px"><h5><i class="c1"></i>Load Checkpoint</h5><div class="p">ckpt<b>sd_xl_base_1.0</b></div><div class="io"><span></span><span>MODEL ● CLIP ● VAE ●</span></div></div>
+        <div class="node" style="left:356px;top:92px"><h5><i class="c3"></i>CLIP Text Encode +</h5><div class="p">text<b>empress, crimson silk…</b></div><div class="io"><span>● clip</span><span>CONDITIONING ●</span></div></div>
+        <div class="node" style="left:356px;top:272px"><h5><i class="c3"></i>CLIP Text Encode −</h5><div class="p">text<b>blurry, lowres</b></div><div class="io"><span>● clip</span><span>CONDITIONING ●</span></div></div>
+        <div class="node sel" style="left:600px;top:184px"><h5><i class="c2"></i>KSampler</h5><div class="p">seed<b>281492</b></div><div class="p">steps<b>28</b></div><div class="p">cfg<b>6.5</b></div><div class="p">sampler<b>dpmpp_2m</b></div><div class="io"><span>● model ● pos ● neg ● latent</span></div></div>
+        <div class="node" style="left:30px;top:440px"><h5><i class="c5"></i>Empty Latent Image</h5><div class="p">size<b>1344 × 768</b></div><div class="io"><span></span><span>LATENT ●</span></div></div>
+        <div class="node" style="left:600px;top:460px"><h5><i class="c4"></i>VAE Decode</h5><div class="io"><span>● samples ● vae</span><span>IMAGE ●</span></div></div>
+        <div class="node" style="left:600px;top:626px"><h5><i class="c4"></i>Save Image</h5><div class="p">prefix<b>chanthra</b></div><div class="io"><span>● images</span></div></div>
+        <div class="zoom"><span class="btn">−</span><span class="mono mut" style="font-size:10px">ZOOM 90%</span><span class="btn">+</span></div>
+        <div class="mini"><i style="left:10px;top:24px;width:30px"></i><i style="left:66px;top:18px;width:30px"></i><i style="left:66px;top:46px;width:30px"></i><i style="left:118px;top:34px;width:30px"></i><i style="left:10px;top:70px;width:30px"></i><i style="left:118px;top:72px;width:30px"></i><b></b></div>
+    </section>
+
+    <section class="insp">
+        <div class="panel-h"><h2>Inspector</h2><small>KSampler</small></div>
+        <div class="body">
+            <p class="lbl" style="margin:0">Parameters</p>
+            <div><p class="lbl">seed</p><div class="box fld">281492</div></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><p class="lbl">steps</p><div class="box fld">28</div></div><div><p class="lbl">cfg</p><div class="box fld">6.5</div></div></div>
+            <div><p class="lbl">sampler_name</p><div class="box fld">dpmpp_2m</div></div>
+            <div><p class="lbl">scheduler</p><div class="box fld">karras</div></div>
+            <div><p class="lbl">denoise</p><div class="box fld">1.00</div></div>
+            <div class="box ai">
+                <p class="lbl" style="color:var(--gold)">✦ Build with AI</p>
+                <p class="th t2" style="font-size:11.5px;line-height:1.55">“ทำภาพแนวตั้ง 9:16 จากรูปอ้างอิง แล้วขยายเป็น 4K”</p>
+                <div style="display:flex;margin-top:10px"><span class="btn out">✦ Generate workflow</span></div>
+            </div>
+        </div>
+    </section>
+</div></main>
+<script src="chrome.js"></script>
+</body></html>

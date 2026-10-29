@@ -1,0 +1,50 @@
+<!doctype html>
+<!-- Chats tab — Views/MainPage.xaml (💬 Conversations) beside Views/ChatPage.xaml (messages, 📎, "Type a message...", ➤).
+     In the app the chat opens as its own page; drawn side by side here to show both. -->
+<html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .page { background: linear-gradient(135deg, #0A0A1A, #10051A 70%, #0A1020); display: grid; grid-template-columns: 420px 1fr; gap: 16px; }
+    .list .conv { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 14px; margin-bottom: 8px; background: #12121F; border: 1px solid #2A2A4A; }
+    .list .conv.on { border-color: #7C3AED; background: linear-gradient(135deg, #1A1A3A, #22164A); }
+    .av { width: 46px; height: 46px; border-radius: 23px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex: none; position: relative; }
+    .av i { position: absolute; right: 0; bottom: 0; width: 12px; height: 12px; border-radius: 6px; background: #22C55E; border: 2px solid #12121F; }
+    .badge { margin-left: auto; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 9px; background: #EC4899; }
+    .chat { display: flex; flex-direction: column; border-radius: 20px; border: 1px solid #2A2A4A; background: #0D0D24; overflow: hidden; }
+    .chat .top { display: flex; align-items: center; gap: 12px; padding: 14px 18px; background: #12122A; border-bottom: 1px solid #2A2A4A; }
+    .msgs { flex: 1; padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+    .m { max-width: 62%; padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.45; }
+    .m small { display: block; font-size: 11px; opacity: .7; margin-top: 4px; }
+    .in { background: #1A1A3A; border: 1px solid #2A2A4A; align-self: flex-start; border-bottom-left-radius: 4px; }
+    .out { background: linear-gradient(135deg, #7C3AED, #9333EA); align-self: flex-end; border-bottom-right-radius: 4px; }
+    .file { display: flex; align-items: center; gap: 10px; }
+    .input { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: #12122A; border-top: 1px solid #2A2A4A; }
+    .input .box { flex: 1; height: 44px; border-radius: 22px; background: #0A0A1A; border: 1px solid #2A2A4A; display: flex; align-items: center; padding: 0 16px; color: #64748B; }
+    .send { width: 44px; height: 44px; border-radius: 22px; background: linear-gradient(135deg, #7C3AED, #EC4899); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+</style></head>
+<body data-on="Chats">
+<div class="page">
+    <div class="list">
+        <div class="card" style="margin-bottom:14px;padding:14px 16px">
+            <div class="row" style="gap:10px"><span style="font-size:22px">🕷️</span><div><div style="font-weight:700;font-size:16px">SpiderX Network</div><div class="sub" style="font-size:12px">Your SpiderX ID</div></div><span class="btn vp" style="margin-left:auto;height:34px;font-size:13px">Share ID</span></div>
+            <div class="mono cy" style="font-size:12.5px;margin-top:8px">spx1Q7mXc4Rk2VbN9pTzH6eWfLa3JuYd8sGq</div>
+        </div>
+        <div style="font-size:16px;font-weight:700;margin:4px 0 10px">💬 Conversations</div>
+        <div class="conv on"><span class="av g-violet">NL<i></i></span><div><div style="font-weight:700">Nok-Laptop</div><div class="sub" style="font-size:12px">ส่งไฟล์ให้แล้วนะ เช็กใน Files ได้เลย</div></div><span class="badge">2</span></div>
+        <div class="conv"><span class="av g-pink">SP<i></i></span><div><div style="font-weight:700">Studio-PC</div><div class="sub" style="font-size:12px">Mix รอบสุดท้ายอยู่ในแคตตาล็อก</div></div><span class="badge">1</span></div>
+        <div class="conv"><span class="av g-cyan">MD<i></i></span><div><div style="font-weight:700">Mint-Desktop</div><div class="sub" style="font-size:12px">คืนนี้เปิด Virtual LAN เล่นเกมกัน</div></div></div>
+        <div class="conv"><span class="av g-green">PK</span><div><div style="font-weight:700">Pim-Tablet</div><div class="mut" style="font-size:12px">Offline</div></div></div>
+    </div>
+    <div class="chat">
+        <div class="top"><span class="av g-violet" style="width:40px;height:40px">NL<i style="border-color:#12122A"></i></span><div><div style="font-weight:700">Nok-Laptop</div><div style="font-size:12px;color:#22C55E">Online</div></div><span class="mut" style="margin-left:auto">Call</span></div>
+        <div class="msgs">
+            <div class="m in">ถึงออฟฟิศยัง วงแลนเดียวกันเลยเห็นเครื่องเธอใน Nearby แล้ว<small>09:12</small></div>
+            <div class="m out">ถึงแล้ว ต่อกันแล้วด้วย ขอไฟล์คลิปงานเมื่อวานหน่อย<small>09:13 ✓✓</small></div>
+            <div class="m in">แชร์ไว้ใน Files แล้ว ดึงจากเครื่องเรากับ Studio-PC พร้อมกันได้เลย เร็วกว่า<small>09:14</small></div>
+            <div class="m in file"><span class="fi" style="width:40px;height:40px;border-radius:10px;background:#0A0A1A;display:flex;align-items:center;justify-content:center;font-size:22px">🎬</span><div>team-meetup-2026.mp4<small>1.8 GB · Shared in Files</small></div></div>
+            <div class="m out">กำลังโหลดอยู่ 64% แล้ว ขอบคุณมาก<small>09:16 ✓</small></div>
+        </div>
+        <div class="input"><span style="font-size:20px">📎</span><span class="box">Type a message...</span><span class="send">➤</span></div>
+    </div>
+</div>
+<script src="chrome.js"></script>
+</body></html>

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .filters { display: flex; gap: 16px; }
+    .stat2 p { color: #9ca3af; font-size: 14px; } .stat2 b { display: block; font-size: 24px; font-weight: 700; }
+    .ver .from { color: #6b7280; } .ver .arr { color: #4b5563; margin: 0 4px; } .ver .to { color: #60a5fa; }
+    td { font-size: 14px; } .r { color: #f59e0b; font-weight: 700; margin-right: 6px; }
+    .acts { text-align: right; } .acts span + span { margin-left: 4px; }
+</style></head>
+<body data-on="history">
+<div class="main">
+<div class="page">
+    <div class="top">
+        <div><h1>Sync History</h1><p>View all synchronization activities</p></div>
+        <div class="acts" style="display:flex;gap:8px"><span class="btn-secondary">📥 Export</span><span class="btn-secondary">🔄 Refresh</span></div>
+    </div>
+
+    <div class="card p4">
+        <div class="filters">
+            <span class="input" style="flex:1">All Projects</span>
+            <span class="input" style="width:160px">All Status</span>
+            <span class="input" style="width:160px">All Triggers</span>
+            <span class="input" style="width:160px">01/10/2026</span>
+            <span class="input" style="width:160px">29/10/2026</span>
+        </div>
+    </div>
+
+    <div class="grid4">
+        <div class="card p4 stat2"><p>Total Syncs</p><b>48</b></div>
+        <div class="card p4 stat2"><p>Successful</p><b class="g5">45</b></div>
+        <div class="card p4 stat2"><p>Failed</p><b class="r5">3</b></div>
+        <div class="card p4 stat2"><p>Success Rate</p><b>93%</b></div>
+    </div>
+
+    <div class="card" style="overflow:hidden">
+        <table>
+            <thead><tr><th>Project</th><th>Version</th><th>Status</th><th>Trigger</th><th>Duration</th><th>Files</th><th>Started</th><th style="text-align:right">Actions</th></tr></thead>
+            <tbody>
+                <tr><td><b style="font-weight:500">shop-web</b></td><td class="mono ver"><span class="from">v2.8.0</span><span class="arr">-&gt;</span><span class="to">v2.8.1</span></td>
+                    <td><span class="pill bg-g g4">Success</span></td><td><span class="pill bg-g g4">Webhook</span></td><td class="mut">41s</td><td>37 files</td><td class="mut">29/10/2026 09:12</td>
+                    <td class="acts"><span class="btn-ghost">Rollback</span><span class="btn-ghost">Details</span></td></tr>
+                <tr><td><b style="font-weight:500">api-gateway</b></td><td class="mono ver"><span class="from">v1.12.0</span><span class="arr">-&gt;</span><span class="to">v1.13.0</span></td>
+                    <td><span class="pill bg-r r4">Failed</span></td><td><span class="pill bg-p p4c">Scheduled</span></td><td class="mut">1m 08s</td><td>214 files</td><td class="mut">29/10/2026 08:54</td>
+                    <td class="acts"><span class="btn-ghost">Details</span></td></tr>
+                <tr><td><b style="font-weight:500">docs-site</b></td><td class="mono ver"><span class="from">v0.9.4</span><span class="arr">-&gt;</span><span class="to">v0.9.5</span></td>
+                    <td><span class="pill bg-g g4">Success</span></td><td><span class="pill bg-b b4">Manual</span></td><td class="mut">23s</td><td>12 files</td><td class="mut">29/10/2026 06:30</td>
+                    <td class="acts"><span class="btn-ghost">Rollback</span><span class="btn-ghost">Details</span></td></tr>
+                <tr><td><b style="font-weight:500">shop-web</b></td><td class="mono ver"><span class="from">v2.7.9</span><span class="arr">-&gt;</span><span class="to">v2.8.0</span></td>
+                    <td><span class="pill bg-g g4">Success</span></td><td><span class="pill bg-g g4">Webhook</span></td><td class="mut">39s</td><td>58 files</td><td class="mut">28/10/2026 17:02</td>
+                    <td class="acts"><span class="btn-ghost">Rollback</span><span class="btn-ghost">Details</span></td></tr>
+                <tr><td><b style="font-weight:500">docs-site</b></td><td class="mono ver"><span class="from">v0.9.3</span><span class="arr">-&gt;</span><span class="to">v0.9.4</span></td>
+                    <td><span class="pill bg-g g4">Success</span></td><td><span class="pill bg-p p4c">Scheduled</span></td><td class="mut">21s</td><td>9 files</td><td class="mut">28/10/2026 11:40</td>
+                    <td class="acts"><span class="btn-ghost">Rollback</span><span class="btn-ghost">Details</span></td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</div>
+<script src="chrome.js"></script>
+</body></html>

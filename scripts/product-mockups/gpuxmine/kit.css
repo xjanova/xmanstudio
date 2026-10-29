@@ -1,0 +1,63 @@
+/* GPUxMINE mock-ups — drawn to match the WPF client (GpuXmine src/GpuxMine.App: Theme.xaml, MainWindow.xaml, Views/*.xaml).
+   Brushed-chrome panels, gold accents, dark LCD read-outs; the strips, gauge ring, screws and logo are the app's own
+   files from Assets/gfx. Every number in these pictures is made up. */
+@font-face { font-family: ShareTech; src: url(assets/ShareTechMono-Regular.ttf); }
+@font-face { font-family: NotoThai; src: url(../_fonts/NotoSansThai-500.ttf); font-weight: 500; }
+@font-face { font-family: NotoThai; src: url(../_fonts/NotoSansThai-700.ttf); font-weight: 700; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1440px; height: 900px; overflow: hidden; }
+body { font-family: Tahoma, NotoThai, Verdana, sans-serif; font-size: 13px; color: #2c3238;
+    background: linear-gradient(160deg, #fdfdfe 0%, #dde1e7 38%, #b9c0c9 70%, #8d95a0 100%); padding: 7px; }
+.win { position: relative; width: 100%; height: 100%; border: 1px solid #6b737c; border-radius: 7px; overflow: hidden; display: grid; grid-template-rows: 64px 1fr 30px; }
+.title { background: url(assets/header-strip.png) center / 100% 100%; display: flex; align-items: center; padding: 0 12px; gap: 16px; }
+.title img { height: 50px; filter: drop-shadow(0 0 6px rgba(159, 180, 204, .45)); }
+.title .wid { font-size: 12px; color: #cfe4ff; }
+.title .btns { margin-left: auto; display: flex; gap: 6px; }
+.title .btns i { width: 28px; height: 24px; border-radius: 4px; border: 1px solid #8a929b; background: linear-gradient(#fff, #e4e8ed 45%, #c0c7cf); display: block; }
+.title .btns i.x { background: linear-gradient(#ffb0a4, #d8574a 48%, #a93023); border-color: #7a2016; color: #fff5f2; font: bold 12px Tahoma; text-align: center; line-height: 22px; font-style: normal; }
+.body { display: grid; grid-template-columns: 214px 1fr; min-height: 0; }
+.side { position: relative; background: linear-gradient(100deg, #f4f6f8, #dfe4ea 52%, #c7cdd5); border-right: 1px solid #9ea6af; padding: 14px 11px; display: flex; flex-direction: column; }
+.side::before { content: ""; position: absolute; inset: 0; background: url(assets/sidebar-tile.png); opacity: .35; pointer-events: none; }
+.side > * { position: relative; }
+.lbl { font-size: 11px; font-weight: bold; color: #6b737d; letter-spacing: .06em; text-transform: uppercase; }
+.nav { list-style: none; margin: 8px 0 0; }
+.nav li { display: flex; align-items: center; gap: 9px; height: 34px; padding: 0 10px; margin-bottom: 5px; border-radius: 6px; font-size: 13px; font-weight: bold; color: #2c3238;
+    background: linear-gradient(#fdfdfe, #eceff3 50%, #dbe0e6); border: 1px solid #b3bac2; box-shadow: 0 1px 2px rgba(0, 0, 0, .12); }
+.nav li b { width: 18px; height: 18px; border-radius: 4px; flex: none; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; color: #3a2c07;
+    background: linear-gradient(#f4e2ab, #c0952c); border: 1px solid #9d7a1c; }
+.nav li.on { background: linear-gradient(#fffbee, #f3e0a7 20%, #e0bd5c 60%, #c8a039); border-color: #9d7a1c; color: #3a2c07; }
+.nav li.on b { background: #3a2c07; color: #ffd77a; border-color: #3a2c07; }
+.chrome { position: relative; background: linear-gradient(#fcfdfe, #e3e8ed 46%, #c7ced6); border: 1px solid #969ea8; border-radius: 9px; padding: 14px; box-shadow: 0 2px 4px rgba(0, 0, 0, .22); }
+.lcd { position: relative; background: linear-gradient(#11161b, #1e252c); border: 1px solid #79818a; border-radius: 7px; padding: 10px 12px; box-shadow: 0 1px 5px rgba(0, 0, 0, .3); color: #cfe4ff; }
+.lcd .l { font-size: 10.5px; color: #8c98a4; letter-spacing: .08em; text-transform: uppercase; }
+.mono { font-family: ShareTech, Consolas, monospace; }
+.gold { color: #ffd77a; text-shadow: 0 0 14px rgba(255, 190, 70, .6); }
+.blue { color: #cfe4ff; }
+.green { color: #7fe07a; }
+.orange { color: #ffae6a; }
+.dim { color: #6b7783; }
+.ink { color: #262b31; }
+.muted { color: #6b737d; font-size: 12px; }
+.red { color: #c2542f; }
+.goldtxt { color: #8a6a1a; }
+.led { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #7fe07a; box-shadow: 0 0 8px #7fe07a; margin-right: 7px; vertical-align: 1px; }
+.led.off { background: #5c646d; box-shadow: none; }
+.bar { height: 10px; border-radius: 4px; background: linear-gradient(#0e1114, #22282e); border: 1px solid #7c848d; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: linear-gradient(#bdf7a6, #3fae3a); }
+.bar.g > i { background: linear-gradient(#ffeaa9, #d8a62f 55%, #a87c18); }
+.bar.o > i { background: linear-gradient(#ffd7b0, #d9772a); }
+.btn { display: inline-flex; align-items: center; justify-content: center; height: 32px; padding: 0 16px; border-radius: 6px; font-weight: bold; font-size: 12.5px; color: #2c3238;
+    background: linear-gradient(#fff, #e4e8ed 45%, #c0c7cf); border: 1px solid #8a929b; box-shadow: 0 1px 2px rgba(0, 0, 0, .18); }
+.btn.gold { color: #3a2c07; text-shadow: none; background: linear-gradient(#fffbee, #f4e2ab 18%, #e0bd5c 52%, #bd9229 80%, #a37c18); border-color: #8d6f18; }
+.tog { display: inline-block; width: 38px; height: 20px; border-radius: 10px; background: linear-gradient(#caa53a, #a4801a); position: relative; border: 1px solid #8d6f18; flex: none; }
+.tog::after { content: ""; position: absolute; right: 2px; top: 2px; width: 14px; height: 14px; border-radius: 50%; background: linear-gradient(#fff, #c0c7cf); }
+.tog.off { background: linear-gradient(#9aa3ad, #6e7680); border-color: #6b737c; }
+.tog.off::after { right: auto; left: 2px; }
+.screw { position: absolute; width: 13px; height: 13px; background: url(assets/panel-screw.png) center / cover; opacity: .55; }
+.foot { background: url(assets/footer-strip.png) center / 100% 100%; display: flex; align-items: center; padding: 0 12px; gap: 14px; font-size: 11.5px; color: #c9d1da; font-weight: bold; }
+.foot span + span { border-left: 1px solid #6b737c; padding-left: 14px; font-weight: normal; }
+.foot .r { margin-left: auto; font-weight: normal; }
+.content { background: linear-gradient(#eef1f4, #dee3e9 72%, #ced5dc); padding: 16px 18px; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+.h { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; }
+.h h1 { font-size: 20px; color: #262b31; }
+.h p { font-size: 12px; color: #6b737d; }

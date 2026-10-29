@@ -1,0 +1,85 @@
+<!doctype html>
+<!-- SmsChecker จัดการออเดอร์ (ui/orders/OrdersScreen.kt): header tone navy, the chrome segmented control
+     (รอ / อนุมัติ / ทั้งหมด), order cards with the status chip, the site the bill came from, the unique-decimal amount
+     and อนุมัติ / ✕. Strings are the app's own (AppStrings.kt); customers, sites and amounts are made up. -->
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .appbar .tools { display: flex; gap: 8px; }
+    .appbar .tools span { width: 36px; height: 36px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, .18); border: 1px solid rgba(255, 255, 255, .35); }
+    .appbar .tools svg { width: 18px; height: 18px; color: #fff; }
+    .seg { margin: 0 16px 12px; }
+    .card { margin: 0 16px 12px; padding: 16px; border-radius: 20px; }
+    .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .head .no { font-size: 11.5px; color: var(--ink-faint); }
+    .head .who { font-size: 15px; font-weight: 600; color: var(--ink); line-height: 1.3; }
+    .head .chips { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+    .site { display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; font-size: 11.5px; font-weight: 600; color: #114a55; }
+    .site i { width: 7px; height: 7px; border-radius: 50%; background: var(--aqua); }
+    .prod { margin-top: 4px; font-size: 11.5px; color: var(--ink-soft); }
+    .amtrow { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 10px; }
+    .amtrow p { font-size: 11px; color: var(--ink-faint); }
+    .amtrow b { font-size: 26px; font-weight: 900; color: var(--navy-deep); letter-spacing: -.4px; }
+    .amtrow b em { font-style: normal; color: var(--green); }
+    .acts { display: flex; gap: 8px; margin-top: 12px; }
+    .acts .gbtn.green { flex: 1; height: 38px; }
+    .acts .gbtn.ghost { width: 46px; height: 38px; padding: 0; }
+</style></head>
+<body><div class="phone t-navy">
+    <div class="sb">09:41<span class="r"><b></b><i></i></span></div>
+    <div class="appbar">
+        <div><h1>จัดการออเดอร์</h1><p>2 รายการรอการอนุมัติ</p></div>
+        <div class="tools">
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6"/></svg></span>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg></span>
+        </div>
+    </div>
+    <div class="seg"><span class="on">รอ 2</span><span>อนุมัติ</span><span>ทั้งหมด</span></div>
+
+    <div class="glass card">
+        <div class="head">
+            <div><p class="no">ออเดอร์ #A-10482</p><p class="who">สมหญิง ใจดี</p></div>
+            <div class="chips"><span class="chip amber">รอจับคู่</span></div>
+        </div>
+        <span class="site"><i></i>shop.example.com</span>
+        <p class="prod">เสื้อยืดลายแมว x2</p>
+        <div class="amtrow">
+            <div><p>ยอดที่ต้องโอน (เลขทศนิยมเฉพาะ)</p><b class="num">฿1,250<em>.37</em></b></div>
+            <span class="coin kbank">K</span>
+        </div>
+        <div class="acts"><span class="gbtn green">✓ อนุมัติ</span><span class="gbtn ghost">✕</span></div>
+    </div>
+
+    <div class="glass card">
+        <div class="head">
+            <div><p class="no">ออเดอร์ #B-2207</p><p class="who">ร้านต้นกล้า</p></div>
+            <div class="chips"><span class="chip amber">รอจับคู่</span></div>
+        </div>
+        <span class="site"><i></i>store.example.net</span>
+        <p class="prod">แพ็กเกจรายเดือน x1</p>
+        <div class="amtrow">
+            <div><p>ยอดที่ต้องโอน (เลขทศนิยมเฉพาะ)</p><b class="num">฿499<em>.08</em></b></div>
+            <span class="coin scb">SCB</span>
+        </div>
+        <div class="acts"><span class="gbtn green">✓ อนุมัติ</span><span class="gbtn ghost">✕</span></div>
+    </div>
+
+    <div class="glass card">
+        <div class="head">
+            <div><p class="no">ออเดอร์ #A-10479</p><p class="who">มานพ รักดี</p></div>
+            <div class="chips"><span class="chip green">จับคู่แล้ว</span><span class="chip aqua">อนุมัติผ่าน SMS</span></div>
+        </div>
+        <span class="site"><i></i>shop.example.com</span>
+        <div class="amtrow">
+            <div><p>ได้รับเมื่อ 09:21</p><b class="num">฿890<em>.12</em></b></div>
+            <span class="coin scb">SCB</span>
+        </div>
+    </div>
+
+    <div class="glass nav">
+        <a><i><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 0h8v8h-8z"/></svg></i>หน้าหลัก</a>
+        <a class="on"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h2m3 0h5M7 13h2m3 0h5M7 17h2m3 0h5"/></svg></i>ออเดอร์<b>2</b></a>
+        <a><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M8 4v15m0 0-4-4m4 4 4-4M16 20V5m0 0-4 4m4-4 4 4"/></svg></i>รายการ</a>
+        <a><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 5h16v11H8l-4 4z"/></svg></i>ข้อความ</a>
+        <a><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 7h10m4 0h2M4 17h4m4 0h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></i>ตั้งค่า</a>
+    </div>
+</div></body></html>

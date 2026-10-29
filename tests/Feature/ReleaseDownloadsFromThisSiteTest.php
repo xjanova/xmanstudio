@@ -96,7 +96,10 @@ class ReleaseDownloadsFromThisSiteTest extends TestCase
 
     public function test_the_cluadex_pages_link_to_this_site_and_never_to_github(): void
     {
-        foreach (['/cluadex', '/cluadex/pricing'] as $page) {
+        $this->product('cluadex-ai-coding-assistant');
+        $this->get('/cluadex')->assertRedirect(route('products.show', 'cluadex-ai-coding-assistant'));
+
+        foreach (['/products/cluadex-ai-coding-assistant', '/cluadex/pricing'] as $page) {
             $html = $this->get($page)->assertOk()->getContent();
 
             $this->assertStringNotContainsStringIgnoringCase('github.com/xjanova', $html, $page);

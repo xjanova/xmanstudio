@@ -91,3 +91,6 @@ create_personal_access_tokens.sql
 /storage/fonts/*_*.ufm
 /storage/fonts/*_*.ufm.json
 /storage/fonts/*_*.ttf
+
+# product page screen renders (scripts/product-mockups/build.py)
+/scripts/product-mockups/.render/

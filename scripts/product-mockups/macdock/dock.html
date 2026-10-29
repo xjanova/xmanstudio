@@ -1,0 +1,37 @@
+<!doctype html>
+<!-- Hero: the dock on its default edge (Settings.cs: Edge = Top), desktop icons and the taskbar hidden
+     (HideDesktopIcons / HideTaskbar default on), running apps first with the blue dot, then the pinned items
+     and their categories, the pointer on one icon. Icon size "Large" (72) from the dock's own menu.
+     The clock is a crop of a real capture; the window behind is a generic block drawing. -->
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .clock { position: absolute; z-index: 2; right: 96px; bottom: 96px; width: 230px; filter: drop-shadow(0 18px 30px rgba(0, 0, 0, .55)); }
+</style></head>
+<body>
+<div class="app" style="left: 120px; top: 190px; width: 860px; height: 600px;">
+    <div class="tb"><i></i><i></i><i></i></div>
+    <div class="side" id="side"></div>
+    <div class="body" id="code"></div>
+</div>
+<img class="clock" src="assets/clock-analog.png" alt="">
+<script src="dock.js"></script>
+<script>
+(function () {
+    var side = document.getElementById('side'), code = document.getElementById('code');
+    [70, 55, 82, 60, 48, 75, 66, 52, 80, 58].forEach(function (w) { side.insertAdjacentHTML('beforeend', '<div class="ln" style="width:' + w + '%"></div>'); });
+    var cols = ['#a78bfa', '#7dd3fc', '#86efac', '#fda4af', '#fcd34d', 'rgba(255,255,255,.18)'];
+    for (var i = 0; i < 26; i++) {
+        var ind = [0, 24, 48, 24, 48, 72, 48, 24][i % 8], w = 120 + ((i * 97) % 340);
+        code.insertAdjacentHTML('beforeend', '<div class="ln" style="margin-left:' + ind + 'px;width:' + w + 'px;background:' + cols[(i * 5) % cols.length] + ';opacity:.55"></div>');
+    }
+})();
+MacDock.dock({ edge: 'top', size: 72, hover: 7, items: [
+    { g: 'browser', name: 'Web Browser', run: true }, { g: 'code', name: 'Code Editor', run: true }, { g: 'music', name: 'Music Player', run: true },
+    '|',
+    { g: 'folder', name: 'Documents' },
+    { hdr: 'งานเอกสาร' }, { g: 'notes', name: 'Notes' }, { g: 'sheet', name: 'Spreadsheet' }, { g: 'slides', name: 'Slides' },
+    { hdr: 'เกม', col: true },
+    { hdr: 'เครื่องมือ' }, { g: 'calc', name: 'Calculator' }, { g: 'gear', name: 'Settings' },
+] });
+</script>
+</body></html>

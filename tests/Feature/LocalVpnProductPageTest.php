@@ -186,7 +186,9 @@ class LocalVpnProductPageTest extends TestCase
 
         // meta and social preview
         $this->assertStringContainsString('<link rel="canonical" href="' . url('/products/localvpn') . '"', $html);
-        $this->assertStringContainsString(asset('images/products/localvpn/og.jpg'), $html);
+        // the v2 social card once the key art is built (scripts/product-mockups/build.py localvpn), the old one until then
+        $og = is_file(public_path('images/products/localvpn/v2/og.jpg')) ? 'images/products/localvpn/v2/og.jpg' : 'images/products/localvpn/og.jpg';
+        $this->assertStringContainsString('<meta property="og:image" content="' . asset($og) . '"', $html);
         $this->assertStringContainsString('"@type":"SoftwareApplication"', $html);
 
         // a guest sees no "my keys" link
@@ -253,6 +255,46 @@ class LocalVpnProductPageTest extends TestCase
         $this->get(route('localvpn.pricing'))->assertOk()->assertSee(route('products.show', 'localvpn'), false);
     }
 
+    public function test_windows_is_offered_only_when_the_release_carries_the_installer(): void
+    {
+        // production's release v1.0.39 has the APK only: a Windows button there would land on an error
+        $version = ProductVersion::create([
+            'product_id' => $this->product->id,
+            'version' => '1.0.39',
+            'download_filename' => 'LocalVPN-v1.0.39.apk',
+            'assets' => [['name' => 'LocalVPN-v1.0.39.apk', 'size' => 100, 'sha256' => str_repeat('a', 64), 'download_url' => 'https://example.com/a.apk', 'api_url' => null]],
+            'is_active' => true,
+        ]);
+        $windows = Route::has('localvpn.download.windows') ? route('localvpn.download.windows') : route('localvpn.download');
+
+        $html = $this->get('/products/localvpn')->assertOk()->getContent();
+        $this->assertSame(0, substr_count($html, 'href="' . $windows . '"'));
+        $this->assertSame(4, substr_count($html, 'href="' . route('localvpn.download.apk') . '"'));
+        $this->assertStringContainsString('data-windows-pending', $html);
+        $this->assertStringNotContainsString('data-coming-soon', $html);
+
+        // the next release with LocalVPN-Setup-v{X}.exe: the four Windows buttons come back
+        $version->update(['assets' => array_merge($version->assets, [
+            ['name' => 'LocalVPN-Setup-v1.0.39.exe', 'size' => 100, 'sha256' => str_repeat('b', 64), 'download_url' => 'https://example.com/s.exe', 'api_url' => null],
+        ])]);
+
+        $html = $this->get('/products/localvpn')->assertOk()->getContent();
+        $this->assertSame(4, substr_count($html, 'href="' . $windows . '"'));
+        $this->assertStringNotContainsString('data-windows-pending', $html);
+    }
+
+    public function test_the_page_names_only_what_the_app_and_server_enforce(): void
+    {
+        $html = $this->get('/products/localvpn')->assertOk()->getContent();
+
+        // free 5 per network, Pro 50 (LicenseState.maxNetworkMembers, LocalVpnRelayController::join), trial 30 days
+        foreach (['5 คนต่อวง', '50 คน', 'ทดลอง Pro ฟรี 30 วัน', 'X25519 + ChaCha20-Poly1305'] as $needle) {
+            $this->assertStringContainsString($needle, $html);
+        }
+        // there is no iOS app
+        $this->assertStringNotContainsString('App Store', $html);
+    }
+
     public function test_the_listing_card_shows_the_monthly_price_and_links_to_the_page(): void
     {
         $html = $this->get('/products')->assertOk()->getContent();
@@ -271,7 +313,7 @@ class LocalVpnProductPageTest extends TestCase
     /** the page's own markup, without the per-request CSRF tokens (random characters) */
     private function pageBody(string $html): string
     {
-        $start = strpos($html, '<div class="lvp ');
+        $start = strpos($html, '<div class="xp ');
         $end = strpos($html, '</script>', strpos($html, 'application/ld+json'));
         $this->assertNotFalse($start);
         $this->assertNotFalse($end);

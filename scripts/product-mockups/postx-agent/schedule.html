@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    /* Views/Pages/SchedulerPage.xaml: a date picker and the Draft list on the left, the chosen day's posts on the right,
+       and the "ตั้งเวลาโพสต์" dialog (date + hour : minute). SchedulerService checks the queue every minute. */
+    .cols { display: grid; grid-template-columns: 360px 1fr; gap: 16px; }
+    .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 10px; text-align: center; font-size: 12.5px; }
+    .cal b { font-weight: 600; color: var(--t3); font-size: 11px; padding: 4px 0; }
+    .cal span { height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; color: #d4d4d8; position: relative; }
+    .cal span.o { color: #3f3f46; }
+    .cal span.d::after { content: ""; position: absolute; bottom: 4px; width: 4px; height: 4px; border-radius: 2px; background: #8B5CF6; }
+    .cal span.on { background: linear-gradient(135deg, #8B5CF6, #EC4899); color: #fff; font-weight: 700; }
+    .dr { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: var(--bg3); margin-top: 8px; }
+    .dr b { display: block; font-size: 13px; font-weight: 600; } .dr small { font-size: 11px; color: var(--t3); }
+    .dr .go { margin-left: auto; font-size: 12px; color: #c4b5fd; }
+    .slot { display: grid; grid-template-columns: 70px 1fr; gap: 14px; align-items: stretch; margin-top: 12px; }
+    .slot .t { text-align: right; font-family: "Segoe UI", sans-serif; font-size: 22px; font-weight: 700; padding-top: 10px; }
+    .slot .t small { font-size: 11px; color: var(--t3); font-weight: 500; }
+    .slot .p { border-radius: 14px; background: var(--bg2); border: 1px solid rgba(255, 255, 255, .06); border-left: 3px solid #8B5CF6; padding: 12px 16px; display: flex; align-items: center; gap: 14px; }
+    .slot .p.done { border-left-color: #10B981; opacity: .8; }
+    .slot .p b { display: block; font-size: 14px; } .slot .p small { display: block; font-size: 12px; color: var(--t3); margin-top: 3px; }
+    .slot .p .tag { margin-left: auto; }
+    .dlg { position: absolute; right: 26px; bottom: 26px; width: 380px; border-radius: 18px; background: #1b1b26; border: 1px solid rgba(139, 92, 246, .5); box-shadow: 0 30px 70px -10px rgba(0, 0, 0, .8), 0 0 40px -10px rgba(139, 92, 246, .5); padding: 20px; }
+    .dlg h3 { font-size: 18px; font-weight: 700; }
+    .hm { display: grid; grid-template-columns: 1fr 20px 1fr; align-items: center; margin-top: 6px; }
+    .hm .field { justify-content: center; font-size: 22px; font-weight: 700; height: 52px; }
+</style></head>
+<body data-on="schedule">
+<div class="main">
+    <div class="hd">
+        <div><h1>Scheduler</h1><p>ตั้งเวลาโพสต์อัตโนมัติ</p></div>
+        <div class="act"><span class="btn">↻ รีเฟรช</span></div>
+    </div>
+    <div class="cols">
+        <div style="display:flex;flex-direction:column;gap:16px">
+            <div class="card">
+                <h2>เลือกวันที่ <small>พฤศจิกายน</small></h2>
+                <div class="cal">
+                    <b>อา</b><b>จ</b><b>อ</b><b>พ</b><b>พฤ</b><b>ศ</b><b>ส</b>
+                    <span>1</span><span>2</span><span class="d">3</span><span class="d">4</span><span class="d on">5</span><span class="d">6</span><span>7</span>
+                    <span>8</span><span class="d">9</span><span>10</span><span class="d">11</span><span>12</span><span class="d">13</span><span>14</span>
+                    <span>15</span><span>16</span><span>17</span><span>18</span><span>19</span><span>20</span><span>21</span>
+                    <span>22</span><span>23</span><span>24</span><span>25</span><span>26</span><span>27</span><span>28</span>
+                    <span>29</span><span>30</span><span class="o">1</span><span class="o">2</span><span class="o">3</span><span class="o">4</span><span class="o">5</span>
+                </div>
+            </div>
+            <div class="card">
+                <h2>โพสต์ Draft <small>3</small></h2>
+                <div class="dr"><span class="pf fb">f</span><span><b>โปรสมาชิก วันศุกร์</b><small>Facebook - ร้านขนมตัวอย่าง</small></span><span class="go">ตั้งเวลา →</span></div>
+                <div class="dr"><span class="pf ig">◎</span><span><b>เบื้องหลังการคั่วเมล็ด</b><small>Instagram - @example.cafe</small></span><span class="go">ตั้งเวลา →</span></div>
+                <div class="dr"><span class="pf fb">f</span><span><b>ชวนรีวิว รับส่วนลด</b><small>Facebook - ร้านกาแฟตัวอย่าง</small></span><span class="go">ตั้งเวลา →</span></div>
+            </div>
+        </div>
+        <div class="card">
+            <h2>5 พฤศจิกายน · 5 โพสต์</h2>
+            <div class="slot"><div class="t">09:00<br><small>น.</small></div><div class="p done"><span class="pf fb">f</span><span><b>เปิดร้านใหม่ ลด 50% ทั้งเมนู ☕</b><small>Facebook - ร้านกาแฟตัวอย่าง</small></span><span class="tag t-gr">Published</span></div></div>
+            <div class="slot"><div class="t">10:30<br><small>น.</small></div><div class="p done"><span class="pf ig">◎</span><span><b>เมนูใหม่ประจำฤดูฝน</b><small>Instagram - @example.cafe · รูป 1 รูป</small></span><span class="tag t-gr">Published</span></div></div>
+            <div class="slot"><div class="t">12:15<br><small>น.</small></div><div class="p"><span class="pf fb">f</span><span><b>เซ็ตอาหารกลางวัน + กาแฟ</b><small>Facebook - ร้านขนมตัวอย่าง</small></span><span class="tag t-pu">Scheduled</span></div></div>
+            <div class="slot"><div class="t">18:00<br><small>น.</small></div><div class="p"><span class="pf fb">f</span><span><b>รีวิวจากลูกค้า สัปดาห์นี้</b><small>Facebook - ร้านกาแฟตัวอย่าง</small></span><span class="tag t-pu">Scheduled</span></div></div>
+            <div class="slot"><div class="t">20:00<br><small>น.</small></div><div class="p"><span class="pf ig">◎</span><span><b>Tips ชงกาแฟดริปที่บ้าน</b><small>Instagram - @example.cafe · รูป 1 รูป</small></span><span class="tag t-pu">Scheduled</span></div></div>
+        </div>
+    </div>
+    <div class="dlg">
+        <h3>◷ ตั้งเวลาโพสต์</h3>
+        <p class="sub" style="margin-bottom:12px">โปรสมาชิก วันศุกร์ · Facebook</p>
+        <span class="lbl">วันที่</span><span class="field dd">07/11/2026</span>
+        <span class="lbl" style="margin-top:12px">เวลา</span>
+        <div class="hm"><span class="field">19</span><b style="text-align:center;font-size:20px">:</b><span class="field">30</span></div>
+        <div style="display:flex;gap:10px;margin-top:16px"><span class="btn" style="flex:1;justify-content:center">ยกเลิก</span><span class="btn rgb" style="flex:1;justify-content:center">ตั้งเวลา</span></div>
+    </div>
+</div>
+<script src="chrome.js"></script>
+</body></html>

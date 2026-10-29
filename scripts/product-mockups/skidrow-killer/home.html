@@ -1,0 +1,76 @@
+<!doctype html>
+<!-- Home (Views/HomeView.xaml): radar ring + protection status, four stat cards, the three actions, Engine Self-Test.
+     Self-test names are SelfTestService's own. Numbers are made up. -->
+<html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .hero { display: flex; align-items: center; gap: 28px; padding: 24px; border-radius: 12px; margin-bottom: 20px; }
+    .ring { width: 180px; height: 180px; position: relative; flex: none; }
+    .ring i { position: absolute; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .08); }
+    .ring .r1 { inset: 0; border: 2px solid var(--border); }
+    .ring .r2 { inset: 21px; } .ring .r3 { inset: 42px; }
+    .ring .sweep { inset: 0; border: 5px solid transparent; border-top-color: #29b6f6; border-right-color: #66bb6a; transform: rotate(-20deg);
+        -webkit-mask: conic-gradient(#000 0 24%, transparent 0); mask: conic-gradient(#000 0 24%, transparent 0); filter: drop-shadow(0 0 10px #29b6f6); }
+    .ring svg { position: absolute; left: 50%; top: 50%; width: 60px; height: 60px; transform: translate(-50%, -50%); filter: drop-shadow(0 0 12px rgba(41, 182, 246, .6)); }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+    .acts { display: flex; gap: 12px; margin-bottom: 20px; }
+    .st { display: flex; align-items: center; justify-content: space-between; background: var(--bg3); border-radius: 4px; padding: 8px 12px; margin-bottom: 6px; }
+    .st .pass { background: #2e7d32; color: #fff; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 3px; }
+    .cols { display: grid; grid-template-columns: 1fr 1fr; column-gap: 10px; }
+</style></head>
+<body data-on="home" data-msg="Threat Intel updated: +3,214 hashes">
+<div class="main">
+    <div class="card hero">
+        <div class="ring">
+            <i class="r1"></i><i class="r2"></i><i class="r3"></i><i class="sweep"></i>
+            <svg viewBox="0 0 24 24"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#81d4fa"/><stop offset="1" stop-color="#66bb6a"/></linearGradient></defs>
+                <path fill="url(#g)" d="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1M12,7L13.5,10.5L17,11L13.5,11.5L12,15L10.5,11.5L7,11L10.5,10.5L12,7Z"/></svg>
+        </div>
+        <div>
+            <div style="font-size:26px;font-weight:700">Skidrow Killer</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:8px"><span style="width:12px;height:12px;border-radius:50%;background:var(--ok)"></span><span class="ok" style="font-size:18px;font-weight:600">Protected</span></div>
+            <div class="t2" style="margin-top:6px">Real-time protection and the multi-layer engine are active.</div>
+            <div class="t3" style="font-size:12px;margin-top:6px">Last scan: 28/10/2026 21:14</div>
+        </div>
+    </div>
+
+    <div class="stats">
+        <div class="card"><div class="lbl">Threats Detected</div><div class="num bad" style="margin-top:4px">4</div></div>
+        <div class="card"><div class="lbl">Scans Run</div><div class="num acc" style="margin-top:4px">37</div></div>
+        <div class="card"><div class="lbl">In Quarantine</div><div class="num warn" style="margin-top:4px">3</div></div>
+        <div class="card"><div class="lbl">Threat-Intel IOCs</div><div class="num cy" style="margin-top:4px">412,806</div></div>
+    </div>
+
+    <div class="acts">
+        <span class="btn pri" style="width:150px">Quick Scan</span>
+        <span class="btn sec" style="width:150px">Run Self-Test</span>
+        <span class="btn sec" style="width:170px">Update Intelligence</span>
+    </div>
+
+    <div class="card">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px"><span class="h2">Engine Self-Test</span><span class="t3" style="font-size:12px">19/19 checks passed</span></div>
+        <div class="cols">
+            <div>
+                <div class="st"><span>Detect by filename (.crack)</span><span class="pass">PASS</span></div>
+                <div class="st"><span>Detect by scene-group name pattern</span><span class="pass">PASS</span></div>
+                <div class="st"><span>Detect by content hash (innocent filename)</span><span class="pass">PASS</span></div>
+                <div class="st"><span>Detect hidden ADS executable stream</span><span class="pass">PASS</span></div>
+                <div class="st"><span>Detect anti-recovery command in file content</span><span class="pass">PASS</span></div>
+                <div class="st"><span>No false positive on a benign file</span><span class="pass">PASS</span></div>
+                <div class="st"><span>Full scan finds the hash-matched file</span><span class="pass">PASS</span></div>
+                <div class="st"><span>Remove wipes the file from disk</span><span class="pass">PASS</span></div>
+            </div>
+            <div>
+                <div class="st"><span>Removal takes a restorable backup first</span><span class="pass">PASS</span></div>
+                <div class="st"><span>Kill a running sample and wipe its image</span><span class="pass">PASS</span></div>
+                <div class="st"><span>Autorun entry pointing at the sample is removed</span><span class="pass">PASS</span></div>
+                <div class="st"><span>Removal reports failure honestly</span><span class="pass">PASS</span></div>
+                <div class="st"><span>Learns from confirmed removals</span><span class="pass">PASS</span></div>
+                <div class="st"><span>Learns from 'this is safe' feedback</span><span class="pass">PASS</span></div>
+                <div class="st"><span>Quarantine isolates, encrypts and restores</span><span class="pass">PASS</span></div>
+                <div class="st"><span>Virus hash library reached the engine</span><span class="pass">PASS</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="chrome.js"></script>
+</body></html>

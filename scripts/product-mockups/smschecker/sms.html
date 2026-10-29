@@ -1,0 +1,59 @@
+<!doctype html>
+<!-- SmsChecker ข้อความ SMS (ui/smshistory/SmsHistoryScreen.kt): header tone aqua, the "สด" chip, the
+     ทั้งหมด / เงินเข้า / เงินออก segmented control, message cards with the green/chrome stripe, bank coin,
+     จับคู่ / เงินออก chip, the site chip (SiteAttributionChip) and the raw message.
+     Strings are the app's own; every message, account and site is made up. -->
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .seg { margin: 0 16px 12px; }
+    .msg { margin: 0 16px 10px; border-radius: 16px; display: flex; }
+    .msg .st { width: 4px; flex: none; background: var(--green-lo); }
+    .msg.out .st { background: #a7b2bd; }
+    .msg .c { flex: 1; padding: 12px 15px 12px 13px; }
+    .msg .top { display: flex; align-items: center; gap: 9px; }
+    .msg .coin { width: 34px; height: 34px; font-size: 10.5px; }
+    .msg .top div { flex: 1; min-width: 0; }
+    .msg .top p { font-size: 13px; font-weight: 700; color: var(--navy-deep); }
+    .msg .top div span { font: 10.5px Consolas, monospace; color: var(--ink-faint); }
+    .msg .site { display: inline-flex; align-items: center; gap: 5px; margin-top: 8px; padding: 2px 8px; border-radius: 99px; font-size: 10.5px; font-weight: 700; color: #114a55; background: linear-gradient(180deg, #cfeaf1, #b2dce7); }
+    .msg .raw { margin-top: 8px; font-size: 12.5px; line-height: 1.5; color: var(--ink-soft); }
+</style></head>
+<body><div class="phone t-aqua">
+    <div class="sb">09:41<span class="r"><b></b><i></i></span></div>
+    <div class="appbar">
+        <div><h1>ข้อความ SMS</h1><p>128 ข้อความล่าสุด · ซิงค์แล้ว</p></div>
+        <span class="chip on-dark">● สด</span>
+    </div>
+    <div class="seg"><span class="on">ทั้งหมด</span><span>เงินเข้า</span><span>เงินออก</span></div>
+
+    <div class="glass msg"><span class="st"></span><div class="c">
+        <div class="top"><span class="coin kbank">K</span><div><p>KBANK</p><span>09:38 · KBANK-NOTIF</span></div><span class="chip green">✓ จับคู่</span></div>
+        <span class="site">● shop.example.com</span>
+        <p class="raw">เงินเข้า 1,250.37 บ. เข้าบัญชี x4821 จาก นาง สมหญิง ใ.</p>
+    </div></div>
+
+    <div class="glass msg"><span class="st"></span><div class="c">
+        <div class="top"><span class="coin scb">SCB</span><div><p>SCB</p><span>09:21 · SCBeasy</span></div><span class="chip green">✓ จับคู่</span></div>
+        <span class="site">● shop.example.com</span>
+        <p class="raw">มีเงินโอนเข้า 890.12 บาท เข้าบัญชี x4821 คงเหลือ 25,410.63 บ.</p>
+    </div></div>
+
+    <div class="glass msg out"><span class="st"></span><div class="c">
+        <div class="top"><span class="coin ktb">KTB</span><div><p>KTB</p><span>08:55 · Krungthai</span></div><span class="chip red">↓ เงินออก</span></div>
+        <p class="raw">โอนเงินออก 3,000.00 บาท จากบัญชี x7710 ไปยัง ร้านวัสดุ (ตัวอย่าง)</p>
+    </div></div>
+
+    <div class="glass msg"><span class="st"></span><div class="c">
+        <div class="top"><span class="coin pp">PP</span><div><p>PROMPTPAY</p><span>08:12 · PromptPay</span></div><span class="chip green">✓ จับคู่</span></div>
+        <span class="site">● store.example.net</span>
+        <p class="raw">รับโอนพร้อมเพย์ 499.08 บาท เข้าบัญชี x4821</p>
+    </div></div>
+
+    <div class="glass nav">
+        <a><i><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 0h8v8h-8z"/></svg></i>หน้าหลัก</a>
+        <a><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h2m3 0h5M7 13h2m3 0h5M7 17h2m3 0h5"/></svg></i>ออเดอร์<b>2</b></a>
+        <a><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M8 4v15m0 0-4-4m4 4 4-4M16 20V5m0 0-4 4m4-4 4 4"/></svg></i>รายการ</a>
+        <a class="on"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 5h16v11H8l-4 4z"/></svg></i>ข้อความ</a>
+        <a><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 7h10m4 0h2M4 17h4m4 0h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></i>ตั้งค่า</a>
+    </div>
+</div></body></html>
