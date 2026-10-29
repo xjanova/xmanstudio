@@ -9,6 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -44,7 +45,7 @@ class AdminPanelThemeTest extends TestCase
         ));
     }
 
-    /** @dataProvider siteThemes */
+    #[DataProvider('siteThemes')]
     public function test_the_admin_panel_is_classic_by_default_whatever_the_site_theme(string $siteTheme): void
     {
         ThemeService::setTheme($siteTheme);

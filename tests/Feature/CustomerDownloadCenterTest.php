@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -78,7 +79,7 @@ class CustomerDownloadCenterTest extends TestCase
         ];
     }
 
-    /** @dataProvider appDownloads */
+    #[DataProvider('appDownloads')]
     public function test_an_app_card_links_to_that_apps_own_download_on_this_site(string $slug, string $path): void
     {
         $user = User::factory()->create();
@@ -209,7 +210,7 @@ class CustomerDownloadCenterTest extends TestCase
         ];
     }
 
-    /** @dataProvider appPlatforms */
+    #[DataProvider('appPlatforms')]
     public function test_an_app_card_shows_its_real_version_and_what_it_runs_on(string $slug, string $platform): void
     {
         $user = User::factory()->create();
@@ -285,7 +286,7 @@ class CustomerDownloadCenterTest extends TestCase
         ];
     }
 
-    /** @dataProvider cardsThatKnowLess */
+    #[DataProvider('cardsThatKnowLess')]
     public function test_a_card_leaves_out_what_this_site_does_not_know(string $slug, ?string $version, ?string $platform): void
     {
         $user = User::factory()->create();

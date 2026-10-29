@@ -3,6 +3,7 @@
 namespace Tests\Unit\Rules;
 
 use App\Rules\NoMaliciousUrls;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class NoMaliciousUrlsTest extends TestCase
@@ -15,7 +16,7 @@ class NoMaliciousUrlsTest extends TestCase
         $this->rule = new NoMaliciousUrls;
     }
 
-    /** @test */
+    #[Test]
     public function it_passes_for_valid_http_urls()
     {
         $validUrls = [
@@ -36,7 +37,7 @@ class NoMaliciousUrlsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_passes_for_non_url_strings()
     {
         $nonUrls = [
@@ -55,7 +56,7 @@ class NoMaliciousUrlsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_javascript_protocol()
     {
         $maliciousUrls = [
@@ -74,7 +75,7 @@ class NoMaliciousUrlsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_data_protocol()
     {
         $maliciousUrls = [
@@ -93,7 +94,7 @@ class NoMaliciousUrlsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_vbscript_protocol()
     {
         $maliciousUrls = [
@@ -111,7 +112,7 @@ class NoMaliciousUrlsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_file_protocol()
     {
         $maliciousUrls = [
@@ -130,7 +131,7 @@ class NoMaliciousUrlsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_about_protocol()
     {
         $maliciousUrls = [
@@ -148,7 +149,7 @@ class NoMaliciousUrlsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_localhost_by_default()
     {
         $localhostUrls = [
@@ -170,7 +171,7 @@ class NoMaliciousUrlsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_localhost_when_configured()
     {
         $rule = new NoMaliciousUrls(true); // Allow localhost
@@ -191,7 +192,7 @@ class NoMaliciousUrlsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_private_ip_ranges()
     {
         $privateIps = [
@@ -211,7 +212,7 @@ class NoMaliciousUrlsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_link_local_addresses()
     {
         $linkLocalUrls = [
@@ -230,7 +231,7 @@ class NoMaliciousUrlsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_url_shorteners()
     {
         $shortenerUrls = [
@@ -251,7 +252,7 @@ class NoMaliciousUrlsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_typosquatting_patterns()
     {
         $typosquattingUrls = [
@@ -270,7 +271,7 @@ class NoMaliciousUrlsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_multiple_at_symbols()
     {
         $maliciousUrls = [
@@ -288,7 +289,7 @@ class NoMaliciousUrlsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_excessive_url_encoding()
     {
         $maliciousUrls = [
@@ -306,7 +307,7 @@ class NoMaliciousUrlsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_html_entities_in_url()
     {
         $maliciousUrls = [
@@ -324,7 +325,7 @@ class NoMaliciousUrlsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_requires_http_or_https_scheme_for_full_urls()
     {
         $invalidSchemes = [
@@ -343,7 +344,7 @@ class NoMaliciousUrlsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_null_and_empty_values()
     {
         $values = [null, '', '   '];
@@ -358,7 +359,7 @@ class NoMaliciousUrlsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_non_string_values()
     {
         $values = [123, 45.67, true, false];
@@ -373,7 +374,7 @@ class NoMaliciousUrlsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_legitimate_urls_with_credentials()
     {
         $validUrls = [
@@ -392,7 +393,7 @@ class NoMaliciousUrlsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_public_ips()
     {
         $publicIps = [
@@ -411,7 +412,7 @@ class NoMaliciousUrlsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_international_domain_names()
     {
         $idn = 'https://例え.jp'; // Japanese IDN
@@ -424,7 +425,7 @@ class NoMaliciousUrlsTest extends TestCase
         $this->assertFalse($failed, 'International domain names should pass');
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_proper_error_message()
     {
         $message = $this->rule->message();
@@ -434,7 +435,7 @@ class NoMaliciousUrlsTest extends TestCase
         $this->assertStringContainsString(':attribute', $message);
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_contextual_error_in_fail_callback()
     {
         $capturedMessage = null;
@@ -447,7 +448,7 @@ class NoMaliciousUrlsTest extends TestCase
         $this->assertStringContainsString('callback_url', $capturedMessage);
     }
 
-    /** @test */
+    #[Test]
     public function it_protects_against_ssrf_via_aws_metadata_service()
     {
         $metadataUrls = [

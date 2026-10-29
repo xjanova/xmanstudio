@@ -95,9 +95,10 @@
 @if($seoSetting->structured_data)
 {!! $seoSetting->getStructuredData($orgLogo && array_key_exists('logo', $seoSetting->structured_data) ? ['logo' => $orgLogo] : null) !!}
 @else
+{{-- @@context: Laravel 12 has an @context directive, so the JSON key needs @@ to print as "@context" --}}
 <script type="application/ld+json">
 {
-    "@context": "https://schema.org",
+    "@@context": "https://schema.org",
     "@type": "Organization",
     "name": "{{ $seoSetting->site_name ?? 'XMAN Studio' }}",
     "url": "{{ url('/') }}",

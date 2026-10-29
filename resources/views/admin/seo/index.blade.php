@@ -330,7 +330,7 @@
 
             <textarea name="structured_data_json" rows="15"
                       class="w-full font-mono text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl p-4 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all"
-                      placeholder='{"@context": "https://schema.org", "@type": "Organization", "name": "XMAN Studio"}'>{{ old('structured_data_json', json_encode($setting->structured_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)) }}</textarea>
+                      placeholder='{"@@context": "https://schema.org", "@type": "Organization", "name": "XMAN Studio"}'>{{ old('structured_data_json', json_encode($setting->structured_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)) }}</textarea>
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">รูปแบบ JSON-LD สำหรับ Schema.org</p>
         </div>
 
