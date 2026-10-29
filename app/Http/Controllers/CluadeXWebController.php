@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ServesReleaseDownloads;
 use App\Models\Product;
-use App\Models\ProductVersion;
 use App\Support\LicensePlans;
 use Illuminate\Http\Request;
 
@@ -61,33 +60,11 @@ class CluadeXWebController extends Controller
     }
 
     /**
-     * Show CluadeX landing page
+     * The landing page is the product page — the app and old links still open /cluadex
      */
     public function detail()
     {
-        $product = Product::where('slug', 'like', '%cluadex%')->first();
-        $version = null;
-        $hasPurchased = false;
-
-        if ($product) {
-            $version = ProductVersion::where('product_id', $product->id)
-                ->where('is_active', true)
-                ->orderByDesc('version')
-                ->first();
-
-            if (auth()->check()) {
-                $hasPurchased = $product->orderItems()
-                    ->whereHas('order', fn ($q) => $q->where('user_id', auth()->id())->where('status', 'completed'))
-                    ->exists();
-            }
-        }
-
-        return view('cluadex.detail', [
-            'pricing' => self::pricedPlans(),
-            'product' => $product,
-            'version' => $version,
-            'hasPurchased' => $hasPurchased,
-        ]);
+        return redirect()->route('products.show', self::PRODUCT_SLUG);
     }
 
     /**

@@ -1,160 +1,151 @@
 @extends($publicLayout ?? 'layouts.app')
 
 @section('title', $service->name . ' - XMAN Studio')
+@section('meta_description', \Illuminate\Support\Str::limit($service->localized_description, 160))
 
 @section('content')
-<!-- Coming Soon Banner -->
-@if(method_exists($service, 'isComingSoon') && $service->isComingSoon())
-<div class="bg-orange-500 text-white py-3">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            <span class="font-semibold">Coming Soon!</span>
-            @if($service->coming_soon_until)
-                <span>- เปิดให้บริการวันที่ {{ $service->coming_soon_until->format('d/m/Y H:i') }}</span>
+@php
+    // ทุกอย่างมาจากแถวในตาราง services ที่แอดมินตั้ง (ชื่อ คำอธิบาย ไอคอน ราคาเริ่มต้น/หน่วย คุณสมบัติ Coming Soon)
+    $comingSoon = $service->isComingSoon();
+    $art = asset('artwork/hero-services.webp');
+    // รูปที่แอดมินใส่เป็นที่อยู่เต็ม หรือเป็นไฟล์ใน storage
+    $image = $service->image ? (preg_match('#^(https?:)?//|^/#', $service->image) ? $service->image : asset('storage/' . $service->image)) : null;
+    $features = $service->localized_features;
+
+    $ld = [
+        '@context' => 'https://schema.org',
+        '@type' => 'Service',
+        'name' => $service->localized_name,
+        'description' => $service->localized_description,
+        'url' => route('services.show', $service->slug),
+        'provider' => ['@type' => 'Organization', 'name' => 'XMAN Studio', 'url' => url('/')],
+    ];
+    if ($service->starting_price) {
+        $ld['offers'] = ['@type' => 'Offer', 'price' => (string) round($service->starting_price), 'priceCurrency' => 'THB'];
+    }
+@endphp
+<x-xp.page a="#67e8f9" b="#a78bfa" c="#7dd3fc" glow="103 232 249" g1="#a78bfa" g2="#67e8f9" g3="#f0abfc">
+
+    @if($comingSoon)
+        <div class="relative z-10 border-b border-amber-300/20 bg-amber-500/10 text-amber-100 py-3 px-4">
+            <p class="max-w-7xl mx-auto flex flex-wrap items-center justify-center gap-2 text-sm">
+                <x-xp.badge tier="soon" label="Coming Soon" />
+                @if($service->coming_soon_until)
+                    <span>เปิดให้บริการวันที่ {{ $service->coming_soon_until->format('d/m/Y H:i') }}</span>
+                @else
+                    <span>บริการนี้จะเปิดให้บริการเร็วๆ นี้</span>
+                @endif
+            </p>
+        </div>
+    @endif
+
+    {{-- ============================ HERO ============================ --}}
+    <x-svc.hero :art="$art" compact :crumbs="[
+        ['หน้าแรก', route('home')],
+        ['บริการ', route('services.index')],
+        [$service->localized_name, null],
+    ]">
+        <x-slot:title>{{ $service->localized_name }}</x-slot:title>
+
+        @if($service->name_th && $service->name !== $service->localized_name)
+            <p class="text-xl text-gray-400 -mt-2 mb-6">{{ $service->name }}</p>
+        @endif
+        <p class="text-lg text-gray-300 leading-relaxed">{{ $service->localized_description }}</p>
+
+        <div class="svc-price mb-8 mt-4">
+            @if($service->starting_price)
+                <p class="text-sm text-gray-400 mb-1">ราคาเริ่มต้น</p>
+                <p class="text-white font-black leading-none"><span class="text-4xl sm:text-5xl">{{ number_format($service->starting_price) }}</span> <span class="text-xl text-gray-300 font-bold">บาท/{{ $service->price_unit }}</span></p>
+                <x-tpix-price variant="detail" :thb="$service->starting_price" class="mt-3" />
             @else
-                <span>- บริการนี้จะเปิดให้บริการเร็วๆ นี้</span>
+                <p class="text-2xl font-bold text-white">{{ $service->formatted_price }}</p>
             @endif
         </div>
-    </div>
-</div>
-@endif
 
-<!-- Hero Section -->
-<section class="relative overflow-hidden py-16" style="background: linear-gradient(135deg, {{ $service->color ?? '#0ea5e9' }}, {{ $service->color ?? '#0ea5e9' }}99)">
-    <x-page-art art="hero-services" :opacity="25" :scrim="false" fade="bottom" />
-    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <nav class="mb-8">
-            <a href="{{ route('services') }}" class="text-white/80 hover:text-white">&larr; กลับไปรายการบริการ</a>
-        </nav>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div class="text-white">
-                <h1 class="text-4xl md:text-5xl font-bold mb-4">{{ $service->name }}</h1>
-                <p class="text-xl text-white/90 mb-6">{{ $service->description }}</p>
-
-                @php
-                    $svcDiscount = \App\Support\Quotation\Pricing::saleDiscount($service->slug);
-                @endphp
-                @if($service->price_type === 'fixed')
-                    <div class="mb-6">
-                        <div class="flex items-center gap-3 mb-1">
-                            <span class="text-lg text-white/50 line-through">{{ number_format($service->price, 0) }} บาท</span>
-                            <span class="px-3 py-1 bg-red-500 text-white text-sm font-bold rounded-full animate-pulse">SALE -{{ intval($svcDiscount * 100) }}%</span>
-                        </div>
-                        <div class="text-3xl font-bold">
-                            {{ number_format($service->price * (1 - $svcDiscount), 0) }}
-                            <span class="text-lg">บาท</span>
-                        </div>
-                        <x-tpix-price variant="detail" :thb="$service->price * (1 - $svcDiscount)" class="mt-1" />
-                    </div>
-                @elseif($service->price_type === 'range')
-                    <div class="mb-6">
-                        <div class="flex items-center gap-3 mb-1">
-                            <span class="text-base text-white/50 line-through">{{ number_format($service->price_min, 0) }} - {{ number_format($service->price_max, 0) }} บาท</span>
-                            <span class="px-3 py-1 bg-red-500 text-white text-sm font-bold rounded-full animate-pulse">SALE -{{ intval($svcDiscount * 100) }}%</span>
-                        </div>
-                        <div class="text-2xl font-bold">
-                            เริ่มต้น {{ number_format($service->price_min * (1 - $svcDiscount), 0) }} - {{ number_format($service->price_max * (1 - $svcDiscount), 0) }}
-                            <span class="text-lg">บาท</span>
-                        </div>
-                        <x-tpix-price variant="detail" :thb="$service->price_min * (1 - $svcDiscount)" class="mt-1" />
-                    </div>
+        <x-slot:actions>
+            @if($comingSoon)
+                <span class="xp-btn-off xp-btn-ghost inline-flex items-center gap-2 px-7 py-4 rounded-xl font-bold text-lg" aria-disabled="true">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Coming Soon
+                    @if($service->coming_soon_until)
+                        - {{ $service->coming_soon_until->format('d/m/Y') }}
+                    @endif
+                </span>
+            @else
+                <a href="{{ route('quote.index') }}" class="xp-btn-main inline-flex items-center px-7 py-4 rounded-xl font-extrabold text-lg transition">ขอใบเสนอราคา</a>
+            @endif
+            <a href="{{ route('services.index') }}" class="xp-btn-ghost inline-flex items-center px-7 py-4 rounded-xl font-bold text-lg transition">ดูบริการอื่นๆ</a>
+        </x-slot:actions>
+        <x-slot:visual>
+            <div class="xp-tilt">
+                @if($image)
+                    <x-xp.screen :src="$image" :alt="$service->localized_name" :eager="true" />
                 @else
-                    <div class="text-2xl font-bold mb-6">สอบถามราคา</div>
-                @endif
-
-                @if(method_exists($service, 'isComingSoon') && $service->isComingSoon())
-                    <div class="inline-block px-8 py-4 bg-orange-400/50 text-white rounded-lg cursor-not-allowed font-semibold text-lg">
-                        <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        Coming Soon
-                        @if($service->coming_soon_until)
-                            - {{ $service->coming_soon_until->format('d/m/Y') }}
-                        @endif
+                    <div class="svc-box">
+                        <div class="svc-in aspect-[16/10] flex flex-col items-center justify-center text-center p-8">
+                            <x-svc.cover :key="$service->slug" class="opacity-90" />
+                            <div class="absolute inset-0 -z-10" style="background: radial-gradient(ellipse 55% 55% at 50% 55%, rgba(7,11,23,.55), transparent 75%)"></div>
+                            @if($service->icon)
+                                <span class="text-7xl sm:text-8xl mb-4 drop-shadow-[0_8px_30px_rgba(0,0,0,.6)]">{{ $service->icon }}</span>
+                            @endif
+                            <p class="text-xl sm:text-2xl font-black text-white">{{ $service->name }}</p>
+                        </div>
                     </div>
-                @else
-                    <a href="{{ route('quote.index') }}"
-                       class="inline-block px-8 py-4 bg-white text-gray-900 rounded-lg hover:bg-gray-100 font-semibold text-lg">
-                        ขอใบเสนอราคา
-                    </a>
                 @endif
             </div>
+        </x-slot:visual>
+    </x-svc.hero>
 
-            <div class="flex justify-center">
-                @if($service->icon)
-                    <div class="text-9xl text-white/80">
-                        {!! $service->icon !!}
-                    </div>
-                @else
-                    <svg class="w-48 h-48 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
-                    </svg>
-                @endif
+    {{-- =========================== FEATURES =========================== --}}
+    @if(count($features) > 0)
+        <section class="relative py-16">
+            <div class="xp-glow w-[34rem] h-[34rem] -right-40 top-0" style="background: rgb(var(--xp-glow) / .1)"></div>
+            <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <x-xp.head class="mb-12" size="md" eyebrow="What you get" title="สิ่งที่คุณจะได้รับ" />
+                <ul class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    @foreach($features as $feature)
+                        <li class="xp-card p-6 flex items-start gap-4 transition">
+                            <span class="xp-tick !w-9 !h-9 !text-base !mt-0">✓</span>
+                            <p class="text-gray-200 font-semibold leading-relaxed">{{ $feature }}</p>
+                        </li>
+                    @endforeach
+                </ul>
             </div>
-        </div>
-    </div>
-</section>
+        </section>
+    @endif
 
-<!-- Features Section -->
-@if($service->features && count($service->features) > 0)
-<section class="relative overflow-hidden py-16">
-    <x-page-art art="proc-build" :opacity="10" :scrim="false" />
-    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 class="text-3xl font-bold text-gray-900 text-center mb-12">สิ่งที่คุณจะได้รับ</h2>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            @foreach($service->features as $feature)
-                <div class="flex items-start p-6 bg-white rounded-xl shadow-lg">
-                    <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center mr-4" style="background-color: {{ $service->color ?? '#0ea5e9' }}20">
-                        <svg class="w-6 h-6" style="color: {{ $service->color ?? '#0ea5e9' }}" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold text-gray-900">{{ $feature }}</h3>
-                    </div>
+    {{-- ======================= RELATED SERVICES ======================= --}}
+    @if($relatedServices->count() > 0)
+        <section class="relative py-16">
+            <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <x-xp.head class="mb-12" size="md" eyebrow="More services" title="บริการอื่นๆ" />
+                <div class="grid md:grid-cols-3 gap-5">
+                    @foreach($relatedServices as $related)
+                        <a href="{{ route('services.show', $related->slug) }}" class="xp-card p-6 flex flex-col transition group">
+                            <div class="flex items-center gap-3 mb-3">
+                                @if($related->icon)<span class="svc-icon !w-11 !h-11 !text-2xl">{{ $related->icon }}</span>@endif
+                                <h3 class="text-xl font-bold text-white group-hover:text-cyan-200 transition">{{ $related->localized_name }}</h3>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-5 line-clamp-2">{{ $related->localized_description }}</p>
+                            <div class="mt-auto flex items-center justify-between gap-3">
+                                <span class="text-sm font-semibold text-gray-200">{{ $related->formatted_price }}</span>
+                                <span class="xp-link text-xl transition-transform group-hover:translate-x-1" aria-hidden="true">→</span>
+                            </div>
+                        </a>
+                    @endforeach
                 </div>
-            @endforeach
-        </div>
-    </div>
-</section>
-@endif
+            </div>
+        </section>
+    @endif
 
-<!-- Details Section -->
-@if($service->details)
-<section class="relative overflow-hidden py-16 bg-gray-50">
-    <x-page-art art="space-planning" :opacity="8" :scrim="false" />
-    <div class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 class="text-3xl font-bold text-gray-900 text-center mb-8">รายละเอียดบริการ</h2>
-        <div class="prose prose-lg max-w-none">
-            {!! nl2br(e($service->details)) !!}
-        </div>
-    </div>
-</section>
-@endif
+    {{-- ============================= CTA ============================= --}}
+    <x-svc.cta :art="$art" title="พร้อม" glow="เริ่มต้นแล้วหรือยัง?"
+               sub="ติดต่อเราวันนี้เพื่อรับคำปรึกษาฟรี และใบเสนอราคาที่ออกแบบมาเฉพาะสำหรับธุรกิจของคุณ"
+               en="Talk to us for a free consultation and a quotation made for your business.">
+        <a href="{{ route('quote.index') }}" class="xp-btn-main inline-flex items-center px-8 py-4 rounded-xl font-extrabold transition">ติดต่อเรา</a>
+        <a href="{{ route('services.index') }}" class="xp-btn-ghost inline-flex items-center px-8 py-4 rounded-xl font-bold transition">ดูบริการอื่นๆ</a>
+    </x-svc.cta>
+</x-xp.page>
 
-<!-- CTA Section -->
-<section class="relative overflow-hidden py-16">
-    <x-page-art art="team-cta" :opacity="12" :scrim="false" fade="top" />
-    <div class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 class="text-3xl font-bold text-gray-900 mb-4">พร้อมเริ่มต้นแล้วหรือยัง?</h2>
-        <p class="text-lg text-gray-600 mb-8">
-            ติดต่อเราวันนี้เพื่อรับคำปรึกษาฟรี และใบเสนอราคาที่ออกแบบมาเฉพาะสำหรับธุรกิจของคุณ
-        </p>
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="{{ route('quote.index') }}"
-               class="inline-block px-8 py-4 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-semibold text-lg">
-                ติดต่อเรา
-            </a>
-            <a href="{{ route('services') }}"
-               class="inline-block px-8 py-4 border-2 border-gray-300 text-gray-700 rounded-lg hover:border-gray-400 font-semibold text-lg">
-                ดูบริการอื่นๆ
-            </a>
-        </div>
-    </div>
-</section>
+<script type="application/ld+json">{!! json_encode($ld, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) !!}</script>
 @endsection

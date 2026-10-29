@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .content { padding: 14px 16px 0; overflow: hidden; }
+    .tbar { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+    .tbar .sp { width: 10px; }
+    .srch { display: flex; gap: 6px; align-items: center; margin-bottom: 10px; font-size: 12.5px; }
+    .srch .field { width: 240px; }
+    .grid { display: grid; grid-template-columns: 1fr 330px; gap: 12px; }
+    td, th { padding: 4px 10px; }
+    td { font-family: Consolas, monospace; font-size: 12.5px; }
+    td.o { color: #00D4FF; } td.a { color: #8892A0; letter-spacing: .06em; }
+    td b { color: #FFD700; font-weight: 400; }
+    .side { display: grid; gap: 10px; align-content: start; }
+    .box { border-radius: 8px; background: rgba(13, 27, 42, .6); padding: 12px 14px; }
+    .box h3 { font-size: 14px; margin-bottom: 8px; }
+    .hit { font-family: Consolas, monospace; font-size: 12px; padding: 5px 8px; border-radius: 4px; background: rgba(27, 40, 56, .53); margin-top: 5px; }
+    .hit span { color: #00D4FF; }
+    .box p { font-size: 12.5px; margin-top: 4px; }
+</style></head>
+<body data-on="Hex Editor" data-dev="Samsung Galaxy A54 (R5EXAMPLE0001)" data-brand="Samsung" data-model="Galaxy A54" data-op="Ready">
+<div class="tbar">
+    <span class="btn acc">Open Full Hex Editor</span><span class="sp"></span>
+    <span class="btn">Open ROM</span><span class="btn">Save</span><span class="btn">Export Hex Dump</span><span class="btn">Export Analysis</span><span class="sp"></span>
+    <span class="btn dkb">Undo</span><span class="btn dkb">Undo All</span>
+</div>
+<div class="srch"><span class="mut">Hex:</span><span class="field">41 4E 44 52 4F 49 44 21</span><span class="btn s">Search</span>
+    <span class="mut" style="margin-left:14px">String:</span><span class="field">ANDROID!</span><span class="btn s">Search</span></div>
+<div class="grid">
+    <table>
+        <thead><tr><th style="width:120px">Offset</th><th style="width:520px">Hex</th><th>ASCII</th></tr></thead>
+        <tbody id="rows"></tbody>
+    </table>
+    <div class="side">
+        <div class="box"><h3>Search Results</h3>
+            <div class="hit"><span>0x00000000</span> ANDROID!........</div>
+        </div>
+        <div class="box"><h3>ROM Analysis</h3>
+            <p>Type: Android Boot Image</p>
+            <p>Size: 67,108,864 bytes</p>
+            <p class="mut" style="margin-top:10px">Patterns:</p>
+        </div>
+    </div>
+</div>
+<script>
+    // a made-up boot.img header: magic, sizes, then zero padding and the cmdline area
+    var head = 'ANDROID!';
+    var bytes = [];
+    for (var i = 0; i < 8; i++) bytes.push(head.charCodeAt(i));
+    bytes = bytes.concat([0x00, 0x8E, 0x1F, 0x01, 0x00, 0x80, 0x00, 0x10, 0x3C, 0x61, 0x2B, 0x00, 0x00, 0x00, 0x00, 0x11,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF0, 0x10, 0x00, 0x01, 0x00, 0x10, 0x00, 0x08, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00]);
+    while (bytes.length < 64) bytes.push(0);
+    var cmd = 'console=ttyMSM0,115200n8 androidboot.hardware=qcom';
+    for (var j = 0; j < cmd.length; j++) bytes.push(cmd.charCodeAt(j));
+    while (bytes.length < 16 * 13) bytes.push(0);
+    var html = '';
+    for (var r = 0; r < 13; r++) {
+        var row = bytes.slice(r * 16, r * 16 + 16), off = r === 4 ? 0x40 : r * 16;
+        var hex = row.map(function (b, k) { var h = ('0' + b.toString(16).toUpperCase()).slice(-2); return (r === 0 && k < 8) ? '<b>' + h + '</b>' : h; }).join(' ');
+        var asc = row.map(function (b) { return b >= 32 && b < 127 ? String.fromCharCode(b).replace('<', '&lt;') : '.'; }).join('');
+        html += '<tr' + (r === 0 ? ' class="sel"' : '') + '><td class="o">' + ('0000000' + (r * 16).toString(16).toUpperCase()).slice(-8) + '</td><td>' + hex + '</td><td class="a">' + asc + '</td></tr>';
+    }
+    document.getElementById('rows').innerHTML = html;
+</script>
+<script type="text/plain" id="log">
+[17:31:02] ROM file loaded: C:\PhoneX\Backups\boot.img
+[17:31:03] ROM type detected: Android Boot Image
+[17:31:20] Found 1 matches for string pattern
+</script>
+<script src="chrome.js"></script>
+</body></html>

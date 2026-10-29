@@ -96,7 +96,7 @@ class BrainXCloudLicenseTest extends TestCase
             ->assertOk()
             ->assertSee('BrainX')
             ->assertSee('Remote MCP')
-            ->assertSee('฿399', false)
+            ->assertSee('฿399/เดือน', false)
             ->assertSee('action="' . route('cart.add', $this->brainx) . '"', false)
             ->assertSee('name="license_type" value="monthly"', false)
             ->assertDontSee('name="renew_license"', false);
@@ -113,6 +113,60 @@ class BrainXCloudLicenseTest extends TestCase
             ->assertSee('name="renew_license" value="' . $key->id . '"', false)
             ->assertSee(substr($key->license_key, 0, 4) . '-••••-••••-' . substr($key->license_key, -4))
             ->assertDontSee($key->license_key);
+    }
+
+    public function test_the_product_page_reads_its_price_from_the_plan_table(): void
+    {
+        config(['licenses.plans.brainx' => ['monthly' => 457]]);
+
+        $html = $this->get('/products/brainx')->assertOk()->getContent();
+        $this->assertStringContainsString('฿457/เดือน', $html);
+        $this->assertStringNotContainsString('฿399', $html);
+        $this->assertStringNotContainsString('name="price"', $html);
+    }
+
+    public function test_the_product_page_on_sale_links_the_installer(): void
+    {
+        $this->get('/products/brainx')->assertOk()
+            ->assertSee('href="' . route('brainx.download') . '"', false)
+            ->assertDontSee('data-coming-soon', false);
+    }
+
+    public function test_coming_soon_the_page_offers_no_download_no_purchase_and_no_free_app(): void
+    {
+        // Production lists BrainX as `brainx-cloud`: Coming Soon on either row closes the page (owner, 2026-10-12)
+        foreach ([fn () => $this->brainx->update(['is_coming_soon' => true]), fn () => Product::create([
+            'category_id' => $this->brainx->category_id, 'name' => 'BrainX Cloud', 'slug' => 'brainx-cloud', 'description' => 'x',
+            'price' => 399, 'stock' => 0, 'is_active' => true, 'is_coming_soon' => true,
+        ])] as $i => $closeIt) {
+            $this->brainx->update(['is_coming_soon' => false]);
+            Product::where('slug', 'brainx-cloud')->delete();
+            $closeIt();
+
+            $html = $this->get('/products/brainx')->assertOk()->getContent();
+            $this->assertStringContainsString('data-coming-soon', $html, "case {$i}");
+            $this->assertStringNotContainsString('href="' . route('brainx.download') . '"', $html, "case {$i}");
+            $this->assertStringNotContainsString('action="' . route('cart.add', $this->brainx) . '"', $html, "case {$i}");
+            $this->assertStringNotContainsString('ฟรี', $html, "case {$i}: no free-app claim while Coming Soon");
+            $this->assertStringContainsString('฿399', $html, "case {$i}: the price still shows");
+        }
+    }
+
+    public function test_coming_soon_a_key_holder_renews_only_when_the_admin_allows_it(): void
+    {
+        $user = User::factory()->create();
+        $key = $this->firstPurchase($user);
+        $this->brainx->update(['is_coming_soon' => true]);
+
+        $this->actingAs($user)->get('/products/brainx')->assertOk()
+            ->assertDontSee('name="renew_license"', false)
+            // the installer for someone already using BrainX is on their license page, not here
+            ->assertSee(route('customer.licenses.show', $key), false)
+            ->assertDontSee('href="' . route('brainx.download') . '"', false);
+
+        $this->brainx->update(['renew_while_coming_soon' => true]);
+        $this->actingAs($user)->get('/products/brainx')->assertOk()
+            ->assertSee('name="renew_license" value="' . $key->id . '"', false);
     }
 
     // ── the cart ───────────────────────────────────────────────────────

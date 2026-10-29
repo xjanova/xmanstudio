@@ -1,0 +1,29 @@
+<!doctype html>
+<!-- Video studio (lib/studio/studio_overlay.dart): the whole screen is her on a flat key colour (#00b140, drawn in WebGL so
+     the code is exact) for a video call's screen share, a live stream or a clip. The controls hide themselves after 4 s;
+     they are drawn here as they look right after a tap. Labels from i18n/strings_studio.dart. -->
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .phone.green { background: #00b140; }
+    .her { position: absolute; left: 50%; bottom: 0; width: 470px; transform: translateX(-50%); }
+    .bar { position: absolute; z-index: 4; left: 12px; right: 12px; bottom: 18px; padding: 10px; border-radius: 22px; background: rgba(20, 18, 40, .55); backdrop-filter: blur(14px); color: #fff; }
+    .bar p { font-size: 10.5px; font-weight: 600; letter-spacing: .6px; color: rgba(255, 255, 255, .65); margin: 0 4px 6px; }
+    .sw { display: flex; gap: 6px; margin-bottom: 9px; }
+    .sw span { flex: 1; height: 30px; border-radius: 10px; font-size: 10.5px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255, 255, 255, .25); }
+    .sw span.on { outline: 2px solid #fff; outline-offset: 1px; }
+    .acts { display: flex; gap: 6px; }
+    .acts span { flex: 1; height: 34px; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 12px; font-weight: 600; background: rgba(255, 255, 255, .14); }
+    .acts span.rec { background: #ff4d6d; }
+    .top { position: absolute; z-index: 4; left: 12px; right: 12px; top: 12px; display: flex; justify-content: space-between; }
+    .top span { padding: 6px 12px; border-radius: 99px; font-size: 11px; font-weight: 600; color: #fff; background: rgba(20, 18, 40, .5); }
+</style></head>
+<body><div class="phone green">
+    <img class="her" src="assets/avatar-studio.webp" alt="">
+    <div class="top"><span>สตูดิโอวิดีโอ</span><span>ออกจากสตูดิโอ ✕</span></div>
+    <div class="bar">
+        <p>ฉากหลัง</p>
+        <div class="sw"><span style="background:#00b140" class="on">เขียว</span><span style="background:#0047bb">ฟ้า</span><span style="background:#d1007f">บานเย็น</span><span style="background:#000">ดำ</span><span style="background:#fff;color:#23204a">ขาว</span></div>
+        <div class="acts"><span>ระยะภาพ</span><span>ให้หน้าเธอตามหน้าเรา</span></div>
+        <div class="acts" style="margin-top:6px"><span>จอลอย</span><span class="rec">● อัดคลิป</span></div>
+    </div>
+</div></body></html>

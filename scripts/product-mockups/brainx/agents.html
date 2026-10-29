@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .sky { position: absolute; left: 0; top: 34px; width: 1440px; height: 840px; background: url(assets/galaxy.jpg) center 45% / 120% auto no-repeat; opacity: .32; }
+    .bus { left: 22px; top: 58px; width: 360px; }
+    .agent { display: grid; grid-template-columns: 34px 1fr auto; gap: 2px 12px; align-items: center; padding: 11px 12px; margin-bottom: 8px; border-radius: 12px;
+        background: rgba(9, 14, 30, .55); border: 1px solid rgba(255, 255, 255, .06); }
+    .agent .av { grid-row: 1 / span 2; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #0b0f22; }
+    .agent b { grid-column: 2; grid-row: 1; font-size: 13.5px; color: #fff; }
+    .agent small { grid-column: 2; grid-row: 2; font-size: 11.5px; color: #8d90ad; }
+    .agent .st { grid-column: 3; grid-row: 1 / span 2; font-size: 11px; }
+    .orbit { position: relative; height: 150px; margin-top: 6px; }
+    .orbit .ring { position: absolute; left: 50%; top: 50%; border-radius: 50%; border: 1px solid rgba(255, 194, 60, .28); transform: translate(-50%, -50%) rotateX(68deg); }
+    .orbit .sun { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px; border-radius: 50%; background: radial-gradient(circle, #fff, #c9d8ff 45%, #6f8cff 70%, transparent 72%); box-shadow: 0 0 30px #8fb0ff; }
+    .orbit .p { position: absolute; width: 12px; height: 12px; border-radius: 50%; }
+    .feed { left: 404px; top: 58px; width: 620px; height: 560px; }
+    .ev { display: grid; grid-template-columns: 62px 98px 1fr; gap: 10px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid rgba(255, 255, 255, .05); font-size: 12.5px; }
+    .ev .tm { font-size: 11.5px; color: #6b6f8c; }
+    .ev .who { font-size: 11px; color: #c9c5f0; white-space: nowrap; }
+    .ev .what { color: #dfe2f1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ev .what em { font-style: normal; color: #5be9e9; font-family: "Cascadia Mono", Consolas, monospace; font-size: 12px; margin-right: 6px; }
+    .ev.err .what em { color: #e0736b; }
+    .tasks { left: 1046px; top: 58px; width: 372px; }
+    .task { padding: 12px 14px; margin-bottom: 9px; border-radius: 12px; background: rgba(9, 14, 30, .55); border: 1px solid rgba(255, 255, 255, .06); }
+    .task .top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .task .top .tag { margin-left: auto; }
+    .task b { font-size: 13.5px; color: #fff; }
+    .task p { font-size: 12px; color: #b9bcd3; line-height: 1.5; }
+    .task .meta { margin-top: 7px; font-size: 11px; color: #8d90ad; }
+    .mcp { left: 404px; top: 640px; width: 620px; }
+    .mcp .big { font-size: 34px; font-weight: 700; color: #fff; }
+    .mcp svg { display: block; margin-top: 4px; }
+</style></head>
+<body class="space" data-status="agent bus · 3 online · 1 task waiting">
+<div class="sky"></div>
+
+<div class="panel bus">
+    <div class="ph"><b>AGENT BUS</b><span>3 online</span></div>
+    <div class="agent"><span class="av" style="background:#d8b978">CC</span><b>Claude Code</b><span class="st dot">working</span><small>แก้ไฟล์ใน repo · brain_search</small></div>
+    <div class="agent"><span class="av" style="background:#5be9e9">CX</span><b>Codex</b><span class="st dot">online</span><small>รับงาน “Export notes as PDF”</small></div>
+    <div class="agent"><span class="av" style="background:#9d7bff">CL</span><b>CluadeX</b><span class="st dot amber">waiting</span><small>รอคำตอบจาก Claude Code</small></div>
+    <div class="agent"><span class="av" style="background:#4d5270;color:#cfd2e6">CD</span><b>Claude Desktop</b><span class="st dot grey">away</span><small>ส่งสเปกงานไว้ 20 นาทีก่อน</small></div>
+    <div class="orbit">
+        <span class="ring" style="width:300px;height:300px"></span><span class="ring" style="width:200px;height:200px"></span>
+        <span class="sun"></span>
+        <span class="p" style="left:62px;top:52px;background:#d8b978;box-shadow:0 0 10px #d8b978"></span>
+        <span class="p" style="left:272px;top:66px;background:#5be9e9;box-shadow:0 0 10px #5be9e9"></span>
+        <span class="p" style="left:120px;top:112px;background:#9d7bff;box-shadow:0 0 10px #9d7bff"></span>
+    </div>
+</div>
+
+<div class="panel glass feed">
+    <div class="ph"><b>ACTIVITY</b><span>live</span></div>
+    <div class="ev"><span class="tm mono">14:32:08</span><span class="who"><span class="tag">CLAUDE CODE</span></span><span class="what"><em>brain_search</em>“export pdf thai font embedding”</span></div>
+    <div class="ev"><span class="tm mono">14:31:52</span><span class="who"><span class="tag cy">CODEX</span></span><span class="what"><em>task_update</em>claimed “Export notes as PDF”</span></div>
+    <div class="ev"><span class="tm mono">14:31:40</span><span class="who"><span class="tag">CLAUDE CODE</span></span><span class="what"><em>edit</em>src/Export/PdfWriter.cs</span></div>
+    <div class="ev"><span class="tm mono">14:30:11</span><span class="who"><span class="tag pk">CLUADEX</span></span><span class="what"><em>agent_send</em>→ Claude Code: “ใช้ฟอนต์ตัวเดียวกับหน้าจอได้ไหม”</span></div>
+    <div class="ev"><span class="tm mono">14:29:47</span><span class="who"><span class="tag">CLAUDE CODE</span></span><span class="what"><em>brain_get_note</em>Fonts — what ships with the app</span></div>
+    <div class="ev err"><span class="tm mono">14:29:30</span><span class="who"><span class="tag">CLAUDE CODE</span></span><span class="what"><em>build</em>failed · 2 errors (recorded)</span></div>
+    <div class="ev"><span class="tm mono">14:12:05</span><span class="who"><span class="tag gr">DESKTOP</span></span><span class="what"><em>task_handoff</em>“Export notes as PDF” → codex</span></div>
+    <div class="ev"><span class="tm mono">14:11:58</span><span class="who"><span class="tag gr">DESKTOP</span></span><span class="what"><em>brain_create_note</em>Tasks/Export notes as PDF</span></div>
+    <div class="ev"><span class="tm mono">13:58:21</span><span class="who"><span class="tag cy">CODEX</span></span><span class="what"><em>brain_remember</em>“tests run with --filter, never the full suite”</span></div>
+    <div class="ev"><span class="tm mono">13:40:02</span><span class="who"><span class="tag pk">CLUADEX</span></span><span class="what"><em>brain_semantic_search</em>“วิธีตั้งชื่อไฟล์ส่งออก”</span></div>
+    <div class="ev"><span class="tm mono">13:22:44</span><span class="who"><span class="tag">CLAUDE CODE</span></span><span class="what"><em>brain_append_note</em>Release checklist · +3 lines</span></div>
+    <div class="ev"><span class="tm mono">13:05:19</span><span class="who"><span class="tag gr">DESKTOP</span></span><span class="what"><em>brain_recall</em>“what did we decide about exports”</span></div>
+</div>
+
+<div class="panel tasks">
+    <div class="ph"><b>TASKS</b><span>Tasks/ · 3 notes</span></div>
+    <div class="task"><div class="top"><b>Export notes as PDF</b><span class="tag am">CLAIMED</span></div>
+        <p>ส่งออกโน้ตที่เลือกเป็น PDF ภาษาไทยไม่แตก มีสารบัญ และลิงก์ภายในยังกดได้</p>
+        <div class="meta">from Claude Desktop → codex · 3 acceptance checks</div></div>
+    <div class="task"><div class="top"><b>Tag cleanup in Research/</b><span class="tag">QUEUED</span></div>
+        <p>รวมแท็กที่สะกดต่างกันให้เป็นอันเดียว แล้วรายงานว่าย้ายกี่โน้ต</p>
+        <div class="meta">from Claude Desktop → any</div></div>
+    <div class="task"><div class="top"><b>Weekly brain report</b><span class="tag gr">SHIPPED</span></div>
+        <p>สรุปโน้ตใหม่ของสัปดาห์ ลิงก์ที่เพิ่ม และโน้ตที่ขัดแย้งกัน</p>
+        <div class="meta">claude-code · report left in the note</div></div>
+</div>
+
+<div class="panel mcp">
+    <div class="ph"><b>MCP</b><span>24 h</span></div>
+    <div style="display:flex;align-items:baseline;gap:10px"><span class="big mono">318</span><span class="muted">CALLS</span><span class="mono gr" style="font-size:12px">+64 vs prev</span>
+        <span class="muted mono" style="margin-left:auto;font-size:12px">top tool · brain_search 141×</span></div>
+    <svg width="620" height="60" viewBox="0 0 620 60"><polyline fill="none" stroke="#5be9e9" stroke-width="2" points="0,44 40,38 80,46 120,30 160,34 200,22 240,40 280,36 320,18 360,26 400,30 440,14 480,24 520,20 560,8 600,16 620,12"/></svg>
+</div>
+</body>
+<script src="chrome.js"></script>
+</html>

@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .cols { display: grid; grid-template-columns: 270px 1fr 300px; height: 100%; }
+    .bin { border-right: 1px solid var(--hair); }
+    .bin .search2 { margin: 0 16px 10px; height: 30px; border-radius: 8px; background: var(--inset); border: 1px solid var(--hair); display: flex; align-items: center; padding: 0 10px; font-family: PlexMono; font-size: 10px; color: var(--t4); }
+    .bin .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px; }
+    .bin .g2 .thumb { aspect-ratio: 16/10; }
+    .bin .g2 p { font-size: 10.5px; margin-top: 5px; color: var(--t2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .stage { display: grid; grid-template-rows: 46px 1fr 300px; min-width: 0; overflow: hidden; }
+    .sbar { display: flex; align-items: center; gap: 10px; padding: 0 18px; border-bottom: 1px solid var(--hair); }
+    .prev { display: flex; align-items: center; justify-content: center; padding: 16px 30px; }
+    .canvas { position: relative; width: 100%; aspect-ratio: 16/9; border-radius: 8px; background: url(assets/empress-wide.jpg) center/cover;
+        box-shadow: 0 0 0 1px rgba(212, 167, 106, .18), 0 0 0 6px rgba(8, 5, 14, .5), 0 30px 80px -20px rgba(212, 167, 106, .18); }
+    .canvas .pip { position: absolute; right: 14px; top: 14px; width: 26%; aspect-ratio: 16/9; border-radius: 5px; border: 1px solid rgba(240, 203, 136, .6); background: url(assets/empress-portrait.jpg) center 30%/cover; }
+    .canvas .title { position: absolute; left: 0; right: 0; bottom: 18%; text-align: center; font-family: PlexThai; font-weight: 500; font-size: 26px; color: var(--gold-hi); text-shadow: 0 2px 12px rgba(0, 0, 0, .8); }
+    .canvas .meta { position: absolute; left: 12px; top: 12px; display: flex; gap: 6px; }
+    .canvas .meta span { font-family: PlexMono; font-size: 9.5px; padding: 3px 7px; border-radius: 5px; background: rgba(0, 0, 0, .55); }
+    .nle { border-top: 1px solid var(--hair); background: rgba(0, 0, 0, .22); padding: 10px 18px; position: relative; }
+    .tools { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+    .ruler { margin-left: 92px; display: flex; justify-content: space-between; font-family: PlexMono; font-size: 9px; color: var(--t4); border-bottom: 1px solid var(--hair); padding-bottom: 3px; }
+    .tr { display: grid; grid-template-columns: 84px 1fr; gap: 8px; align-items: center; margin-top: 6px; }
+    .tr .lab { font-family: PlexMono; font-size: 9px; letter-spacing: .08em; color: var(--t4); }
+    .tr .lane { height: 34px; border-radius: 6px; background: rgba(255, 255, 255, .02); position: relative; }
+    .seg { position: absolute; top: 3px; bottom: 3px; border-radius: 5px; font-size: 9.5px; padding: 3px 6px; overflow: hidden; white-space: nowrap; }
+    .seg.v { background-size: cover; background-position: center; color: #fff; text-shadow: 0 1px 3px #000; border: 1px solid rgba(240, 203, 136, .35); }
+    .seg.sel { box-shadow: 0 0 0 1.5px var(--gold-hi), 0 0 12px rgba(212, 167, 106, .5); }
+    .seg.a { background: linear-gradient(90deg, rgba(108, 94, 133, .45), rgba(108, 94, 133, .2)); color: var(--moon); }
+    .seg.t { background: rgba(176, 51, 70, .3); color: #f3c3cb; border: 1px solid rgba(176, 51, 70, .5); }
+    .seg.x { width: 14px; background: linear-gradient(90deg, transparent, rgba(240, 203, 136, .5), transparent); border: 0; padding: 0; }
+    .playhead { position: absolute; top: 34px; bottom: 10px; left: 47%; width: 1px; background: var(--gold-hi); box-shadow: 0 0 6px var(--gold); }
+    .playhead::before { content: ""; position: absolute; left: -4px; top: -4px; width: 8px; height: 8px; background: var(--gold-hi); transform: rotate(45deg); }
+    .insp { border-left: 1px solid var(--hair); padding-bottom: 14px; position: relative; }
+    .insp .body { padding: 0 16px; display: flex; flex-direction: column; gap: 12px; }
+    .kv { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .kv .box { padding: 7px 10px; font-family: PlexMono; font-size: 11px; color: var(--gold-hi); }
+    .sl { display: grid; grid-template-columns: 82px 1fr 34px; gap: 10px; align-items: center; font-size: 11px; color: var(--t2); margin-top: 8px; }
+    .sl span:last-child { font-family: PlexMono; font-size: 10px; color: var(--gold-hi); text-align: right; }
+    .insp .foot { position: absolute; left: 16px; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 10px; }
+</style></head>
+<body data-on="editor">
+<main class="work"><div class="cols">
+    <section class="bin">
+        <div class="panel-h"><h2><span class="s">✦</span>Library</h2><small>14 clips</small></div>
+        <div class="search2">search clips…</div>
+        <div style="display:flex;gap:6px;padding:0 16px 12px"><span class="chip on">all</span><span class="chip">▶ videos</span><span class="chip">🖼 images</span></div>
+        <div class="g2">
+            <div><div class="thumb" style="background-image:url(assets/empress-portrait.jpg)"><span class="du">6.0s</span></div><p>throne_awaken.mp4</p></div>
+            <div><div class="thumb" style="background-image:url(assets/empress-wide.jpg)"><span class="du">6.0s</span></div><p>moon_city.mp4</p></div>
+            <div><div class="thumb" style="background-image:url(assets/empress-tall-1.jpg);background-position:center 30%"><span class="du">6.0s</span></div><p>veil_drop.mp4</p></div>
+            <div><div class="thumb" style="background-image:url(assets/empress-tall-2.jpg);background-position:center 25%"><span class="du">5.0s</span></div><p>red_gate.mp4</p></div>
+            <div><div class="thumb" style="background-image:url(assets/empress-fullbody.jpg);background-position:center 30%"><span class="du">5.0s</span></div><p>balcony.mp4</p></div>
+            <div><div class="thumb" style="background-image:url(assets/empress-portrait.jpg);background-position:center 15%"><span class="du">IMG</span></div><p>halo_still.png</p></div>
+            <div><div class="thumb" style="background-image:url(assets/empress-wide.jpg);background-position:left center"><span class="du">6.0s</span></div><p>skyline_pan.mp4</p></div>
+            <div><div class="thumb" style="background-image:url(assets/empress-tall-1.jpg);background-position:center 70%"><span class="du">4.0s</span></div><p>silk_close.mp4</p></div>
+        </div>
+    </section>
+
+    <section class="stage">
+        <div class="sbar"><span class="disp" style="font-size:18px">Editor · NLE-lite</span><span class="pill" style="color:var(--moon);border-color:rgba(108,94,133,.5);background:rgba(108,94,133,.12)"><i style="background:var(--moon);box-shadow:none"></i>Saved · 4s ago</span>
+            <span style="margin-left:auto" class="btn">↶ Undo</span><span class="btn">↷ Redo</span><span class="btn">Save…</span></div>
+        <div class="prev"><div class="canvas"><div class="meta"><span>SLOT 2 / 5</span><span>00:00:08:04</span><span>16:9 · 1080p · 30 fps</span></div><div class="pip"></div><div class="title">นางพญาแห่งจันทรา</div></div></div>
+        <div class="nle">
+            <div class="tools"><span class="btn">＋ Import video</span><span class="btn">+ Title</span><span class="btn">+ Track</span><span class="btn">✂ razor @ 00:08.1</span><span class="mono mut" style="margin-left:auto;font-size:10px">TOTAL 00:27.0</span></div>
+            <div class="ruler"><span>0:00</span><span>0:05</span><span>0:10</span><span>0:15</span><span>0:20</span><span>0:25</span></div>
+            <div class="tr"><span class="lab">VIDEO</span><div class="lane">
+                <span class="seg v" style="left:0;width:21%;background-image:url(assets/empress-portrait.jpg)">throne_awaken</span>
+                <span class="seg x" style="left:20.3%"></span>
+                <span class="seg v sel" style="left:21.5%;width:22%;background-image:url(assets/empress-wide.jpg)">moon_city</span>
+                <span class="seg v" style="left:44.5%;width:18%;background-image:url(assets/empress-tall-1.jpg)">veil_drop</span>
+                <span class="seg x" style="left:62%"></span>
+                <span class="seg v" style="left:63.5%;width:17%;background-image:url(assets/empress-tall-2.jpg)">red_gate</span>
+                <span class="seg v" style="left:81.5%;width:18%;background-image:url(assets/empress-fullbody.jpg)">balcony</span>
+            </div></div>
+            <div class="tr"><span class="lab">OVERLAY · PIP</span><div class="lane"><span class="seg v" style="left:24%;width:16%;background-image:url(assets/empress-portrait.jpg)">halo_still</span></div></div>
+            <div class="tr"><span class="lab">TITLE CARDS</span><div class="lane"><span class="seg t th" style="left:26%;width:20%">นางพญาแห่งจันทรา</span><span class="seg t" style="left:84%;width:15%">the moon rises</span></div></div>
+            <div class="tr"><span class="lab">AUDIO 1</span><div class="lane"><span class="seg a" style="left:0;width:99%">♪ moonrise_theme.wav · ACE-Step</span></div></div>
+            <div class="tr"><span class="lab">AUDIO 2</span><div class="lane"><span class="seg a" style="left:5%;width:40%">◔ narrator_take3.mp3 · TTS</span></div></div>
+            <div class="playhead"></div>
+        </div>
+    </section>
+
+    <section class="insp">
+        <div class="panel-h"><h2>Inspector</h2><small>SLOT · 2</small></div>
+        <div class="body">
+            <div><p class="lbl">Slot duration · trim start</p><div class="kv"><div class="box">6.0s</div><div class="box">0.4s</div></div></div>
+            <div><p class="lbl">Ken Burns · zoom</p>
+                <div class="sl"><span>START</span><div class="slider"><b style="width:30%"></b></div><span>100%</span></div>
+                <div class="sl"><span>END</span><div class="slider"><b style="width:55%"></b></div><span>115%</span></div>
+                <p class="mono mut" style="font-size:9px;margin-top:6px">↗ push-in</p></div>
+            <div><p class="lbl">Color grade · EQ</p>
+                <div class="sl"><span>BRIGHTNESS</span><div class="slider"><b style="width:52%"></b></div><span>+0.04</span></div>
+                <div class="sl"><span>CONTRAST</span><div class="slider"><b style="width:60%"></b></div><span>1.10</span></div>
+                <div class="sl"><span>SATURATION</span><div class="slider"><b style="width:66%"></b></div><span>1.20</span></div></div>
+            <div><p class="lbl">Crossfade between slots</p><div class="sl" style="margin-top:0"><span>CROSSFADE</span><div class="slider"><b style="width:35%"></b></div><span>0.5s</span></div></div>
+            <div><p class="lbl">Fade in · fade out</p><div class="kv"><div class="box">0.8s</div><div class="box">1.2s</div></div></div>
+        </div>
+        <div class="foot">
+            <div style="display:flex;gap:6px"><span class="chip">Draft · 720p</span><span class="chip on">Full · 1080p</span><span class="chip">Hi · 4K</span></div>
+            <div style="display:flex;gap:6px"><span class="chip">24</span><span class="chip on">30</span><span class="chip">60</span><span class="chip" style="margin-left:auto">16:9</span></div>
+            <div class="cta">✦ Render film</div>
+        </div>
+    </section>
+</div></main>
+<script src="chrome.js"></script>
+</body></html>

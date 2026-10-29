@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .content { padding: 16px 16px 0; overflow: hidden; }
+    .card { border-radius: 8px; background: rgba(13, 27, 42, .6); padding: 14px 18px; display: flex; align-items: center; margin-bottom: 10px; }
+    .card h2 { font-size: 21px; }
+    .card p { margin-top: 3px; }
+    .card .btn { margin-left: auto; font-size: 14px; padding: 11px 20px; }
+    .quick { border-radius: 8px; background: rgba(44, 107, 79, .1); padding: 12px 16px; margin-bottom: 10px; }
+    .quick h3 { font-size: 14px; color: #10B981; margin-bottom: 9px; }
+    .quick div { display: flex; gap: 8px; }
+    .quick .btn { flex-direction: column; align-items: flex-start; gap: 0; padding: 8px 14px; min-width: 196px; }
+    .quick .btn b { font-size: 13px; } .quick .btn small { font-weight: 400; font-size: 11px; opacity: .85; }
+    .quick .btn i { font-style: normal; font-size: 18px; position: absolute; }
+    .lists { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .list { border-radius: 8px; background: rgba(13, 27, 42, .6); padding: 12px 14px; }
+    .list h3 { font-size: 15px; margin-bottom: 9px; }
+    .list h3 small { font-weight: 400; color: #8892A0; font-size: 12px; }
+    .it { display: flex; align-items: center; gap: 12px; border-radius: 6px; background: rgba(27, 40, 56, .53); padding: 8px 12px; margin-bottom: 6px; }
+    .it .ic { font-size: 18px; width: 18px; text-align: center; }
+    .it p { flex: 1; }
+    .it p b { display: block; font-size: 12.5px; }
+    .it p small { display: block; font-size: 11px; color: #8892A0; }
+    .it p em { display: block; font-style: normal; font-size: 10px; margin-top: 2px; }
+    .it .pb { width: 60px; height: 6px; border-radius: 3px; background: #1B2838; overflow: hidden; }
+    .it .pb i { display: block; height: 100%; background: #00D4FF; }
+</style></head>
+<body data-on="⚙ Setup" data-dev="Samsung Galaxy A54 (R5EXAMPLE0001)" data-brand="Samsung" data-model="Galaxy A54" data-prog="64" data-progtext="MTK Client: Downloading..." data-op="Installing MTK Client" data-down="38.2 MB">
+<div class="card">
+    <div><h2>🛠️ Tools &amp; Driver Setup</h2><p class="mut">Install required tools and drivers for flashing Android devices. Click buttons below to install.</p></div>
+    <span class="btn acc">⬇️ Install Everything</span>
+</div>
+<div class="quick">
+    <h3>⚡ Quick Install</h3>
+    <div>
+        <span class="btn acc"><b>📱 Install Platform Tools</b><small>ADB + Fastboot</small></span>
+        <span class="btn"><b>🔌 Google USB Driver</b><small>Required for ADB</small></span>
+        <span class="btn"><b>📲 Samsung Driver</b><small>For Download Mode</small></span>
+        <span class="btn warn"><b>⚡ Qualcomm Driver</b><small>For EDL Mode</small></span>
+        <span class="btn ok"><b>🔧 MediaTek Driver</b><small>For BROM Mode</small></span>
+    </div>
+</div>
+<div class="lists">
+    <div class="list">
+        <h3>📦 Tools <small>(12 items)</small></h3>
+        <div class="it"><span class="ic gr">✓</span><p><b>Android Platform Tools</b><small>ADB and Fastboot command-line tools (Required)</small><em class="gr">✓ Installed</em></p><span class="btn s dkb">🗑️ Remove</span></div>
+        <div class="it"><span class="ic gr">✓</span><p><b>Heimdall</b><small>Open-source Samsung flashing tool</small><em class="gr">✓ Installed</em></p><span class="btn s dkb">🗑️ Remove</span></div>
+        <div class="it"><span class="ic gr">✓</span><p><b>EDL Client</b><small>Qualcomm Emergency Download mode tool (Requires Python)</small><em class="gr">✓ Installed</em></p><span class="btn s dkb">🗑️ Remove</span></div>
+        <div class="it"><span class="ic rd">✗</span><p><b>MTK Client</b><small>MediaTek BROM/Preloader tool (Requires Python)</small><em class="cy">Downloading...</em></p><span class="pb"><i style="width:64%"></i></span><span class="btn s">⬇️ Install</span><span class="btn s dkb">🌐</span></div>
+    </div>
+    <div class="list">
+        <h3>🔌 Drivers <small>(4 items)</small></h3>
+        <div class="it"><span class="ic gr">✓</span><p><b>Google USB Driver</b><small>Universal Android ADB/Fastboot driver</small><em class="gr">✓ Installed</em></p><span class="btn s dkb">🗑️ Remove</span></div>
+        <div class="it"><span class="ic gr">✓</span><p><b>Qualcomm HS-USB QDLoader</b><small>Qualcomm EDL 9008 mode driver</small><em class="gr">✓ Installed</em></p><span class="btn s dkb">🗑️ Remove</span></div>
+        <div class="it"><span class="ic rd">✗</span><p><b>MediaTek Preloader</b><small>MTK download mode driver</small><em class="mut">Not installed</em></p><span class="btn s">⬇️ Install</span><span class="btn s dkb">🌐</span></div>
+        <div class="it"><span class="ic gr">✓</span><p><b>Samsung USB Driver</b><small>Samsung Odin/Download mode driver</small><em class="gr">✓ Installed</em></p><span class="btn s dkb">🗑️ Remove</span></div>
+    </div>
+</div>
+<script type="text/plain" id="log">
+[11:02:10] ✓ Android Platform Tools installed successfully!
+[11:02:41] ✓ Google USB Driver installed successfully!
+[11:03:05] ✓ Samsung USB Driver installed successfully!
+[11:03:22] Checking drivers...
+</script>
+<script src="chrome.js"></script>
+</body></html>

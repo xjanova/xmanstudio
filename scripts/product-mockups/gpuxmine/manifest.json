@@ -1,0 +1,41 @@
+{
+  "out_dir": "images/products/gpuxmine/v2",
+  "screens": [
+    {
+      "name": "dashboard",
+      "html": "dashboard.html"
+    },
+    {
+      "name": "power",
+      "html": "power.html"
+    },
+    {
+      "name": "benchmark",
+      "html": "benchmark.html"
+    },
+    {
+      "name": "settings",
+      "html": "settings.html"
+    },
+    {
+      "name": "art-hero",
+      "src": "D:/Code/xmanstudio-campaign-media/product-pages/gpuxmine/art-hero.png",
+      "width": 1536,
+      "quality": 82
+    },
+    {
+      "name": "art-2",
+      "src": "D:/Code/xmanstudio-campaign-media/product-pages/gpuxmine/art-2.png",
+      "width": 1536,
+      "quality": 82
+    },
+    {
+      "name": "og",
+      "ext": "jpg",
+      "w": 1200,
+      "h": 630,
+      "width": 1200,
+      "html": "../_shared/og.html?art=file%3A%2F%2F%2FD%3A%2FCode%2Fxmanstudio-campaign-media%2Fproduct-pages%2Fgpuxmine%2Fart-hero.png&name=GPUxMINE&glow=MINE&line=%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B9%8C%E0%B8%94%E0%B8%88%E0%B8%AD%E0%B8%A7%E0%B9%88%E0%B8%B2%E0%B8%87%7C%E0%B8%97%E0%B8%B3%E0%B8%87%E0%B8%B2%E0%B8%99+AI+%E0%B9%81%E0%B8%97%E0%B8%99%E0%B8%84%E0%B8%B8%E0%B8%93&sub=%E0%B9%83%E0%B8%8A%E0%B9%89%E0%B8%9F%E0%B8%A3%E0%B8%B5+%C2%B7+%E0%B8%84%E0%B9%88%E0%B8%B2%E0%B8%95%E0%B8%AD%E0%B8%9A%E0%B9%81%E0%B8%97%E0%B8%99%E0%B9%80%E0%B8%82%E0%B9%89%E0%B8%B2%E0%B8%81%E0%B8%A3%E0%B8%B0%E0%B9%80%E0%B8%9B%E0%B9%8B%E0%B8%B2+XMAN+%C2%B7+Windows&c1=ffcf3a&c2=f59e0b&c3=60a5fa"
+    }
+  ]
+}

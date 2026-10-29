@@ -1,0 +1,37 @@
+<!doctype html>
+<!-- The clock widget (ClockWidget.cs): Analog and Digital faces are crops of real captures; the menu is
+     its right-click menu with the code's labels, "ตั้งเวลา" open (it opens the Windows Clock app / date settings). -->
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .an { position: absolute; z-index: 2; left: 250px; top: 300px; width: 330px; filter: drop-shadow(0 22px 36px rgba(0, 0, 0, .6)); }
+    .dg { position: absolute; z-index: 2; left: 860px; top: 340px; width: 420px; filter: drop-shadow(0 22px 36px rgba(0, 0, 0, .6)); }
+</style></head>
+<body>
+<script src="dock.js"></script>
+<script>
+MacDock.dock({ edge: 'top', items: [
+    { g: 'browser', name: 'Web Browser', run: true }, { g: 'mail', name: 'Mail', run: true },
+    '|',
+    { g: 'folder', name: 'Documents' }, { g: 'download', name: 'Downloads' },
+    { hdr: 'งานเอกสาร' }, { g: 'notes', name: 'Notes' }, { g: 'sheet', name: 'Spreadsheet' },
+    { hdr: 'เครื่องมือ' }, { g: 'calc', name: 'Calculator' }, { g: 'gear', name: 'Settings' },
+] });
+</script>
+<img class="an" src="assets/clock-analog.png" alt="">
+<img class="dg" src="assets/clock-digital.png" alt="">
+<div class="menu" style="left: 520px; top: 520px;">
+    <div class="mi on">Analog (เข็ม)</div>
+    <div class="mi">Digital (ดิจิตอล)</div>
+    <hr>
+    <div class="mi">เปิดปฏิทิน</div>
+    <div class="mi">แสดงไอคอนถาดระบบ (ดับเบิลคลิกนาฬิกา)</div>
+    <div class="mi sub hi">ตั้งเวลา</div>
+    <hr>
+    <div class="mi">Always on top</div>
+    <div class="mi">Hide clock</div>
+</div>
+<div class="menu" style="left: 813px; top: 627px; min-width: 220px;">
+    <div class="mi">ตั้งปลุก / จับเวลา (Clock)</div>
+    <div class="mi">ตั้งค่าวันและเวลาของ Windows</div>
+</div>
+</body></html>

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .cols { display: grid; grid-template-columns: 340px 1fr; gap: 16px; height: 100%; }
+    .left { display: flex; flex-direction: column; }
+    .phone { width: 112px; height: 172px; border-radius: 16px; margin: 0 auto 14px; position: relative; background: linear-gradient(135deg, #2D2D2D, #1E1E1E); box-shadow: 0 5px 20px rgba(0, 0, 0, .4); }
+    .phone .scr { position: absolute; left: 6px; right: 6px; top: 14px; bottom: 24px; border-radius: 8px; background: rgba(36, 52, 71, .67); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+    .phone .scr b { font-size: 17px; color: #00D4FF; }
+    .phone .scr small { font-size: 11px; font-weight: 600; color: #8892A0; margin-top: 4px; }
+    .phone .home { position: absolute; left: 50%; bottom: 5px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: #10B981; }
+    .name { text-align: center; font-size: 17px; font-weight: 700; }
+    .name .pill { background: #10B981; margin-top: 7px; }
+    .rows { margin-top: 12px; display: grid; gap: 7px; }
+    .rows .light { display: flex; font-size: 12px; padding: 10px 12px; }
+    .rows .light span { width: 86px; color: #8892A0; }
+    .rows .light b { font-weight: 600; }
+    .reboot { margin-top: auto; }
+    .reboot p { font-size: 10px; font-weight: 700; color: #8892A0; margin-bottom: 8px; letter-spacing: .02em; }
+    .reboot div { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+    .reboot .btn { padding: 6px 4px; font-size: 11px; }
+    .right { display: flex; flex-direction: column; }
+    .right .top { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+</style></head>
+<body data-on="Device" data-dev="Samsung Galaxy A54 (R5EXAMPLE0001)" data-brand="Samsung" data-model="Galaxy A54" data-op="Ready" data-prog="0" data-progtext="Ready" data-up="18 KB" data-down="42 KB">
+<div class="cols">
+    <div class="panel left">
+        <div class="phone"><div class="scr"><b>Samsung</b><small>Galaxy A54</small></div><span class="home"></span></div>
+        <div class="name">Samsung Galaxy A54 (R5EXAMPLE0001)<br><span class="pill">Connected</span></div>
+        <div class="rows">
+            <div class="light"><span>Android</span><b>14</b></div>
+            <div class="light"><span>Serial</span><b style="font-size:11px">R5EXAMPLE0001</b></div>
+            <div class="light"><span>Mode</span><b class="pu" style="font-weight:800;color:#9D4EDD">Normal</b></div>
+            <div class="light"><span>Connection</span><b>ADB</b></div>
+        </div>
+        <div class="light reboot"><p>REBOOT TO</p><div><span class="btn">Recovery</span><span class="btn">Fastboot</span><span class="btn">System</span></div></div>
+    </div>
+    <div class="panel right">
+        <div class="top"><h2>Device Partitions</h2><span class="btn">Load Partitions</span></div>
+        <table>
+            <thead><tr><th style="width:70px">Select</th><th style="width:190px">Name</th><th style="width:210px">Type</th><th>Size</th></tr></thead>
+            <tbody>
+                <tr><td><span class="chk"></span></td><td>abl</td><td>Unknown</td><td class="mut">—</td></tr>
+                <tr class="sel"><td><span class="chk on"></span></td><td>boot</td><td>Kernel/Ramdisk</td><td>—</td></tr>
+                <tr><td><span class="chk"></span></td><td>cache</td><td>Cache</td><td class="mut">—</td></tr>
+                <tr><td><span class="chk"></span></td><td>dtbo</td><td>Unknown</td><td class="mut">—</td></tr>
+                <tr><td><span class="chk"></span></td><td>efs</td><td>Unknown</td><td class="mut">—</td></tr>
+                <tr><td><span class="chk"></span></td><td>modem</td><td>Modem/Radio</td><td class="mut">—</td></tr>
+                <tr><td><span class="chk"></span></td><td>persist</td><td>Persistent Data</td><td class="mut">—</td></tr>
+                <tr><td><span class="chk on"></span></td><td>recovery</td><td>Recovery Image</td><td class="mut">—</td></tr>
+                <tr><td><span class="chk"></span></td><td>system</td><td>System Partition</td><td class="mut">—</td></tr>
+                <tr><td><span class="chk"></span></td><td>userdata</td><td>User Data</td><td class="mut">—</td></tr>
+                <tr><td><span class="chk"></span></td><td>vbmeta</td><td>Unknown</td><td class="mut">—</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<script type="text/plain" id="log">
+[10:41:02] Refreshing device list...
+[10:41:03] Found 1 device(s)
+[10:41:15] Loading partitions for Samsung Galaxy A54 (R5EXAMPLE0001)...
+[10:41:16] Found 11 partitions
+</script>
+<script src="chrome.js"></script>
+</body></html>

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .head { display: flex; align-items: center; gap: 14px; padding: 16px 22px 12px; border-bottom: 1px solid var(--hair); }
+    .head h2 { font-family: Cormorant; font-style: italic; font-weight: 500; font-size: 24px; }
+    .modes { display: flex; gap: 6px; margin-left: 10px; }
+    .cols { display: grid; grid-template-columns: 1fr 1fr 400px; height: 760px; }
+    .col { padding: 16px 20px; display: flex; flex-direction: column; gap: 13px; border-right: 1px solid var(--hair); }
+    .sel { padding: 8px 11px; display: flex; align-items: center; }
+    .sel::after { content: "⌄"; margin-left: auto; color: var(--t4); }
+    .voices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .voices span { padding: 7px 9px; border-radius: 8px; border: 1px solid var(--hair); font-size: 11.5px; background: rgba(255, 255, 255, .02); }
+    .voices span small { display: block; font-family: PlexMono; font-size: 8.5px; color: var(--t4); margin-top: 2px; }
+    .voices span.on { border-color: var(--gold); background: rgba(212, 167, 106, .1); color: var(--gold-hi); }
+    .ta { padding: 10px 12px; font-family: PlexThai; line-height: 1.6; min-height: 120px; }
+    .brief { display: flex; gap: 8px; }
+    .brief .box { flex: 1; padding: 8px 11px; font-family: PlexThai; color: var(--t2); }
+    .sl { display: grid; grid-template-columns: 74px 1fr 40px; gap: 10px; align-items: center; color: var(--t2); }
+    .sl span:last-child { font-family: PlexMono; font-size: 10.5px; color: var(--gold-hi); text-align: right; }
+    .takes { padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+    .take { display: grid; grid-template-columns: 34px 1fr; gap: 10px; padding: 10px; border-radius: 10px; border: 1px solid var(--hair); background: rgba(255, 255, 255, .015); }
+    .take .pl { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #8b6938, #f0cb88); color: #1a0d05; font-size: 11px; }
+    .take h4 { font-weight: 500; font-size: 12px; display: flex; gap: 8px; }
+    .take h4 small { margin-left: auto; font-family: PlexMono; font-size: 9.5px; color: var(--t4); font-weight: 400; }
+    .take p { font-family: PlexMono; font-size: 9.5px; color: var(--t4); margin-top: 2px; }
+    .wave { display: flex; align-items: center; gap: 2px; height: 26px; margin-top: 6px; }
+    .wave i { flex: 1; border-radius: 2px; background: linear-gradient(180deg, var(--gold-hi), var(--gold-lo)); opacity: .75; }
+    .take.m .wave i { background: linear-gradient(180deg, var(--moon), var(--moon-deep)); }
+</style></head>
+<body data-on="voice">
+<main class="work">
+    <div class="head"><h2>Sound atelier</h2>
+        <div class="modes"><span class="chip on">◔ TTS</span><span class="chip">♪ Music</span></div>
+        <span class="mono mut" style="font-size:10px;margin-left:auto">OUTPUT → media/voice/ · media/music/</span></div>
+    <div class="cols">
+        <section class="col">
+            <p class="lbl" style="margin:0">Voice-over · TTS</p>
+            <div><p class="lbl">Provider</p><div class="box sel">ElevenLabs</div></div>
+            <div><p class="lbl">Quick pick</p>
+                <div class="voices"><span class="on">Narrator TH<small>warm · calm</small></span><span>Storyteller<small>deep · slow</small></span><span>Bright<small>modern · fast</small></span></div></div>
+            <div><p class="lbl">Brief · one line the LLM expands</p>
+                <div class="brief"><div class="box">เปิดเรื่องนางพญาตื่นใต้แสงจันทร์ 20 วินาที</div><span class="btn out">✦ Write</span></div></div>
+            <div><p class="lbl">Script</p>
+                <div class="box gold ta">ในคืนที่จันทร์เต็มดวง นางพญาแห่งจันทราลืมตาขึ้นอีกครั้ง… เมืองทั้งเมืองเงียบลง เหลือเพียงเสียงลมที่พัดผ่านผ้าไหม และคำอธิษฐานที่รอการตอบรับ</div></div>
+            <div class="sl"><span>Speed</span><div class="slider"><b style="width:46%"></b></div><span>0.95×</span></div>
+            <div class="sl"><span>Stability</span><div class="slider"><b style="width:62%"></b></div><span>0.62</span></div>
+            <div class="cta" style="margin-top:auto">✦ Generate voice</div>
+        </section>
+        <section class="col">
+            <p class="lbl" style="margin:0">Music</p>
+            <div><p class="lbl">Music provider</p><div class="box sel">ComfyUI · ACE-Step (local GPU)</div></div>
+            <div><p class="lbl">Music prompt · style / tempo / instruments</p>
+                <div class="box ta" style="min-height:80px;font-family:Plex">cinematic thai orchestral, ranat ek and strings, slow 72 bpm, mysterious, moonlit</div></div>
+            <div><p class="lbl">เนื้อร้อง (ว่างไว้ = บรรเลงล้วน)</p><div class="box ta mut" style="min-height:70px">—</div></div>
+            <div class="sl"><span>Duration</span><div class="slider"><b style="width:40%"></b></div><span>30s</span></div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="chip">meta/musicgen</span><span class="chip">lucataco/ace-step</span><span class="chip">riffusion/riffusion</span><span class="mono mut" style="font-size:9px;align-self:center">· Replicate</span></div>
+            <div class="cta" style="margin-top:auto">♪ Generate music</div>
+        </section>
+        <section>
+            <div class="panel-h"><h2>Takes</h2><small>newest first</small></div>
+            <div class="takes" id="takes"></div>
+        </section>
+    </div>
+</main>
+<script>
+(function () {
+    var takes = [
+        ['narrator_take3.mp3', 'ElevenLabs · 0:21', '', 0],
+        ['moonrise_theme.wav', 'ACE-Step · 0:30', 'm', 1],
+        ['narrator_take2.mp3', 'ElevenLabs · 0:19', '', 2],
+        ['intro_hook.mp3', 'OpenAI TTS · nova · 0:08', '', 3],
+        ['temple_bells.wav', 'Replicate · musicgen · 0:15', 'm', 4],
+    ];
+    var html = takes.map(function (t) {
+        var bars = '';
+        for (var i = 0; i < 46; i++) { var h = 18 + Math.abs(Math.sin(i * 0.7 + t[3]) * 62) + Math.abs(Math.cos(i * 1.9 + t[3] * 2)) * 20; bars += '<i style="height:' + Math.min(100, h).toFixed(0) + '%"></i>'; }
+        return '<div class="take ' + t[2] + '"><span class="pl">▶</span><div><h4>' + t[0] + '<small>today</small></h4><p>' + t[1] + '</p><div class="wave">' + bars + '</div></div></div>';
+    }).join('');
+    document.getElementById('takes').innerHTML = html;
+})();
+</script>
+<script src="chrome.js"></script>
+</body></html>

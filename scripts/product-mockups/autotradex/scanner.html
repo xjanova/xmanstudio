@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .wrap { display: grid; grid-template-columns: 330px 1fr; gap: 14px; height: 100%; }
+    .left > .card + .card { margin-top: 12px; }
+    .three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; text-align: center; }
+    .three div { background: rgba(0, 0, 0, .2); border-radius: 10px; padding: 8px 4px; }
+    .strat { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+    .strat span { padding: 9px 10px; border-radius: 10px; background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .1); font-size: 12px; font-weight: 600; color: rgba(255, 255, 255, .7); }
+    .strat span.on { background: linear-gradient(135deg, rgba(124, 58, 237, .5), rgba(37, 99, 235, .4)); border-color: rgba(167, 139, 250, .65); color: #fff; }
+    .tg { display: flex; align-items: center; gap: 10px; font-size: 12px; padding: 6px 0; }
+    .tg i { width: 34px; height: 18px; border-radius: 9px; background: rgba(255, 255, 255, .15); position: relative; flex: none; }
+    .tg i::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; }
+    .tg i.on { background: #10B981; } .tg i.on::after { left: 18px; }
+    .set { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; font-size: 12px; }
+    .sum { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .score { width: 90px; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, .1); overflow: hidden; display: inline-block; vertical-align: middle; margin-right: 8px; }
+    .score b { display: block; height: 100%; background: linear-gradient(90deg, #7C3AED, #10B981); }
+    td { padding: 10px 10px; }
+</style></head>
+<body data-on="Scanner">
+<div class="page">
+    <div class="wrap">
+        <div class="left">
+            <div class="card">
+                <div class="row"><b style="font-size:14px">SMART SCANNER</b><span class="badge b-grn sp">● Scanning</span></div>
+                <div class="row" style="margin-top:12px;gap:8px"><span class="btn gh" style="flex:1;opacity:.5">START SCANNING</span><span class="btn red" style="flex:1">STOP SCANNING</span></div>
+                <div class="three"><div><p class="mid">1,284</p><p class="mut" style="font-size:10px">Scans</p></div><div><p class="mid grn">9</p><p class="mut" style="font-size:10px">Found</p></div><div><p class="mid pur">87</p><p class="mut" style="font-size:10px">Score</p></div></div>
+            </div>
+            <div class="card">
+                <p class="lbl">SCAN STRATEGY</p>
+                <div class="strat"><span class="on">💰 Arbitrage Best</span><span>📉 Price Drop</span><span>📊 High Volatility</span><span>📈 Volume Surge</span><span>🚀 Momentum Up</span><span>🔥 Top Gainers</span></div>
+            </div>
+            <div class="card">
+                <p class="lbl">AUTO MODE</p>
+                <p class="mut" style="font-size:11px;margin:6px 0 4px">เมื่อเปิด Bot จะเลือกเหรียญที่ดีที่สุดโดยอัตโนมัติ</p>
+                <p class="tg"><i class="on"></i>Auto-execute เมื่อเจอโอกาสดี</p>
+                <p class="tg"><i class="on"></i>แจ้งเตือนเมื่อพบโอกาส</p>
+            </div>
+            <div class="card">
+                <p class="lbl">SETTINGS</p>
+                <p class="set" style="margin-top:4px">Min Spread %<b class="field" style="height:26px">0.10%</b></p>
+                <p class="set">Scan Interval<b class="field" style="height:26px">5s</b></p>
+                <p class="set">Min Score<b class="field" style="height:26px">30</b></p>
+            </div>
+        </div>
+
+        <div>
+            <div class="sum">
+                <div class="stat"><p class="lbl">BEST SPREAD</p><p class="mid grn">0.48%</p><p class="mut" style="font-size:10px">BTC/USDT</p></div>
+                <div class="stat"><p class="lbl">TOP SCORE</p><p class="mid pur">87</p><p class="mut" style="font-size:10px">of 100</p></div>
+                <div class="stat"><p class="lbl">TRADEABLE</p><p class="mid">9</p><p class="mut" style="font-size:10px">Above min score</p></div>
+                <div class="stat"><p class="lbl">EST. PROFIT</p><p class="mid grn">$4.80</p><p class="mut" style="font-size:10px">Per $1000 trade</p></div>
+            </div>
+            <div class="card" style="margin-top:14px;height:666px;padding:14px 16px">
+                <div class="row"><b style="font-size:14px">SCAN RESULTS</b><span class="badge b-pur">AI RECOMMENDED</span><span class="mut sp" style="font-size:11px">Sort:</span><span class="field" style="height:28px">Score (High → Low) ⌄</span></div>
+                <table style="margin-top:8px">
+                    <thead><tr><th>PAIR</th><th>ROUTE</th><th>BUY</th><th>SELL</th><th>SPREAD</th><th>SCORE</th><th></th><th></th></tr></thead>
+                    <tbody>
+                        <tr><td><span class="row"><span class="coin" style="background:#F7931A">BTC</span><b>BTC/USDT</b></span></td><td><span class="row"><span class="ex" style="background:#F3BA2F">BN</span>→<span class="ex" style="background:#23AF91">KC</span></span></td><td class="mono">67,412.30</td><td class="mono">67,735.90</td><td class="grn"><b>0.48%</b></td><td><span class="score"><b style="width:87%"></b></span>87</td><td><span class="badge b-red">HOT</span></td><td><span class="btn pur" style="height:26px">SELECT</span></td></tr>
+                        <tr><td><span class="row"><span class="coin" style="background:#9945FF">SOL</span><b>SOL/USDT</b></span></td><td><span class="row"><span class="ex" style="background:#23AF91">KC</span>→<span class="ex" style="background:#F3BA2F">BN</span></span></td><td class="mono">162.41</td><td class="mono">163.02</td><td class="grn"><b>0.38%</b></td><td><span class="score"><b style="width:81%"></b></span>81</td><td><span class="badge b-red">HOT</span></td><td><span class="btn pur" style="height:26px">SELECT</span></td></tr>
+                        <tr><td><span class="row"><span class="coin" style="background:#627EEA">ETH</span><b>ETH/THB</b></span></td><td><span class="row"><span class="ex" style="background:#4CBA64">BK</span>→<span class="ex" style="background:#F3BA2F">BN</span></span></td><td class="mono">฿ 118,420</td><td class="mono">฿ 118,812</td><td class="grn"><b>0.33%</b></td><td><span class="score"><b style="width:74%"></b></span>74</td><td><span class="badge b-cy">฿ THB</span></td><td><span class="btn pur" style="height:26px">SELECT</span></td></tr>
+                        <tr><td><span class="row"><span class="coin" style="background:#23292F">XRP</span><b>XRP/USDT</b></span></td><td><span class="row"><span class="ex" style="background:#F3BA2F">BN</span>→<span class="ex" style="background:#23AF91">KC</span></span></td><td class="mono">0.5412</td><td class="mono">0.5426</td><td class="grn"><b>0.26%</b></td><td><span class="score"><b style="width:66%"></b></span>66</td><td></td><td><span class="btn gh" style="height:26px">SELECT</span></td></tr>
+                        <tr><td><span class="row"><span class="coin" style="background:#C2A633">DOGE</span><b>DOGE/USDT</b></span></td><td><span class="row"><span class="ex" style="background:#23AF91">KC</span>→<span class="ex" style="background:#F3BA2F">BN</span></span></td><td class="mono">0.1384</td><td class="mono">0.1387</td><td class="grn"><b>0.22%</b></td><td><span class="score"><b style="width:61%"></b></span>61</td><td></td><td><span class="btn gh" style="height:26px">SELECT</span></td></tr>
+                        <tr><td><span class="row"><span class="coin" style="background:#E84142">AVAX</span><b>AVAX/USDT</b></span></td><td><span class="row"><span class="ex" style="background:#F3BA2F">BN</span>→<span class="ex" style="background:#23AF91">KC</span></span></td><td class="mono">28.614</td><td class="mono">28.665</td><td class="grn"><b>0.18%</b></td><td><span class="score"><b style="width:55%"></b></span>55</td><td></td><td><span class="btn gh" style="height:26px">SELECT</span></td></tr>
+                        <tr><td><span class="row"><span class="coin" style="background:#2A5ADA">LINK</span><b>LINK/USDT</b></span></td><td><span class="row"><span class="ex" style="background:#23AF91">KC</span>→<span class="ex" style="background:#F3BA2F">BN</span></span></td><td class="mono">13.482</td><td class="mono">13.501</td><td class="grn"><b>0.14%</b></td><td><span class="score"><b style="width:48%"></b></span>48</td><td></td><td><span class="btn gh" style="height:26px">SELECT</span></td></tr>
+                        <tr><td><span class="row"><span class="coin" style="background:#0033AD">ADA</span><b>ADA/USDT</b></span></td><td><span class="row"><span class="ex" style="background:#F3BA2F">BN</span>→<span class="ex" style="background:#4CBA64">BK</span></span></td><td class="mono">0.3921</td><td class="mono">0.3926</td><td class="grn"><b>0.13%</b></td><td><span class="score"><b style="width:41%"></b></span>41</td><td></td><td><span class="btn gh" style="height:26px">SELECT</span></td></tr>
+                        <tr><td><span class="row"><span class="coin" style="background:#E6007A">DOT</span><b>DOT/USDT</b></span></td><td><span class="row"><span class="ex" style="background:#23AF91">KC</span>→<span class="ex" style="background:#F3BA2F">BN</span></span></td><td class="mono">4.218</td><td class="mono">4.223</td><td class="grn"><b>0.11%</b></td><td><span class="score"><b style="width:34%"></b></span>34</td><td></td><td><span class="btn gh" style="height:26px">SELECT</span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="chrome.js"></script>
+</body></html>

@@ -1,0 +1,81 @@
+<!doctype html>
+<!-- Smart Scan (Views/ScanView.xaml) part-way through a Deep Scan: the mode picker, drives, the two progress bars
+     (section / total), counters and the Scan Log in SafeScanner's own wording. Paths, names and numbers are made up. -->
+<html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .top .bs { display: flex; gap: 8px; }
+    .radio { display: inline-flex; align-items: center; gap: 8px; margin-right: 24px; font-size: 13px; }
+    .radio i { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border2); position: relative; }
+    .radio.on i { border-color: var(--accent); }
+    .radio.on i::after { content: ""; position: absolute; inset: 2px; border-radius: 50%; background: var(--accent); }
+    .desc { background: rgba(255, 255, 255, .06); border-radius: 6px; padding: 8px 12px; color: var(--t2); margin: 12px 0 14px; }
+    .sep { height: 1px; background: var(--border); margin: 14px 0; }
+    .drv { display: inline-flex; align-items: center; gap: 8px; margin-right: 22px; }
+    .prog { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
+    .spin { width: 34px; height: 34px; border-radius: 50%; border: 4px solid rgba(41, 182, 246, .18); border-top-color: var(--accent); border-right-color: var(--cyan); flex: none; }
+    .sec { background: var(--cyan); color: var(--bg1); font-weight: 700; font-size: 12px; padding: 3px 10px; border-radius: 4px; }
+    .track { height: 8px; border-radius: 4px; background: rgba(255, 255, 255, .08); overflow: hidden; }
+    .track b { display: block; height: 100%; border-radius: 4px; }
+    .log { background: #071320; border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; height: 262px; overflow: hidden;
+        font-family: Consolas, "Cascadia Mono", monospace; font-size: 12px; line-height: 1.6; color: var(--t2); white-space: pre; }
+    .log .r { color: #ff8a80; } .log .y { color: var(--warn); } .log .g { color: var(--ok); } .log .c { color: var(--accentL); }
+</style></head>
+<body data-on="scan" data-threats="3" data-msg="Deep Scan - Full system scan">
+<div class="main">
+    <div class="top">
+        <div><h1>🔍 Smart Scan</h1><div class="sub">Intelligent malware detection with scoring system to reduce false positives</div></div>
+        <div class="bs">
+            <span class="btn pri" style="width:140px;opacity:.5">🔍 Start Scan</span>
+            <span class="btn ok" style="width:100px">⏸️ Pause</span>
+            <span class="btn bad" style="width:100px">⏹️ Stop</span>
+            <span class="btn sec" style="width:110px;opacity:.5">📄 Report</span>
+        </div>
+    </div>
+
+    <div class="glass" style="margin-bottom:16px">
+        <div class="h2" style="font-size:15px">Scan Mode</div>
+        <div style="margin-top:12px"><span class="radio"><i></i>⚡ Quick Scan</span><span class="radio on"><i></i>🔬 Deep Scan</span><span class="radio"><i></i>⚙️ Custom</span></div>
+        <div class="desc">🔬 Deep Scan: Full system scan of all selected drives, registry, and processes. Thorough but takes longer.</div>
+        <div class="h2" style="font-size:15px;margin-bottom:12px">Select Drives to Scan</div>
+        <div><span class="drv"><span class="toggle on"></span>C:\ (Local Disk)</span><span class="drv"><span class="toggle on"></span>D:\ (Data)</span><span class="drv"><span class="toggle"></span>E:\ (USB Drive)</span></div>
+        <div class="sep"></div>
+        <div style="display:flex;gap:28px"><span class="drv"><span class="toggle on"></span>Auto Backup before delete</span><span class="drv"><span class="toggle on"></span>Confirm uncertain items</span></div>
+    </div>
+
+    <div class="glass" style="margin-bottom:16px">
+        <div class="prog">
+            <span class="spin"></span>
+            <span class="sec">Files</span>
+            <span class="t3">1 / 3</span>
+            <div style="flex:1">
+                <div class="track" style="margin-bottom:6px"><b style="width:58%;background:linear-gradient(90deg,#29b6f6,#4dd0e1)"></b></div>
+                <div class="track"><b style="width:41%;background:linear-gradient(90deg,#43a047,#66bb6a)"></b></div>
+            </div>
+            <span style="font-weight:700"><span class="cy">58%</span> <span class="t3">/</span> <span class="ok">41%</span></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:24px">
+            <span><b class="cy" style="font-size:16px">128,442</b><span class="t2"> items</span></span>
+            <span><b class="bad" style="font-size:16px">3</b><span class="t2"> threats</span></span>
+            <span class="t3 mono" style="font-size:12px">D:\Games\Downloads\setup_files\data2.bin</span>
+            <span class="t2" style="margin-left:auto">Scanning...</span>
+        </div>
+    </div>
+
+    <div class="h2" style="margin-bottom:8px">Scan Log</div>
+    <div class="log"><span class="c">[21:31:04] =============================================================</span>
+[21:31:04] 🔍 Starting Deep Scan with Threat Analysis
+[21:31:04]    Mode: Deep - Full system scan
+[21:31:04]    Drives: C:\, D:\
+[21:31:05] 📊 [PRE-SCAN] Counting items to scan...
+[21:31:19]    Files: 296,180 | Registry: 14,522 | Processes: 186
+[21:31:19] 📁 [FILE SCAN] Scanning file system...
+<span class="r">[21:36:52] 🔴 [THREAT] CRITICAL: C:\Users\demo\Downloads\GameX_Crack\steam_api64.dll</span>
+[21:36:52]    Score: 96 | Patterns: content-hash, scene-group, steam-emu
+<span class="y">[21:39:10] 🔴 [THREAT] HIGH: C:\Users\demo\AppData\Roaming\upd\svc_host32.exe</span>
+[21:39:10]    Score: 88 | Patterns: run-key, packed, high-entropy
+<span class="y">[21:41:33] 🔴 [THREAT] HIGH: D:\Games\Downloads\Office_Activator\KMS_tool.exe</span>
+[21:41:33]    Score: 74 | Patterns: activator, lolbin-cmdline</div>
+</div>
+<script src="chrome.js"></script>
+</body></html>

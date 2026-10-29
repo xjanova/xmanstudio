@@ -387,6 +387,35 @@ class MacDockProductTest extends TestCase
         $this->assertStringNotContainsStringIgnoringCase('github', $html);
     }
 
+    public function test_the_product_page_has_three_download_buttons_and_explains_the_free_licence(): void
+    {
+        $this->makeVersion('1.1.0');
+
+        $html = $this->get('/products/macdock')->assertOk()->getContent();
+
+        // hero, the free card and the closing call to action — no cart: the app has no paid tier
+        $this->assertSame(3, substr_count($html, 'href="' . route('macdock.download') . '"'));
+        $this->assertStringNotContainsString('name="license_type"', $html);
+        $this->assertStringContainsString('id="license"', $html);
+        $this->assertStringContainsString(e('ไลเซ่น & อัปเดต'), $html);
+        $this->assertStringContainsString(asset('images/products/macdock/v2/og.jpg'), $html);
+    }
+
+    public function test_an_account_holding_a_free_key_is_told_so_on_the_product_page(): void
+    {
+        $owner = User::factory()->create();
+        $this->registerDevice('a');
+        $this->claim($owner, 'a');
+
+        $this->actingAs($owner)->get('/products/macdock')
+            ->assertOk()
+            ->assertSee('บัญชีนี้มีไลเซ่นฟรี MacDock 1 เครื่อง');
+
+        $this->actingAs(User::factory()->create())->get('/products/macdock')
+            ->assertOk()
+            ->assertDontSee('บัญชีนี้มีไลเซ่นฟรี MacDock');
+    }
+
     public function test_a_coming_soon_product_shows_no_download_link(): void
     {
         $this->product->update(['is_coming_soon' => true]);

@@ -1,438 +1,322 @@
 @extends($publicLayout ?? 'layouts.app')
-{{-- Coming Soon = ปุ่มดาวน์โหลดเป็นป้าย (กฎเจ้าของ 2026-10-12) --}}
+{{-- Coming Soon = ปุ่มดาวน์โหลดเป็นป้าย และซื้อไม่ได้ (กฎเจ้าของ 2026-10-12) --}}
 @php $csDownload = \App\Models\Product::slugIsComingSoon('tping'); @endphp
 
-@section('title', 'Tping - ช่วยพิมพ์ สำหรับผู้ที่ใช้นิ้วไม่สะดวก')
-@section('meta_description', 'Tping แอพช่วยพิมพ์บน Android ออโต้กรอกฟอร์ม บันทึก Workflow พิมพ์แทนคุณในทุกแอพ เหมาะสำหรับผู้ที่ใช้นิ้วไม่สะดวก งาน Data Entry กรอกฟอร์มซ้ำๆ')
+@section('title', 'Tping — ช่วยพิมพ์และกดแทนบน Android · ทดลองฟรี 24 ชม.' . (\App\Support\LicensePlans::price('tping', 'monthly') ? ' · เริ่ม ฿' . number_format(\App\Support\LicensePlans::price('tping', 'monthly')) . '/เดือน' : '') . ' | XMAN Studio')
+@section('meta_description', 'Tping แอปช่วยพิมพ์บน Android สำหรับผู้ที่ใช้นิ้วไม่สะดวกและงานกรอกซ้ำ ๆ บันทึกขั้นตอนครั้งเดียวแล้วเล่นซ้ำ 1–999 รอบ สลับชุดข้อมูลทุกรอบ โหมดเกมวางพิกัดด้วยกากบาท กดรัว และแก้ captcha แบบเลื่อน ไม่ต้อง Root ทดลองฟรี 24 ชั่วโมง · An Android auto-typer: record once, play it back.')
+@section('og_image', asset('images/products/tping/v2/og.jpg'))
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-gray-900 via-indigo-900 to-gray-900">
+@php
+    // ราคาทุกแผนมาจาก config/licenses.php 'plans' ที่เดียว (หน้า checkout ของ Tping คิดตามนี้) — ห้ามเขียนตัวเลขราคาลงหน้านี้ตรง ๆ
+    $prices = \App\Support\LicensePlans::for('tping');
+    $monthly = isset($prices['monthly']) ? number_format($prices['monthly']) : null;
+    $yearlySaving = \App\Support\LicensePlans::yearlySaving('tping');
 
-    {{-- ============================================================ --}}
-    {{-- HERO SECTION --}}
-    {{-- ============================================================ --}}
-    <section class="relative py-24 lg:py-32 overflow-hidden">
-        <x-page-art art="card-tping" :opacity="40" />
-        {{-- Background decoration --}}
-        <div class="absolute inset-0 opacity-10">
-            <div class="absolute inset-0" style="background-image: radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.4) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.4) 0%, transparent 50%), radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.2) 0%, transparent 70%);"></div>
-        </div>
-        <div class="absolute top-20 left-10 w-72 h-72 bg-violet-500/10 rounded-full blur-3xl"></div>
-        <div class="absolute bottom-10 right-10 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
+    // ส่วนลดเมื่อจ่ายด้วย Wallet — อ่านจากตัวที่หน้า checkout ใช้คิดเงินจริง (TpingController::WALLET_DISCOUNT_PERCENT)
+    $walletDiscount = (new \ReflectionClassConstant(\App\Http\Controllers\TpingController::class, 'WALLET_DISCOUNT_PERCENT'))->getValue();
+    $tpixPay = \App\Services\TpixPay\TpixCheckout::available();
 
+    // เวอร์ชันที่ /tping/download/apk ส่งจริง (ตัวที่ active — TpingController ส่ง $version มาให้)
+    $latest = $version ?? null;
+
+    // ภาพหน้าจอ: mockup วาดตามโค้ด Compose ของแอป (ยังไม่มีภาพจริง) — สร้างใหม่ได้ด้วย scripts/product-mockups/build.py tping
+    $shot = fn (string $file) => asset('images/products/tping/v2/' . $file);
+
+    // จำนวนเครื่องต่อคีย์ = max_activations ที่ TpingController::generateLicenseForOrder ออกให้ (ตลอดชีพ 3 · นอกนั้น 1)
+    $plans = [
+        'monthly' => ['name' => 'รายเดือน', 'en' => 'Monthly', 'unit' => '/ เดือน', 'note' => 'ซื้อทีละ 30 วัน ไม่ตัดเงินอัตโนมัติ', 'days' => '30 วัน', 'devices' => '1 เครื่อง'],
+        'yearly' => ['name' => 'รายปี', 'en' => 'Yearly', 'unit' => '/ ปี', 'note' => $yearlySaving ? 'ถูกกว่ารายเดือน ' . $yearlySaving . '%' : 'จ่ายครั้งเดียวใช้ทั้งปี', 'days' => '365 วัน', 'devices' => '1 เครื่อง'],
+        'lifetime' => ['name' => 'ตลอดชีพ', 'en' => 'Lifetime', 'unit' => 'ครั้งเดียว', 'note' => 'จ่ายครั้งเดียว ใช้ได้ตลอด', 'days' => 'ไม่หมดอายุ', 'devices' => 'สูงสุด 3 เครื่อง'],
+    ];
+
+    // บันทึก → เล่นซ้ำ → ชุดข้อมูล — ข้อเท็จจริงจากโค้ดแอป (HomeScreen guide, FloatingOverlayContent, PlaybackEngine, DataProfileScreen)
+    $coreRows = [
+        [
+            'img' => $shot('record.webp'), 'mock' => true, 'phone' => true, 'name' => 'บันทึกขั้นตอน', 'eyebrow' => 'Record once',
+            'th' => 'กดปุ่มลอย "บันทึก" แล้วไปใช้แอปที่ต้องการตามปกติ — แตะ กดค้าง พิมพ์ เลื่อน ย้อนกลับ Tping จำทุกขั้นตอนไว้ แล้วกด "Tag" เพื่อผูกช่องที่พิมพ์กับข้อมูล เช่น อีเมล หรือรหัสผ่าน',
+            'en' => 'Use any app as you normally would; Tping remembers every tap, long-press, text, scroll and back. Tag a field to fill it from your data.',
+            'points' => ['ระบบแนะนำชื่อช่อง (อีเมล รหัสผ่าน) และชื่อ Workflow จากแอปเป้าหมายให้', 'หาปุ่มด้วย ID → ข้อความ → พิกัดจอ ไล่ตามลำดับ', 'ตั้งชื่อ Workflow แล้วบันทึก ใช้ซ้ำได้ตลอด'],
+            'alt' => 'ภาพตัวอย่าง Tping กำลังบันทึกขั้นตอนในแอปอื่น พร้อมหน้าต่างผูกข้อมูลกับช่องอีเมล',
+        ],
+        [
+            'img' => $shot('play.webp'), 'mock' => true, 'phone' => true, 'name' => 'เล่นอัตโนมัติ', 'eyebrow' => 'Play it back',
+            'th' => 'เลือก Workflow เลือกหมวดข้อมูล ตั้งจำนวนรอบ 1–999 แล้วกดเริ่มเล่น Tping เปิดแอปเป้าหมายให้เอง และใช้ข้อมูลชุดถัดไปในแต่ละรอบ ข้อมูลหมดก่อนรอบจะวนกลับไปชุดแรก',
+            'en' => 'Pick a workflow and a data category, set 1–999 loops and press play. Each loop takes the next data set.',
+            'points' => ['สุ่มลำดับข้อมูลได้ โดยไม่ซ้ำในหมวดเดียวกัน', 'Turbo Mode: ไม่มีดีเลย์ระหว่างขั้นตอน (ปกติรอ 3 วินาที)', 'พัก ต่อ หยุด ได้ทั้งจากหน้าแอปและปุ่มลอย'],
+            'alt' => 'ภาพตัวอย่างหน้าต่างเลือก Workflow ของ Tping: ข้อมูลที่ต้องใช้ หมวดข้อมูล จำนวนรอบ และ Turbo Mode',
+        ],
+        [
+            'img' => $shot('data.webp'), 'mock' => true, 'phone' => true, 'name' => 'ชุดข้อมูล', 'eyebrow' => 'Data sets',
+            'th' => 'เก็บข้อมูลที่ต้องกรอกบ่อยเป็นชุด ๆ เช่น "บัญชี A" "บัญชี B" แต่ละชุดมีกี่ช่องก็ได้ และจัดเข้าหมวดเพื่อเลือกใช้ตอนเล่น',
+            'en' => 'Keep what you type often as named sets of fields, grouped into categories you pick at play time.',
+            'points' => ['Gen ชุดข้อมูล: สร้างหลายชุดในครั้งเดียวจากรูปแบบเดียว ใช้ * แทนเลขลำดับ สูงสุด 500 ชุดต่อครั้ง (ต้องมี License)', 'ทำสำเนา แก้ไข ลบ ได้ทีละชุด'],
+            'alt' => 'ภาพตัวอย่างหน้าจัดการข้อมูลของ Tping พร้อมหน้าต่าง Gen ชุดข้อมูล',
+        ],
+    ];
+
+    // โหมดเกม (ภาพมือถือ จึงเป็นแถว ไม่ใช่แท็บ) + เครื่องมือเสริม — ใช้ได้ทั้งตอนทดลองและเมื่อมี License
+    $gameRow = [
+        'img' => $shot('game.webp'), 'mock' => true, 'phone' => true, 'name' => 'โหมดเกม (พิกัด)', 'eyebrow' => 'Game mode',
+        'th' => 'เกมและแอปบางตัวไม่บอกตำแหน่งปุ่มให้ระบบอ่าน เลือกโหมด "เกม" ตอนบันทึก แล้ววางจุดกดเองด้วยกากบาท ลากไปตำแหน่งที่ต้องการแล้วกดตกลง',
+        'en' => 'For games and apps that expose no buttons: place every tap yourself with a crosshair.',
+        'points' => ['กด · กดค้าง · กรอกข้อมูล · กดรัว · รอ 1 หรือ 3 วินาที · ย้อนกลับ · หน้าหลัก', 'บล็อกพิกัดลากย้ายได้ ไม่บังจุดที่จะวาง', 'ตอนเล่นต้องใช้ความละเอียดจอเท่าเดิม และห้ามหมุนจอ'],
+        'alt' => 'ภาพตัวอย่างโหมดเกมของ Tping: กากบาทวางพิกัด และแผงปุ่มคำสั่งของโหมดเกม',
+    ];
+    $gameTools = [
+        [
+            'key' => 'rapid', 'name' => 'กดรัว', 'short' => 'กดซ้ำจุดเดิมเร็ว ๆ',
+            'th' => 'วางจุดด้วยกากบาท แล้วตั้งให้กดซ้ำที่จุดนั้นตามจำนวนครั้งและความเร็วที่ต้องการ หรือกดไปเรื่อย ๆ จนกว่าจะสั่งหยุด',
+            'en' => 'Tap one spot over and over, a set number of times or until you stop it.',
+            'points' => ['เลือกจำนวน 5 / 10 / 20 / 50 / 100 ครั้ง หรือ ∞ ไม่จำกัด', 'ความเร็ว 30–2,000 ms ต่อครั้ง (เร็วสุด เร็ว ปกติ ช้า ช้ามาก)'],
+        ],
+        [
+            'key' => 'captcha', 'name' => 'Captcha แบบเลื่อน', 'short' => 'เลื่อนชิ้นส่วนให้เอง',
+            'th' => 'เจอ captcha แบบเลื่อนชิ้นส่วนเข้าช่อง กดปุ่ม Captcha ในโหมดเกม แล้วกำหนดตำแหน่งตัวเลื่อนกับปุ่มรีเฟรช ตอนเล่น Tping หาช่องจากภาพหน้าจอและเลื่อนให้เอง',
+            'en' => 'Slider-puzzle captchas: mark the slider and refresh button once, and Tping finds the gap and slides it during playback.',
+            'points' => ['วิเคราะห์ภาพด้วย OpenCV บนมือถือเอง', 'ไม่ผ่านจะกดรีเฟรชแล้วลองใหม่ให้'],
+        ],
+        [
+            'key' => 'float', 'name' => 'ปุ่มลอย + ปุ่มลัด', 'short' => 'สั่งงานได้จากทุกแอป',
+            'th' => 'แผงควบคุมลอยอยู่บนทุกแอป บันทึก เล่น พัก หยุด ได้โดยไม่ต้องกลับมาที่ Tping และตั้งเป็นปุ่มลัดการช่วยเหลือพิเศษของ Android ได้ เปิดแผงจากในเกมได้ทันที',
+            'en' => 'A floating panel over every app, also reachable from Android’s accessibility shortcut.',
+            'points' => ['ปุ่มลัดเปิดได้ทั้งปุ่มลอยที่ขอบจอ กดปุ่มเสียงค้าง หรือปัดสองนิ้ว (แล้วแต่รุ่นเครื่อง)'],
+        ],
+    ];
+
+    // License ปลดสิ่งนี้เพิ่ม — CloudScreen/CloudSyncManager/DataProfileScreen เช็ก LicenseStatus.ACTIVE (ช่วงทดลองไม่ใช่)
+    $compare = [
+        ['ในเครื่อง · On the phone', [
+            ['บันทึกขั้นตอน โหมดปกติ + โหมดเกม', false],
+            ['เล่นอัตโนมัติ 1–999 รอบ · สลับ/สุ่มชุดข้อมูล', false],
+            ['Turbo Mode · กดรัว · Captcha แบบเลื่อน', false],
+            ['ชุดข้อมูลหลายชุด แยกหมวด', false],
+            ['ปุ่มลอย · ปุ่มลัดการช่วยเหลือพิเศษ · อัปเดตในแอป', false],
+            ['Gen ชุดข้อมูลอัตโนมัติ (สูงสุด 500 ชุดต่อครั้ง)', true],
+        ]],
+        ['คลาวด์ · Cloud', [
+            ['Cloud Sync — ซิงค์ Workflow และชุดข้อมูลข้ามเครื่อง', true],
+            ['ดู/แก้ Workflow และชุดข้อมูลบนเว็บ (บัญชีของฉัน)', true],
+            ['ส่งออก/นำเข้าเป็นไฟล์ JSON', true],
+        ]],
+    ];
+
+    $ld = [
+        '@context' => 'https://schema.org',
+        '@type' => 'SoftwareApplication',
+        'name' => 'Tping',
+        'operatingSystem' => 'Android 8.0+',
+        'applicationCategory' => 'UtilitiesApplication',
+        'inLanguage' => ['th', 'en'],
+        'description' => 'แอปช่วยพิมพ์และกดแทนบน Android บันทึกขั้นตอนครั้งเดียวแล้วเล่นซ้ำพร้อมสลับชุดข้อมูล มีโหมดเกม กดรัว และแก้ captcha แบบเลื่อน ไม่ต้อง Root',
+        'image' => asset('images/products/tping/v2/og.jpg'),
+        'url' => route('tping.detail'),
+        'publisher' => ['@type' => 'Organization', 'name' => 'XMAN Studio', 'url' => url('/')],
+        'offers' => collect($prices)->map(fn ($price, $term) => ['@type' => 'Offer', 'name' => 'Tping (' . ($plans[$term]['en'] ?? $term) . ')', 'price' => (string) $price, 'priceCurrency' => 'THB'])->values()->all(),
+    ];
+@endphp
+<x-xp.page a="#b9a3ff" b="#5eead4" c="#22d3ee" glow="139 92 246" g1="#8b5cf6" g2="#e040fb" g3="#22d3ee">
+
+    {{-- ============================ HERO ============================ --}}
+    <x-xp.hero :art="$shot('art-hero.webp')"
+               tagline="ช่วยพิมพ์และกดแทนคุณ"
+               tagline-en="An Android helper that taps and types for you."
+               lead="สำหรับผู้ที่ใช้นิ้วไม่สะดวกและงานกรอกซ้ำ ๆ — บันทึกขั้นตอนการกดและพิมพ์ในแอปไหนก็ได้ครั้งเดียว แล้วให้ Tping ทำซ้ำแทนคุณ 1–999 รอบ พร้อมสลับชุดข้อมูลทุกรอบ ทำงานผ่านบริการการช่วยเหลือพิเศษของ Android ไม่ต้อง Root เครื่อง"
+               lead-en="Record a routine once in any app and let Tping repeat it up to 999 times with a different data set each loop. No root needed.">
+        <x-slot:chips>
+            <span class="xp-chip"><i></i>{{ $latest ? 'Tping ' . $latest->version : 'Tping' }}</span>
+            <span class="xp-chip">Android 8.0 ขึ้นไป</span>
+        </x-slot:chips>
+        <x-slot:title>T<span class="xp-text-glow">ping</span></x-slot:title>
+        <x-slot:actions>
+            <x-xp.download :href="route('tping.download')" :coming-soon="$csDownload" th="ดาวน์โหลด ทดลองฟรี 24 ชม." en="Free 24-hour trial" />
+            <a href="#pricing" class="xp-btn-pro inline-flex items-center px-6 py-4 rounded-xl font-extrabold transition">
+                ซื้อ License{{ $monthly ? ' — เริ่ม ฿' . $monthly . '/เดือน' : '' }}
+            </a>
+        </x-slot:actions>
+        <x-slot:notes>
+            @if($latest)
+                <p class="mt-4 text-sm text-gray-400">เวอร์ชันล่าสุด {{ $latest->version }}@if($latest->file_size) · {{ $latest->file_size_formatted }}@endif · ไฟล์ .apk จาก xman4289.com โดยตรง</p>
+            @endif
+            <p class="mt-2 text-sm"><a href="{{ route('tping.install-guide') }}" class="xp-link font-semibold">วิธีติดตั้งและเปิดสิทธิ์ทีละขั้น →</a></p>
+        </x-slot:notes>
+        <x-slot:badges>
+            <li class="flex items-center gap-2 text-gray-300"><x-xp.badge tier="free" label="24 ชม." /> ทดลองฟรี ไม่ต้องสมัคร</li>
+            <li class="flex items-center gap-2 text-gray-300"><span class="xp-dot"></span> ไม่ต้อง Root</li>
+            <li class="flex items-center gap-2 text-gray-300"><span class="xp-dot"></span> ใช้ได้ทุกแอปและเกม</li>
+        </x-slot:badges>
+        <x-slot:visual>
+            <div class="max-w-xs mx-auto w-full">
+                <x-xp.screen phone :src="$shot('home.webp')" :eager="true" :mock="true" :width="390" :height="845"
+                             alt="ภาพตัวอย่างหน้าหลักของ Tping: สถานะทดลองใช้ สถานะสิทธิ์ ปุ่มลอย และเมนูหลัก" />
+            </div>
+            <div class="xp-float absolute -left-1 sm:left-0 bottom-10 xp-card backdrop-blur-md px-4 py-3 shadow-2xl hidden sm:block">
+                <p class="text-[11px] tracking-widest uppercase text-gray-400">เล่นซ้ำ · Loops</p>
+                <p class="text-white font-extrabold text-lg leading-tight">1–999 รอบ<br><span class="text-gray-400 text-sm font-normal">สลับชุดข้อมูลทุกรอบ</span></p>
+            </div>
+            <div class="xp-float-2 absolute right-0 top-10 xp-card backdrop-blur-md px-4 py-3 shadow-2xl hidden sm:block">
+                <p class="text-[11px] tracking-widest uppercase text-gray-400">Turbo Mode</p>
+                <p class="text-white font-bold leading-tight">ไม่มีดีเลย์<br><span class="text-gray-400 text-sm font-normal">ระหว่างขั้นตอน</span></p>
+            </div>
+        </x-slot:visual>
+    </x-xp.hero>
+
+    {{-- ========================== RECORD · PLAY · DATA ========================== --}}
+    <section class="relative py-20" id="features">
+        <div class="xp-glow w-[34rem] h-[34rem] -right-40 top-10" style="background: rgb(var(--xp-glow) / .12)"></div>
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center">
-                {{-- Badge --}}
-                <div class="inline-flex items-center px-4 py-2 bg-violet-500/20 rounded-full text-violet-300 text-sm mb-8 backdrop-blur-sm border border-violet-500/30">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                    Android Accessibility Service
-                </div>
-
-                {{-- Title --}}
-                <h1 class="text-5xl sm:text-6xl lg:text-7xl font-black text-white mb-6 tracking-tight">
-                    T<span class="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-purple-400 to-blue-400">ping</span>
-                </h1>
-
-                {{-- Tagline --}}
-                <p class="text-xl sm:text-2xl text-gray-300 max-w-3xl mx-auto mb-4 leading-relaxed">
-                    ช่วยพิมพ์ สำหรับผู้ที่ใช้นิ้วไม่สะดวก
-                </p>
-                <p class="text-base text-gray-400 max-w-2xl mx-auto mb-10">
-                    ออโต้กรอกฟอร์ม บันทึก Workflow พิมพ์แทนคุณในทุกแอพ
-                    ด้วย Android Accessibility Service
-                </p>
-
-                {{-- CTA Buttons --}}
-                <div class="flex flex-col sm:flex-row justify-center gap-4 mb-12">
-                    @if($csDownload)
-                        <span class="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-violet-500/25 text-lg" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
-                    @else
-                    <a href="{{ route('tping.download') }}"
-                       class="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-violet-500/25 text-lg">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                        ดาวน์โหลด ทดลองฟรี 24 ชม.
-                    </a>
-                    @endif
-                    <a href="{{ route('tping.pricing') }}"
-                       class="inline-flex items-center justify-center px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-all backdrop-blur-sm border border-white/20 text-lg">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
-                        ดูราคา
-                    </a>
-                </div>
-
-                {{-- Feature badges --}}
-                <div class="flex flex-wrap justify-center gap-3 text-sm">
-                    <span class="px-4 py-2 bg-white/5 rounded-full border border-white/10 text-gray-400">Auto Fill</span>
-                    <span class="px-4 py-2 bg-white/5 rounded-full border border-white/10 text-gray-400">Workflow Record</span>
-                    <span class="px-4 py-2 bg-white/5 rounded-full border border-white/10 text-gray-400">Cloud Sync</span>
-                    <span class="px-4 py-2 bg-white/5 rounded-full border border-white/10 text-gray-400">Data Profiles</span>
-                    <span class="px-4 py-2 bg-white/5 rounded-full border border-white/10 text-gray-400">Multi-device</span>
-                </div>
-            </div>
+            <x-xp.head class="mb-16" eyebrow="Record once · play it back" title="ทำครั้งเดียว" title2="ที่เหลือให้ Tping ทำ"
+                       sub="งานกรอกซ้ำ ๆ สมัครสมาชิก ล็อกอิน หรือกดเดิมทุกวัน — บันทึกครั้งเดียว แล้วให้ Tping กดและพิมพ์แทนนิ้วคุณ"
+                       en="Repetitive forms, sign-ups, logins, daily taps: record them once and let Tping do the tapping and typing." />
+            <x-xp.rows :items="$coreRows" />
         </div>
     </section>
 
-    {{-- ============================================================ --}}
-    {{-- FEATURES SECTION (6 cards) --}}
-    {{-- ============================================================ --}}
-    <section class="py-20 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-7xl mx-auto">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">ฟีเจอร์หลัก</h2>
-                <p class="text-gray-400 max-w-2xl mx-auto">Tping ออกแบบมาให้ช่วยพิมพ์แทนคุณได้อย่างสะดวกและปลอดภัย</p>
-            </div>
-
-            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {{-- Feature 1: Auto Fill --}}
-                <div class="group bg-gray-800/40 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 hover:border-violet-500/50 transition-all duration-300">
-                    <div class="w-14 h-14 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-3">Auto Fill</h3>
-                    <p class="text-gray-400 leading-relaxed">กรอกฟอร์มอัตโนมัติในทุกแอพ แค่แตะปุ่มเดียว ข้อมูลที่ตั้งไว้จะถูกกรอกให้ทันที</p>
-                </div>
-
-                {{-- Feature 2: Workflow Record --}}
-                <div class="group bg-gray-800/40 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 hover:border-blue-500/50 transition-all duration-300">
-                    <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-3">Workflow Record</h3>
-                    <p class="text-gray-400 leading-relaxed">บันทึกขั้นตอนการทำงาน แล้วเล่นซ้ำอัตโนมัติ ลดเวลางานซ้ำๆ จากชั่วโมงเหลือไม่กี่นาที</p>
-                </div>
-
-                {{-- Feature 3: Data Profiles --}}
-                <div class="group bg-gray-800/40 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 hover:border-emerald-500/50 transition-all duration-300">
-                    <div class="w-14 h-14 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-3">Data Profiles</h3>
-                    <p class="text-gray-400 leading-relaxed">สร้างโปรไฟล์ข้อมูลหลายชุด สลับใช้งานได้ง่าย เหมาะกับงานที่ต้องกรอกข้อมูลต่างกัน</p>
-                </div>
-
-                {{-- Feature 4: Cloud Sync --}}
-                <div class="group bg-gray-800/40 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 hover:border-sky-500/50 transition-all duration-300">
-                    <div class="w-14 h-14 bg-gradient-to-br from-sky-500 to-blue-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-3">Cloud Sync</h3>
-                    <p class="text-gray-400 leading-relaxed">ซิงค์ข้อมูลผ่านคลาวด์ ตั้งค่าครั้งเดียว ใช้ได้ทุกเครื่อง ไม่ต้องกลัวข้อมูลหาย</p>
-                </div>
-
-                {{-- Feature 5: Multi-device --}}
-                <div class="group bg-gray-800/40 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 hover:border-orange-500/50 transition-all duration-300">
-                    <div class="w-14 h-14 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-3">Multi-device</h3>
-                    <p class="text-gray-400 leading-relaxed">ใช้งานได้หลายเครื่องพร้อมกัน (แพ็กเกจ Lifetime) เปลี่ยนเครื่องได้โดยไม่ต้องซื้อใหม่</p>
-                </div>
-
-                {{-- Feature 6: Accessibility Service --}}
-                <div class="group bg-gray-800/40 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 hover:border-pink-500/50 transition-all duration-300">
-                    <div class="w-14 h-14 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-3">Accessibility Service</h3>
-                    <p class="text-gray-400 leading-relaxed">ทำงานผ่าน Android Accessibility ไม่ต้อง Root เครื่อง ปลอดภัย ใช้ได้กับทุกแอพ</p>
-                </div>
-            </div>
+    {{-- ========================== GAME MODE + TOOLS ========================== --}}
+    <section class="relative py-20 isolate">
+        <x-xp.art :src="$shot('art-2.webp')" class="top-0 w-[130%] opacity-35 right-[-30%] lg:right-[-16%] lg:w-[68%] lg:opacity-80" />
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-xp.head align="left" class="mb-10" eyebrow="Games & extra tools" title="ใช้กับเกม" title2="และแอปที่กดยาก"
+                       sub="โหมดเกม กดรัว และ Captcha แบบเลื่อน ใช้ได้ตั้งแต่ช่วงทดลอง ไม่ต้องรอซื้อ"
+                       en="Game mode, rapid taps and slider captchas are all there from the trial on." />
+            <x-xp.rows :items="[$gameRow]" class="mb-16" />
+            <x-xp.explorer id="tools" label="เครื่องมือเสริมของ Tping" :tools="$gameTools" />
         </div>
     </section>
 
-    {{-- ============================================================ --}}
-    {{-- HOW IT WORKS (3 steps) --}}
-    {{-- ============================================================ --}}
-    <section class="py-20 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-5xl mx-auto">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">เริ่มใช้งานง่ายๆ 3 ขั้นตอน</h2>
-                <p class="text-gray-400">ไม่ต้อง Root เครื่อง ติดตั้งง่าย ใช้งานได้ทันที</p>
-            </div>
-
-            <div class="grid md:grid-cols-3 gap-8">
-                {{-- Step 1 --}}
-                <div class="relative text-center">
-                    <div class="w-20 h-20 bg-gradient-to-br from-violet-600 to-purple-700 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-violet-500/20">
-                        <span class="text-3xl font-black text-white">1</span>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-3">ดาวน์โหลดแอพ</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed">ดาวน์โหลด Tping APK จากเว็บไซต์ แล้วติดตั้งบนมือถือ Android ของคุณ</p>
-                    {{-- Connector arrow (hidden on mobile) --}}
-                    <div class="hidden md:block absolute top-10 -right-4 w-8 text-gray-600">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                    </div>
-                </div>
-
-                {{-- Step 2 --}}
-                <div class="relative text-center">
-                    <div class="w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-500/20">
-                        <span class="text-3xl font-black text-white">2</span>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-3">เปิด Accessibility Service</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed">เข้าไปที่ตั้งค่ามือถือ &gt; Accessibility &gt; เปิดใช้งาน Tping ตามคู่มือติดตั้ง</p>
-                    {{-- Connector arrow --}}
-                    <div class="hidden md:block absolute top-10 -right-4 w-8 text-gray-600">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                    </div>
-                </div>
-
-                {{-- Step 3 --}}
-                <div class="text-center">
-                    <div class="w-20 h-20 bg-gradient-to-br from-emerald-600 to-green-700 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-500/20">
-                        <span class="text-3xl font-black text-white">3</span>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-3">ใช้งานได้เลย</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed">ตั้งค่า Profile ข้อมูลของคุณ บันทึก Workflow แล้วให้ Tping ทำงานแทน</p>
-                </div>
-            </div>
-
-            <div class="text-center mt-12">
-                <a href="{{ route('tping.install-guide') }}"
-                   class="inline-flex items-center text-violet-400 hover:text-violet-300 font-medium transition-colors">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-                    อ่านคู่มือติดตั้งแบบละเอียด
-                </a>
-            </div>
+    {{-- ============================ CLOUD (License) ============================ --}}
+    <section class="relative py-20 scroll-mt-20" id="cloud">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-xp.rows :items="[[
+                'img' => $shot('cloud.webp'), 'mock' => true, 'phone' => true, 'name' => 'Cloud Sync', 'eyebrow' => 'With a licence · ต้องมี License',
+                'th' => 'มี License แล้ว Tping เชื่อม Xman Studio Cloud ให้เอง Workflow และชุดข้อมูลซิงค์ขึ้นคลาวด์ทุกครั้งที่แก้ ดึงลงเครื่องใหม่ได้ และดูหรือแก้บนเว็บในหน้า บัญชีของฉัน ได้ด้วย',
+                'en' => 'With a licence, workflows and data sets sync to Xman Studio Cloud after every change, and show up in your account on the web.',
+                'points' => ['อัปโหลด ดาวน์โหลด หรือซิงค์ทั้งหมดในปุ่มเดียว', 'ส่งออก/นำเข้า Workflow และชุดข้อมูลเป็นไฟล์ JSON ชื่อซ้ำเลือกได้ว่าจะข้าม แทนที่ หรือเปลี่ยนชื่อ', 'ช่วงทดลองยังไม่เปิด Cloud Sync — ข้อมูลอยู่ในเครื่องเท่านั้น'],
+                'alt' => 'ภาพตัวอย่างหน้า Cloud Sync ของ Tping: อัปโหลด ดาวน์โหลด ซิงค์ทั้งหมด แดชบอร์ดบนเว็บ และ Import / Export',
+            ]]" />
         </div>
     </section>
 
-    {{-- ============================================================ --}}
-    {{-- USE CASES --}}
-    {{-- ============================================================ --}}
-    <section class="py-20 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-7xl mx-auto">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">เหมาะกับใคร?</h2>
-                <p class="text-gray-400 max-w-2xl mx-auto">Tping ช่วยให้ชีวิตง่ายขึ้นสำหรับทุกคนที่ต้องพิมพ์ซ้ำๆ</p>
-            </div>
-
-            <div class="grid md:grid-cols-3 gap-8">
-                {{-- Use Case 1 --}}
-                <div class="bg-gradient-to-br from-gray-800/60 to-gray-800/30 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50">
-                    <div class="w-12 h-12 bg-violet-500/20 rounded-xl flex items-center justify-center mb-6">
-                        <svg class="w-6 h-6 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-3">คนที่ต้องกรอกฟอร์มซ้ำๆ</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed">สมัครงาน สมัครบริการ กรอกเอกสาร ข้อมูลซ้ำๆ เช่น ชื่อ ที่อยู่ เบอร์โทร ให้ Tping กรอกให้อัตโนมัติ</p>
-                </div>
-
-                {{-- Use Case 2 --}}
-                <div class="bg-gradient-to-br from-gray-800/60 to-gray-800/30 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50">
-                    <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mb-6">
-                        <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-3">ผู้ที่ใช้นิ้วไม่สะดวก</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed">ผู้สูงอายุ ผู้พิการทางนิ้วมือ หรือผู้ที่มีอาการบาดเจ็บ Tping ช่วยลดการพิมพ์ให้เหลือน้อยที่สุด</p>
-                </div>
-
-                {{-- Use Case 3 --}}
-                <div class="bg-gradient-to-br from-gray-800/60 to-gray-800/30 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50">
-                    <div class="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center mb-6">
-                        <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-3">งาน Data Entry</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed">บันทึก Workflow การกรอกข้อมูลทั้งหมด แล้วเล่นซ้ำ ทำงาน 100 รายการเหมือนทำแค่รายการเดียว</p>
-                </div>
-            </div>
+    {{-- ============================ TRUST ============================ --}}
+    <section class="relative py-20">
+        <div class="xp-glow w-[36rem] h-[24rem] left-1/2 -translate-x-1/2 top-24" style="background: rgb(var(--xp-glow) / .1)"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-xp.head class="mb-12" eyebrow="Built for real phones" title="ใช้ง่าย" title2="ไม่ต้องแก้เครื่อง"
+                       sub="Tping ใช้ความสามารถมาตรฐานของ Android เท่านั้น"
+                       en="Tping only uses what Android itself offers." />
+            <x-xp.cards :items="[
+                ['icon' => 'phone', 'title' => 'ไม่ต้อง Root', 'body' => 'ทำงานผ่านบริการการช่วยเหลือพิเศษ (Accessibility) กับสิทธิ์แสดงทับแอปอื่น เปิดในหน้าตั้งค่าของ Android เท่านั้น', 'en' => 'Accessibility service + overlay, nothing more'],
+                ['icon' => 'chip', 'title' => 'ข้อมูลอยู่ในเครื่อง', 'body' => 'Workflow และชุดข้อมูลเก็บในมือถือของคุณ ขึ้นคลาวด์เฉพาะเมื่อมี License และเชื่อม Cloud Sync แล้ว', 'en' => 'Your workflows stay on your phone'],
+                ['icon' => 'key', 'title' => 'ลงใหม่ เครื่องเดิม คีย์กลับมาเอง', 'body' => 'ลบแอปแล้วลงใหม่บนเครื่องเดิม Tping ถามร้านว่าเครื่องนี้มีคีย์อยู่แล้วไหม แล้วเปิดใช้ให้เอง ไม่ต้องพิมพ์คีย์ใหม่', 'en' => 'Reinstall on the same phone, the key comes back'],
+                ['icon' => 'cloud', 'title' => 'เน็ตหลุดก็ยังใช้ได้', 'body' => 'คีย์ที่ซื้อแล้วใช้ต่อได้แม้ติดต่อเซิร์ฟเวอร์ไม่ได้ จนถึงวันหมดอายุของคีย์', 'en' => 'A paid key keeps working offline until it expires'],
+                ['icon' => 'download', 'title' => 'อัปเดตในแอป', 'body' => 'Tping เช็กเวอร์ชันใหม่จาก xman4289.com และโหลด APK ให้ในแอป เลือกเปิดอัปเดตอัตโนมัติได้', 'en' => 'Updates from xman4289.com, inside the app'],
+                ['icon' => 'shield', 'title' => 'ตรวจว่าแอปไม่ถูกแก้', 'body' => 'แอปตรวจตัวเองตอนเปิด ถ้าไฟล์ถูกดัดแปลงจะไม่ใช้งาน License — ดาวน์โหลดจาก xman4289.com เท่านั้น', 'en' => 'A modified APK is refused'],
+            ]" />
         </div>
     </section>
 
-    {{-- ============================================================ --}}
-    {{-- PRICING PREVIEW --}}
-    {{-- ============================================================ --}}
-    <section class="py-20 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-5xl mx-auto">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">แพ็กเกจ</h2>
-                <p class="text-gray-400">เริ่มทดลองฟรี 24 ชั่วโมง จากนั้นเลือกแพ็กเกจที่เหมาะกับคุณ</p>
+    {{-- =========================== PRICING =========================== --}}
+    <section class="relative py-20 scroll-mt-20" id="pricing">
+        <div class="xp-glow w-[40rem] h-[26rem] left-1/2 -translate-x-1/2 top-32 bg-amber-500/10"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-xp.head class="mb-12" eyebrow="Pricing" title="ลองฟรี 24 ชั่วโมง" title2="ถูกใจค่อยซื้อคีย์"
+                       sub="เปิดแอปครั้งแรกตอนต่อเน็ต ได้ทดลอง 24 ชั่วโมงทันที ไม่ต้องสมัคร ไม่ต้องผูกบัตร · หมดเวลาแล้วใส่ License เพื่อใช้ต่อ"
+                       en="Open the app once online for a 24-hour trial, no sign-up. After that, a licence key keeps it running." />
+
+            <div class="grid md:grid-cols-2 xl:grid-cols-4 gap-5 max-w-6xl mx-auto">
+                <div class="xp-card p-7 flex flex-col">
+                    <div class="flex items-center justify-between mb-1">
+                        <h3 class="text-2xl font-black text-white">ทดลอง</h3>
+                        <x-xp.badge tier="free" label="24 ชม." />
+                    </div>
+                    <p class="text-gray-400 text-sm mb-6"><x-bi th="ทุกฟีเจอร์ในเครื่อง" en="Everything on the phone" /></p>
+                    <div class="mb-6"><span class="text-5xl font-black text-white">฿0</span></div>
+                    <x-xp.ticks class="!space-y-2.5 text-sm mb-8 flex-1" :items="['บันทึก + เล่นซ้ำ 1–999 รอบ', 'โหมดเกม · กดรัว · Captcha', 'ชุดข้อมูลหลายชุด', 'ไม่ต้องสมัคร ไม่ต้องผูกบัตร']" />
+                    {{-- แอปไฟล์เดียวกับตัวที่ซื้อ — ใส่คีย์ในแอปเมื่อซื้อแล้ว --}}
+                    <x-xp.download block :href="route('tping.download')" :coming-soon="$csDownload" th="ดาวน์โหลด" en="Try it free" />
+                </div>
+
+                @foreach($plans as $term => $plan)
+                    @continue(! isset($prices[$term]))
+                    @php($featured = $term === 'yearly')
+                    <div class="{{ $featured ? 'xp-featured' : 'xp-card' }}">
+                        <div class="p-7 flex flex-col h-full">
+                            @if($featured)
+                                <div class="absolute -top-3 left-1/2 -translate-x-1/2"><x-xp.badge tier="pro" label="คุ้มที่สุด · BEST VALUE" class="shadow-lg" /></div>
+                            @endif
+                            <div class="flex items-center justify-between mb-1">
+                                <h3 class="text-2xl font-black text-white">{{ $plan['name'] }}</h3>
+                                <x-xp.badge tier="pro" label="LICENSE" />
+                            </div>
+                            <p class="text-amber-100/80 text-sm mb-6">{{ $plan['note'] }}</p>
+                            <div class="mb-6 flex items-baseline gap-2">
+                                <span class="text-5xl font-black text-white">฿{{ number_format($prices[$term]) }}</span>
+                                <span class="text-gray-300">{{ $plan['unit'] }}</span>
+                            </div>
+                            <x-tpix-price variant="detail" :thb="$prices[$term]" class="-mt-4 mb-6" />
+                            <x-xp.ticks pro class="!space-y-2.5 text-sm mb-8 flex-1" :items="['ทุกอย่างในช่วงทดลอง', 'Cloud Sync + แดชบอร์ดบนเว็บ', 'Gen ชุดข้อมูล · ส่งออก/นำเข้า', 'อายุ License: ' . $plan['days'], 'ใช้ได้ ' . $plan['devices']]" />
+                            @if($csDownload)
+                                {{-- Coming Soon: ยังไม่เปิดขาย — หน้า checkout เองก็ปฏิเสธ (ComingSoonPurchase) --}}
+                                <span class="xp-btn-ghost xp-btn-off block w-full py-3.5 text-center rounded-xl font-extrabold" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดขาย</span>
+                            @else
+                                {{-- ราคาคิดที่ TpingController::checkout จาก config/licenses.php — ลิงก์ส่งแค่ชื่อแผน --}}
+                                <a href="{{ route('tping.checkout', $term) }}" class="{{ $featured ? 'xp-btn-pro' : 'xp-btn-ghost' }} block w-full py-3.5 text-center rounded-xl font-extrabold transition" data-plan="{{ $term }}">
+                                    ซื้อ{{ $plan['name'] }} — ฿{{ number_format($prices[$term]) }}
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
             </div>
 
-            <div class="grid md:grid-cols-3 gap-6">
-                {{-- Monthly --}}
-                <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-700 hover:border-blue-500/50 transition-all text-center">
-                    <h3 class="text-lg font-bold text-white mb-2">{{ $pricing['monthly']['name_th'] }}</h3>
-                    <div class="text-4xl font-black text-white mb-1">
-                        <span class="text-lg font-normal text-gray-400">฿</span>{{ number_format($pricing['monthly']['price']) }}
-                    </div>
-                    <x-tpix-price variant="detail" :thb="$pricing['monthly']['price'] ?? null" class="-mt-1 mb-2" />
-                    <p class="text-gray-500 text-sm mb-6">{{ $pricing['monthly']['duration_days'] }} วัน</p>
-                    <ul class="space-y-2 mb-8 text-sm text-left">
-                        @foreach($pricing['monthly']['features'] as $feature)
-                        <li class="flex items-center text-gray-300">
-                            <svg class="w-4 h-4 mr-2 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                            {{ $feature }}
-                        </li>
-                        @endforeach
-                    </ul>
-                    <a href="{{ route('tping.pricing') }}" class="block w-full text-center py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors">
-                        เลือกแพ็กเกจนี้
-                    </a>
-                </div>
+            <p class="text-center text-sm text-gray-400 mt-8">
+                จ่ายได้ทั้ง PromptPay โอนผ่านธนาคาร{{ $tpixPay ? ' เหรียญ TPIX' : '' }} หรือ Wallet ของเว็บ (จ่ายด้วย Wallet ลดเพิ่ม {{ $walletDiscount }}%) ·
+                <a href="{{ route('tping.pricing') }}" class="xp-link font-semibold">ดูรายละเอียดแพ็กเกจ →</a>
+            </p>
+            <p class="text-center text-xs text-gray-500 mt-3">ซื้อแล้วได้ License key ทางอีเมลและในหน้าสรุปคำสั่งซื้อ · ใส่คีย์ในหน้าแรกของแอป หรือสแกน QR · รายเดือนและรายปีใช้ได้ 1 เครื่อง ตลอดชีพสูงสุด 3 เครื่อง · ต้องการย้ายเครื่องติดต่อแอดมิน</p>
 
-                {{-- Yearly (Recommended) --}}
-                <div class="relative bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border-2 border-violet-500 hover:border-violet-400 transition-all text-center">
-                    <div class="absolute -top-3 left-1/2 -translate-x-1/2">
-                        <span class="bg-gradient-to-r from-violet-500 to-purple-500 text-white text-xs font-bold px-4 py-1 rounded-full shadow-lg">แนะนำ</span>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">{{ $pricing['yearly']['name_th'] }}</h3>
-                    <div class="text-4xl font-black text-violet-400 mb-1">
-                        <span class="text-lg font-normal text-gray-400">฿</span>{{ number_format($pricing['yearly']['price']) }}
-                    </div>
-                    <x-tpix-price variant="detail" :thb="$pricing['yearly']['price'] ?? null" class="-mt-1 mb-2" />
-                    <p class="text-gray-500 text-sm mb-1">{{ $pricing['yearly']['duration_days'] }} วัน</p>
-                    <span class="inline-block text-xs font-bold text-green-400 bg-green-400/10 px-3 py-1 rounded-full mb-6">ประหยัด {{ \App\Support\LicensePlans::yearlySaving('tping') }}%</span>
-                    <ul class="space-y-2 mb-8 text-sm text-left">
-                        @foreach($pricing['yearly']['features'] as $feature)
-                        <li class="flex items-center text-gray-300">
-                            <svg class="w-4 h-4 mr-2 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                            {{ $feature }}
-                        </li>
-                        @endforeach
-                    </ul>
-                    <a href="{{ route('tping.pricing') }}" class="block w-full text-center py-3 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-semibold rounded-xl transition-all shadow-lg shadow-violet-500/25">
-                        เลือกแพ็กเกจนี้
-                    </a>
-                </div>
-
-                {{-- Lifetime --}}
-                <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-700 hover:border-emerald-500/50 transition-all text-center">
-                    <h3 class="text-lg font-bold text-white mb-2">{{ $pricing['lifetime']['name_th'] }}</h3>
-                    <div class="text-4xl font-black text-emerald-400 mb-1">
-                        <span class="text-lg font-normal text-gray-400">฿</span>{{ number_format($pricing['lifetime']['price']) }}
-                    </div>
-                    <x-tpix-price variant="detail" :thb="$pricing['lifetime']['price'] ?? null" class="-mt-1 mb-2" />
-                    <p class="text-yellow-400 text-sm mb-6">ไม่มีวันหมดอายุ</p>
-                    <ul class="space-y-2 mb-8 text-sm text-left">
-                        @foreach($pricing['lifetime']['features'] as $feature)
-                        <li class="flex items-center text-gray-300">
-                            <svg class="w-4 h-4 mr-2 text-yellow-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                            {{ $feature }}
-                        </li>
-                        @endforeach
-                    </ul>
-                    <a href="{{ route('tping.pricing') }}" class="block w-full text-center py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-colors">
-                        เลือกแพ็กเกจนี้
-                    </a>
-                </div>
-            </div>
+            <x-xp.compare class="mt-14" :groups="$compare" free-label="ทดลอง" pro-label="LICENSE" note="หมดเวลาทดลองหรือคีย์หมดอายุ แอปจะพาไปหน้าใส่คีย์ Workflow และชุดข้อมูลที่บันทึกไว้ยังอยู่ในเครื่อง ใส่คีย์แล้วใช้ต่อได้ทันที" />
         </div>
     </section>
 
-    {{-- ============================================================ --}}
-    {{-- FAQ --}}
-    {{-- ============================================================ --}}
-    <section class="py-20 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-3xl mx-auto">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">คำถามที่พบบ่อย</h2>
-            </div>
+    <x-xp.setup
+        :specs="[
+            ['ระบบปฏิบัติการ', 'Android 8.0 ขึ้นไป', 'Android 8.0+ (API 26)'],
+            ['สิทธิ์ที่ต้องเปิด', 'การช่วยเหลือพิเศษ (Accessibility) และแสดงทับแอปอื่น (Overlay) · แจ้งเตือน (แนะนำ)', 'Accessibility + overlay'],
+            ['ติดตั้งจากไฟล์ .apk', 'ดาวน์โหลดจาก xman4289.com แล้วอนุญาตให้ติดตั้งจากเบราว์เซอร์ที่ใช้โหลด', 'Sideloaded APK'],
+            ['อินเทอร์เน็ต', 'ต่อเน็ตตอนเปิดครั้งแรกเพื่อเริ่มทดลอง ตอนใส่คีย์ และตอนใช้ Cloud Sync', 'Online to start the trial and activate'],
+        ]"
+        specs-note="บางยี่ห้อปิดแอปเบื้องหลังเพื่อประหยัดแบต ถ้า Tping หยุดกลางทาง ให้ตั้งแบตเตอรี่ของ Tping เป็น ไม่จำกัด (หน้าแรกของแอปมีวิธีของแต่ละยี่ห้อ)"
+        :steps="[
+            ['ดาวน์โหลดและติดตั้ง Tping', 'ไฟล์ .apk จาก xman4289.com โดยตรง ใช้ไฟล์เดียวกันทั้งช่วงทดลองและเมื่อซื้อแล้ว', 'Download and install the APK'],
+            ['เปิดสิทธิ์ Accessibility + Overlay', 'กดปุ่ม เปิด ในหน้าแรกของแอปเพื่อไปหน้าตั้งค่าโดยตรง ทำตามคู่มือติดตั้งได้ทีละขั้น', 'Turn on accessibility and overlay'],
+            ['ใช้ฟรี 24 ชม. แล้วใส่คีย์', 'ถูกใจแล้วซื้อ License ใส่คีย์ในหน้าแรกของแอป หรือสแกน QR ไม่ต้องลงแอปใหม่', 'Try it for a day, then enter a key'],
+        ]" />
 
-            <div class="space-y-4" x-data="{ openFaq: null }">
-                {{-- FAQ 1 --}}
-                <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden">
-                    <button @click="openFaq = openFaq === 1 ? null : 1" class="w-full flex items-center justify-between p-6 text-left">
-                        <span class="font-semibold text-white">Tping คืออะไร?</span>
-                        <svg class="w-5 h-5 text-gray-400 transition-transform" :class="{ 'rotate-180': openFaq === 1 }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                    </button>
-                    <div x-show="openFaq === 1" x-collapse class="px-6 pb-6">
-                        <p class="text-gray-400 text-sm leading-relaxed">Tping เป็นแอพ Android ที่ช่วยพิมพ์แทนคุณ ทำงานผ่าน Accessibility Service ช่วยกรอกฟอร์มอัตโนมัติ บันทึก Workflow การทำงาน และซิงค์ข้อมูลผ่านคลาวด์ เหมาะสำหรับผู้ที่ใช้นิ้วไม่สะดวก หรือต้องกรอกข้อมูลซ้ำๆ</p>
-                    </div>
-                </div>
+    <x-xp.faq :items="[
+        ['Tping คืออะไร?', 'แอป Android ที่ช่วยพิมพ์และกดแทนคุณ บันทึกขั้นตอนในแอปไหนก็ได้ครั้งเดียว แล้วเล่นซ้ำพร้อมกรอกข้อมูลจากชุดข้อมูลที่ตั้งไว้ เหมาะกับผู้ที่ใช้นิ้วไม่สะดวก และงานกรอกข้อมูลซ้ำ ๆ'],
+        ['ต้อง Root เครื่องไหม?', 'ไม่ต้อง Tping ใช้บริการการช่วยเหลือพิเศษ (Accessibility) และสิทธิ์แสดงทับแอปอื่น ซึ่งเป็นความสามารถมาตรฐานของ Android แค่เปิดในหน้าตั้งค่า'],
+        ['ทดลองฟรีอย่างไร?', 'ติดตั้งแล้วเปิดแอปตอนต่อเน็ต จะได้ทดลอง 24 ชั่วโมงทันที ไม่ต้องสมัครหรือผูกบัตร ใช้ได้ทุกฟีเจอร์ในเครื่อง ส่วน Cloud Sync, Gen ชุดข้อมูล และส่งออก/นำเข้า เปิดเมื่อมี License'],
+        ['หมดเวลาทดลองแล้วข้อมูลหายไหม?', 'ไม่หาย แอปจะพาไปหน้าใส่คีย์ Workflow และชุดข้อมูลยังอยู่ในเครื่อง ใส่ License แล้วใช้ต่อได้ทันที'],
+        ['ราคาเท่าไร ใช้ได้กี่เครื่อง?', collect($plans)->filter(fn ($p, $t) => isset($prices[$t]))->map(fn ($p, $t) => $p['name'] . ' ฿' . number_format($prices[$t]) . ' (' . $p['devices'] . ')')->implode(' · ') . ' — ต้องการย้ายคีย์ไปเครื่องใหม่ ติดต่อแอดมิน'],
+        ['ชำระเงินอย่างไร?', 'PromptPay (สแกน QR) โอนผ่านธนาคาร' . ($tpixPay ? ' เหรียญ TPIX' : '') . ' หรือ Wallet ของเว็บ จ่ายด้วย Wallet ลดเพิ่ม ' . $walletDiscount . '% และได้คีย์ทันที'],
+        ['ใช้กับเกมได้ไหม?', 'ได้ เลือกโหมด เกม ตอนบันทึกแล้ววางจุดกดด้วยกากบาท มีกดค้าง กรอก กดรัว และรอให้ด้วย ตอนเล่นต้องใช้ความละเอียดจอเท่าเดิมและห้ามหมุนจอ'],
+        ['ไม่มีเน็ตใช้ได้ไหม?', 'คีย์ที่ซื้อแล้วใช้ต่อได้แม้ออฟไลน์จนถึงวันหมดอายุของคีย์ แต่ต้องต่อเน็ตตอนเปิดครั้งแรก ตอนใส่คีย์ และตอนใช้ Cloud Sync'],
+        ['ข้อมูลของฉันไปอยู่ที่ไหน?', 'Workflow และชุดข้อมูลเก็บในมือถือของคุณ เมื่อมี License และเชื่อม Cloud Sync จะซิงค์ขึ้น Xman Studio Cloud ภายใต้บัญชีของคุณ และดูได้ในหน้า บัญชีของฉัน บนเว็บ'],
+    ]" />
 
-                {{-- FAQ 2 --}}
-                <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden">
-                    <button @click="openFaq = openFaq === 2 ? null : 2" class="w-full flex items-center justify-between p-6 text-left">
-                        <span class="font-semibold text-white">ต้อง Root เครื่องไหม?</span>
-                        <svg class="w-5 h-5 text-gray-400 transition-transform" :class="{ 'rotate-180': openFaq === 2 }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                    </button>
-                    <div x-show="openFaq === 2" x-collapse class="px-6 pb-6">
-                        <p class="text-gray-400 text-sm leading-relaxed">ไม่ต้อง Root เครื่อง Tping ใช้ Android Accessibility Service ซึ่งเป็นฟีเจอร์มาตรฐานของ Android แค่เปิดใช้งานในตั้งค่า Accessibility ก็พร้อมใช้งานได้เลย</p>
-                    </div>
-                </div>
+    {{-- =========================== FINAL CTA =========================== --}}
+    <x-xp.cta :art="$shot('art-hero.webp')" title="ให้ Tping " glow="พิมพ์แทนคุณ"
+              :sub="'ทดลองฟรี 24 ชั่วโมง ไม่ต้องสมัคร ไม่ต้อง Root' . ($monthly ? ' · License เริ่ม ฿' . $monthly . ' ต่อเดือน' : '')"
+              en="Let Tping do the typing.">
+        <x-xp.download :href="route('tping.download')" :coming-soon="$csDownload" th="ดาวน์โหลดแอป" en="Download the app" class="!px-8" />
+        <a href="#pricing" class="xp-btn-pro inline-flex items-center px-8 py-4 rounded-xl font-extrabold text-lg transition">ดูแพ็กเกจ</a>
+        <x-slot:footnote>
+            <p class="text-gray-500 text-sm mt-7">Android 8.0 ขึ้นไป · ไม่ต้อง Root · ทดลองฟรี 24 ชม. · ไฟล์ .apk จาก xman4289.com</p>
+        </x-slot:footnote>
+    </x-xp.cta>
 
-                {{-- FAQ 3 --}}
-                <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden">
-                    <button @click="openFaq = openFaq === 3 ? null : 3" class="w-full flex items-center justify-between p-6 text-left">
-                        <span class="font-semibold text-white">ใช้ได้กี่เครื่อง?</span>
-                        <svg class="w-5 h-5 text-gray-400 transition-transform" :class="{ 'rotate-180': openFaq === 3 }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                    </button>
-                    <div x-show="openFaq === 3" x-collapse class="px-6 pb-6">
-                        <p class="text-gray-400 text-sm leading-relaxed">แพ็กเกจรายเดือนและรายปีใช้ได้ 1 เครื่อง แพ็กเกจตลอดชีพสามารถใช้ได้สูงสุด 3 เครื่องพร้อมกัน</p>
-                    </div>
-                </div>
+</x-xp.page>
 
-                {{-- FAQ 4 --}}
-                <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden">
-                    <button @click="openFaq = openFaq === 4 ? null : 4" class="w-full flex items-center justify-between p-6 text-left">
-                        <span class="font-semibold text-white">ชำระเงินอย่างไร?</span>
-                        <svg class="w-5 h-5 text-gray-400 transition-transform" :class="{ 'rotate-180': openFaq === 4 }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                    </button>
-                    <div x-show="openFaq === 4" x-collapse class="px-6 pb-6">
-                        <p class="text-gray-400 text-sm leading-relaxed">รองรับ PromptPay (สแกน QR Code), โอนเงินผ่านธนาคาร, และชำระผ่าน Wallet บนเว็บไซต์ ชำระผ่าน Wallet จะได้รับส่วนลดเพิ่ม 10%</p>
-                    </div>
-                </div>
-
-                {{-- FAQ 5 --}}
-                <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden">
-                    <button @click="openFaq = openFaq === 5 ? null : 5" class="w-full flex items-center justify-between p-6 text-left">
-                        <span class="font-semibold text-white">ข้อมูลของฉันปลอดภัยไหม?</span>
-                        <svg class="w-5 h-5 text-gray-400 transition-transform" :class="{ 'rotate-180': openFaq === 5 }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                    </button>
-                    <div x-show="openFaq === 5" x-collapse class="px-6 pb-6">
-                        <p class="text-gray-400 text-sm leading-relaxed">ข้อมูลทั้งหมดถูกเข้ารหัสและเก็บไว้อย่างปลอดภัย ข้อมูลที่ซิงค์ผ่านคลาวด์เป็นข้อมูลเฉพาะของคุณเท่านั้น ไม่มีใครอื่นสามารถเข้าถึงได้</p>
-                    </div>
-                </div>
-
-                {{-- FAQ 6 --}}
-                <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden">
-                    <button @click="openFaq = openFaq === 6 ? null : 6" class="w-full flex items-center justify-between p-6 text-left">
-                        <span class="font-semibold text-white">ทดลองใช้ฟรีได้ไหม?</span>
-                        <svg class="w-5 h-5 text-gray-400 transition-transform" :class="{ 'rotate-180': openFaq === 6 }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                    </button>
-                    <div x-show="openFaq === 6" x-collapse class="px-6 pb-6">
-                        <p class="text-gray-400 text-sm leading-relaxed">ได้ครับ ทุกคนสามารถทดลองใช้ Tping ฟรี 24 ชั่วโมงเต็มโดยไม่ต้องผูกบัตรเครดิต ดาวน์โหลดแอพแล้วใช้งานได้ทันที</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    {{-- ============================================================ --}}
-    {{-- FINAL CTA --}}
-    {{-- ============================================================ --}}
-    <section class="py-24 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-4xl mx-auto text-center">
-            <div class="bg-gradient-to-r from-violet-600/20 to-purple-600/20 backdrop-blur-sm rounded-3xl p-12 border border-violet-500/30">
-                <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">พร้อมใช้ Tping แล้วหรือยัง?</h2>
-                <p class="text-gray-300 mb-8 max-w-xl mx-auto">ดาวน์โหลดฟรี ทดลองใช้ 24 ชั่วโมง ไม่ต้องผูกบัตร ไม่ต้อง Root เครื่อง</p>
-                <div class="flex flex-col sm:flex-row justify-center gap-4">
-                    @if($csDownload)
-                        <span class="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-violet-500/25 text-lg" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
-                    @else
-                    <a href="{{ route('tping.download') }}"
-                       class="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-violet-500/25 text-lg">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                        ดาวน์โหลดแอพ
-                    </a>
-                    @endif
-                    <a href="{{ route('tping.pricing') }}"
-                       class="inline-flex items-center justify-center px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-all backdrop-blur-sm border border-white/20 text-lg">
-                        ดูราคาแพ็กเกจ
-                    </a>
-                </div>
-
-                @if($version)
-                <p class="text-gray-500 text-sm mt-6">
-                    เวอร์ชั่นล่าสุด: v{{ $version->version }}
-                    @if($version->release_date)
-                        ({{ $version->release_date->format('d/m/Y') }})
-                    @endif
-                </p>
-                @endif
-            </div>
-        </div>
-    </section>
-
-</div>
+<script type="application/ld+json">{!! json_encode($ld, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) !!}</script>
 @endsection

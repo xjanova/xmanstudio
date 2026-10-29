@@ -351,6 +351,27 @@ class GigGokAppTest extends TestCase
         Http::assertNothingSent();
     }
 
+    /**
+     * หน้าแบบใหม่ (x-xp เหมือน Anti X): ปุ่มโหลด APK สามที่ (hero, การ์ดฟรี, CTA) ชี้ไฟล์ของเว็บเราที่เดียวกัน
+     * ภาพเป็น mockup ที่บอกตัวเองว่าเป็นภาพตัวอย่าง และไม่มีตัวเลขราคาของชุด/ข้อความผ่านบริการเขียนลงหน้า
+     */
+    public function test_the_product_page_has_three_apk_buttons_its_own_preview_and_no_prices(): void
+    {
+        $this->release('1.2.0');
+
+        $html = $this->get('/products/giggok')->assertOk()->getContent();
+
+        $this->assertSame(3, substr_count($html, 'href="' . route('giggok.download') . '"'));
+        $this->assertStringContainsString(asset('images/products/giggok/v2/og.jpg'), $html);
+        $this->assertStringContainsString(asset('images/products/giggok/v2/home.webp'), $html);
+        $this->assertStringContainsString('ภาพตัวอย่าง · MOCKUP', $html);
+        $this->assertStringContainsString('href="' . route('user.wallet.topup') . '"', $html);
+        $this->assertStringContainsString('"softwareVersion":"1.2.0"', $html);
+        // ตัวแอปฟรี — ไม่มีแผนรายเดือน/ราคาอื่นนอกจาก ฿0
+        $this->assertDoesNotMatchRegularExpression('/฿\s?[1-9]/u', $html);
+        $this->assertStringNotContainsString('data-coming-soon', $html);
+    }
+
     // ── /giggok/link ──────────────────────────────────────────────────
 
     public function test_a_guest_signs_in_before_linking(): void

@@ -259,7 +259,7 @@
   function setShotTag(p, i) {
     if (!p.shots.length) { shotTag.hidden = true; return; }
     shotTag.hidden = false;
-    shotTag.textContent = 'LIVE CAPTURE ' + pad2(i + 1) + ' / ' + pad2(p.shots.length);
+    shotTag.textContent = (C.isMock(p.shots[i]) ? 'MOCKUP ' : 'LIVE CAPTURE ') + pad2(i + 1) + ' / ' + pad2(p.shots.length);
   }
   window.addEventListener('xph:slide', function (e) {
     var p = C.byId(e.detail.id);
@@ -355,6 +355,18 @@
   }
 
   var cardsEl = $('#cards');
+  /** LIVE CAPTURE counts real captures only; a gallery of mock-ups says so. */
+  function captureBadge(p) {
+    if (!p.shots.length) return '';
+    var real = C.realShots(p);
+    return real
+      ? '<span class="badge capture">◉ LIVE CAPTURE · ' + real + '</span>'
+      : '<span class="badge capture mock">◇ MOCKUP · ' + p.shots.length + '</span>';
+  }
+  /** The dialog's caption for picture i of a gallery. */
+  function shotCaption(p, pics, i) {
+    return (C.isMock(pics[i]) ? '◇ MOCKUP · ภาพตัวอย่างหน้าจอ ' : '◉ LIVE CAPTURE · ภาพหน้าจอจริง ') + pad2(i + 1) + ' / ' + pad2(pics.length);
+  }
   function cardHtml(p) {
     var c = C.cat(p.cat);
     var badges = '<span class="badge ' + p.status + '">' + (p.status === 'live' ? '● LIVE' : '◌ COMING SOON') + '</span>' +
@@ -366,7 +378,7 @@
           (p.shots.length ? '<img class="card-shot" src="' + esc(p.shots[0]) + '" alt="" loading="lazy" decoding="async" draggable="false">' : '') +
           '<div class="card-art-fade"></div></div>' +
         '<div class="card-badges">' + badges + '</div>' +
-        (p.shots.length ? '<span class="badge capture">◉ LIVE CAPTURE · ' + p.shots.length + '</span>' : '') +
+        captureBadge(p) +
         '<span class="card-num">' + esc(c.dir) + pad2(p.index + 1) + '</span>' +
         '<div class="card-body">' +
           '<h3>' + esc(p.name) + '</h3>' +
@@ -616,7 +628,7 @@
         '<div class="dv-main' + (isShot ? ' is-shot' : '') + '"><img id="dv-img" src="' + esc(pics[0]) + '" data-fallback="' + esc(p.art) + '" alt="ภาพของ ' + esc(p.name) + '">' +
           '<div class="dv-fade"></div>' +
           '<div class="detail-state"><span class="badge ' + p.status + '">' + (p.status === 'live' ? '● LIVE' : '◌ COMING SOON') + '</span>' + (p.free ? '<span class="badge free">FREE</span>' : '') + '</div>' +
-          (isShot ? '<span class="dv-cap" id="dv-cap">◉ LIVE CAPTURE · ภาพหน้าจอจริง 01 / ' + pad2(pics.length) + '</span>' : '') +
+          (isShot ? '<span class="dv-cap" id="dv-cap">' + esc(shotCaption(p, pics, 0)) + '</span>' : '') +
         '</div>' +
         (pics.length > 1 ? '<div class="dv-thumbs" role="group" aria-label="ภาพหน้าจอ">' + pics.map(function (s, i) {
           return '<button type="button" data-shot="' + i + '" aria-current="' + (i === 0) + '" aria-label="ภาพที่ ' + (i + 1) + '"><img src="' + esc(s) + '" data-fallback="' + esc(p.art) + '" alt="" loading="lazy"></button>';
@@ -640,7 +652,7 @@
         var i = +b.getAttribute('data-shot');
         $('#dv-img').src = pics[i];
         var cap = $('#dv-cap');
-        if (cap) cap.textContent = '◉ LIVE CAPTURE · ภาพหน้าจอจริง ' + pad2(i + 1) + ' / ' + pad2(pics.length);
+        if (cap) cap.textContent = shotCaption(p, pics, i);
         $$('[data-shot]', thumbs).forEach(function (t) { t.setAttribute('aria-current', t === b ? 'true' : 'false'); });
       });
     }
@@ -788,7 +800,7 @@
   var crumb = $('#crumb');
   var NAMES = { spotlight: 'discover', products: 'products', releases: 'release.log', studio: 'studio.md' };
   var FIRST = {
-    products: function () { return { text: 'นี่คือโปรแกรมทั้ง ' + counts.all + ' ตัวของเราค่ะ ชี้ที่การ์ดใบไหน โนวาจะเล่าให้ฟังเอง~ การ์ดที่มีภาพจริง เอาเมาส์ไปชี้จะเห็นหน้าจอจริงนะ', pose: 'present', priority: 1 }; },
+    products: function () { return { text: 'นี่คือโปรแกรมทั้ง ' + counts.all + ' ตัวของเราค่ะ ชี้ที่การ์ดใบไหน โนวาจะเล่าให้ฟังเอง~ การ์ดที่มีภาพหน้าจอ เอาเมาส์ไปชี้จะเห็นหน้าจอนะ ป้าย LIVE CAPTURE คือภาพจริง ส่วน MOCKUP คือภาพตัวอย่าง', pose: 'present', priority: 1 }; },
     releases: { text: 'ทุกเวอร์ชันที่ปล่อยจริงอยู่ตรงนี้นะ กดการ์ดเพื่อดูเวอร์ชันล่าสุดสด ๆ จากร้านได้เลย!', pose: 'present', priority: 1 },
     studio: { text: 'XMAN Studio สตูดิโอเล็ก ๆ ที่เขียนทุกบรรทัดเอง ขอบคุณที่แวะมานะคะ ✦', pose: 'bye', priority: 1 },
   };

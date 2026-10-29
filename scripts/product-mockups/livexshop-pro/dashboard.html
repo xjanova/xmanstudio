@@ -1,0 +1,61 @@
+<!doctype html>
+<!-- แดชบอร์ด — Views/Dashboard/DashboardPage.xaml: four stat cards, five "waiting" buttons, latest orders + best sellers.
+     Every figure, name and order number is made up. -->
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .stats .card { display: flex; align-items: center; }
+    .stats .v { font-size: 28px; font-weight: 700; line-height: 1.25; margin-top: 2px; }
+    .stats .d { font-size: 12px; margin-top: 2px; }
+    .wait { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 20px; }
+    .wait .n { font-size: 32px; font-weight: 700; line-height: 1.2; }
+    .wait .l { font-size: 12px; color: #A0A0B8; margin-top: 2px; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+    .two .card { height: 438px; }
+    .link { margin-left: auto; font-size: 13px; color: #8B83FF; }
+    .li { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 8px; background: rgba(13, 13, 21, .55); margin-top: 8px; }
+    .li .a { font-weight: 700; font-size: 14px; }
+    .li .b { font-size: 12px; color: #A0A0B8; }
+    .li .amt { margin-left: auto; font-weight: 700; font-size: 15px; text-align: right; }
+    .rank { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; background: rgba(108, 99, 255, .2); color: #8B83FF; flex: none; }
+    .thumb { width: 40px; height: 40px; border-radius: 8px; flex: none; }
+</style></head>
+<body data-on="dashboard" data-title="แดชบอร์ด" data-sub="ภาพรวมการขายและสถิติของร้าน" data-live="1" data-stats="86|12|฿48,250">
+<div id="page">
+    <div class="stats">
+        <div class="card"><div style="flex:1"><div class="sub">ยอดขายวันนี้</div><div class="v">฿48,250</div><div class="d ok">▲ 12% <span class="mut">จากเมื่อวาน</span></div></div><div class="ibox" style="background:rgba(108,99,255,.15);color:#6C63FF">{ic:money}</div></div>
+        <div class="card"><div style="flex:1"><div class="sub">ออเดอร์วันนี้</div><div class="v">86</div><div class="d ok">+8% <span class="mut">จากเมื่อวาน</span></div></div><div class="ibox" style="background:rgba(74,222,128,.15);color:#4ADE80">{ic:orders}</div></div>
+        <div class="card"><div style="flex:1"><div class="sub">ลูกค้าใหม่</div><div class="v">14</div><div class="d mut">คนในวันนี้</div></div><div class="ibox" style="background:rgba(255,107,157,.15);color:#FF6B9D">{ic:addUser}</div></div>
+        <div class="card"><div style="flex:1"><div class="sub">มูลค่าเฉลี่ย/ออเดอร์</div><div class="v">฿561</div><div class="d mut">ต่อออเดอร์</div></div><div class="ibox" style="background:rgba(96,165,250,.15);color:#60A5FA">{ic:trend}</div></div>
+    </div>
+
+    <div class="wait">
+        <div class="gbtn"><div class="n pri">7</div><div class="l">CF รอดำเนินการ</div></div>
+        <div class="gbtn"><div class="n wn">5</div><div class="l">รอยืนยัน</div></div>
+        <div class="gbtn"><div class="n pk">3</div><div class="l">สลิปรอตรวจ</div></div>
+        <div class="gbtn"><div class="n inf">12</div><div class="l">รอแพ็ค</div></div>
+        <div class="gbtn"><div class="n ok">9</div><div class="l">รอส่ง</div></div>
+    </div>
+
+    <div class="two">
+        <div class="card">
+            <div class="row"><span class="h">ออเดอร์ล่าสุด</span><span class="link">ดูทั้งหมด</span></div>
+            <div class="li"><div><div class="a">LX-2510-0186</div><div class="b">คุณมะลิ ใจดี</div></div><span class="pill p-warn">รอยืนยัน</span><span class="b">1 นาที</span><span class="amt">฿890</span></div>
+            <div class="li"><div><div class="a">LX-2510-0185</div><div class="b">Ploy Sample</div></div><span class="pill p-pri">ยืนยันแล้ว</span><span class="b">3 นาที</span><span class="amt">฿1,250</span></div>
+            <div class="li"><div><div class="a">LX-2510-0184</div><div class="b">คุณส้มโอ ตัวอย่าง</div></div><span class="pill p-info">รอแพ็ค</span><span class="b">6 นาที</span><span class="amt">฿420</span></div>
+            <div class="li"><div><div class="a">LX-2510-0183</div><div class="b">Nok Example</div></div><span class="pill p-info">รอแพ็ค</span><span class="b">9 นาที</span><span class="amt">฿2,180</span></div>
+            <div class="li"><div><div class="a">LX-2510-0182</div><div class="b">คุณข้าวหอม สมมุติ</div></div><span class="pill p-ok">จัดส่งแล้ว</span><span class="b">22 นาที</span><span class="amt">฿650</span></div>
+            <div class="li"><div><div class="a">LX-2510-0181</div><div class="b">Mint Demo</div></div><span class="pill p-ok">จัดส่งแล้ว</span><span class="b">35 นาที</span><span class="amt">฿1,040</span></div>
+        </div>
+        <div class="card">
+            <div class="row"><span class="h">สินค้าขายดี</span><span class="link">ดูทั้งหมด</span></div>
+            <div class="li"><span class="rank">1</span><span class="thumb" style="background:linear-gradient(135deg,#FF6B9D,#6C63FF)"></span><div><div class="a">เสื้อยืดโอเวอร์ไซซ์ สีครีม</div><div class="b">SKU TS-001 · {ic:cart} ขายแล้ว 38 ชิ้น</div></div><div class="amt">฿11,020<div class="b" style="font-weight:400">รายได้</div></div></div>
+            <div class="li"><span class="rank">2</span><span class="thumb" style="background:linear-gradient(135deg,#60A5FA,#6C63FF)"></span><div><div class="a">กระเป๋าผ้าแคนวาส</div><div class="b">SKU BG-014 · {ic:cart} ขายแล้ว 21 ชิ้น</div></div><div class="amt">฿7,350<div class="b" style="font-weight:400">รายได้</div></div></div>
+            <div class="li"><span class="rank">3</span><span class="thumb" style="background:linear-gradient(135deg,#FBBF24,#FF6B9D)"></span><div><div class="a">ต่างหูมุก ชุด 3 คู่</div><div class="b">SKU AC-207 · {ic:cart} ขายแล้ว 19 ชิ้น</div></div><div class="amt">฿3,610<div class="b" style="font-weight:400">รายได้</div></div></div>
+            <div class="li"><span class="rank">4</span><span class="thumb" style="background:linear-gradient(135deg,#4ADE80,#60A5FA)"></span><div><div class="a">รองเท้าผ้าใบ ขาวล้วน</div><div class="b">SKU SH-032 · {ic:cart} ขายแล้ว 9 ชิ้น</div></div><div class="amt">฿8,910<div class="b" style="font-weight:400">รายได้</div></div></div>
+            <div class="li"><span class="rank">5</span><span class="thumb" style="background:linear-gradient(135deg,#8B83FF,#FF8EB5)"></span><div><div class="a">หมวกบักเก็ต</div><div class="b">SKU AC-118 · {ic:cart} ขายแล้ว 8 ชิ้น</div></div><div class="amt">฿2,320<div class="b" style="font-weight:400">รายได้</div></div></div>
+        </div>
+    </div>
+</div>
+<script src="chrome.js"></script>
+</body></html>

@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .hd { display: flex; align-items: center; gap: 12px; }
+    .hd h1 { font-size: 22px; }
+    .flt { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+    .tf { display: flex; gap: 4px; } .tf span { padding: 6px 11px; border-radius: 8px; font-size: 11px; color: rgba(255, 255, 255, .55); background: rgba(255, 255, 255, .05); } .tf span.on { background: rgba(124, 58, 237, .55); color: #fff; }
+    .sum { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-top: 12px; }
+    .sum .stat p:last-child { font-size: 10px; color: rgba(255, 255, 255, .4); }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    td { padding: 7px 10px; }
+</style></head>
+<body data-on="Analytics" data-bot="IDLE">
+<div class="page">
+    <div class="hd">
+        <span style="font-size:26px">📊</span>
+        <div><h1>Trade Analytics <span class="badge b-pur" style="vertical-align:middle">⚡ Dual-Balance</span></h1><p class="mut" style="font-size:11px">วิเคราะห์ผลการเทรด Arbitrage / Analyze your arbitrage trades</p></div>
+        <span class="mut sp" style="font-size:11px">💾 DB: <b style="color:#fff">1.4 MB</b></span><span class="btn gh" style="height:28px">🗑️ Cleanup</span>
+    </div>
+    <div class="flt">
+        <span class="mut" style="font-size:11px">Trading Pair:</span><span class="field" style="width:150px">All Pairs ⌄</span>
+        <span class="mut" style="font-size:11px">From:</span><span class="field">01/10/2026</span><span class="mut" style="font-size:11px">To:</span><span class="field">28/10/2026</span>
+        <span class="tf"><span>1D</span><span>7D</span><span class="on">30D</span><span>90D</span><span>ALL</span></span>
+        <span class="btn gh sp">🔄 Refresh</span><span class="btn grn">📥 Export CSV</span>
+    </div>
+    <div class="sum">
+        <div class="stat"><p class="lbl">Total Trades</p><p class="mid">186</p><p>เทรดทั้งหมด</p></div>
+        <div class="stat"><p class="lbl">Win Rate</p><p class="mid grn">71%</p><p>อัตราชนะ</p></div>
+        <div class="stat"><p class="lbl">Avg Profit</p><p class="mid grn">$2.31</p><p>กำไรเฉลี่ย</p></div>
+        <div class="stat"><p class="lbl">Best Trade</p><p class="mid grn">$21.06</p><p>เทรดดีสุด</p></div>
+        <div class="stat"><p class="lbl">Worst Trade</p><p class="mid red">-$9.70</p><p>เทรดแย่สุด</p></div>
+        <div class="stat"><p class="lbl">Total P&amp;L</p><p class="mid grn">+$429.66</p><p>กำไร/ขาดทุนรวม</p></div>
+    </div>
+    <div class="card" style="margin-top:12px;padding:12px 16px">
+        <div class="row"><b>💰 P&amp;L by Trading Pair</b><span class="mut">/ กำไร-ขาดทุนแยกตามคู่เทรด (5 pairs)</span></div>
+        <table style="margin-top:6px">
+            <thead><tr><th>TRADING PAIR</th><th>TRADES</th><th>WIN RATE</th><th>AVG P&amp;L</th><th>TOTAL FEES</th><th>NET P&amp;L</th></tr></thead>
+            <tbody>
+                <tr><td><span class="row"><span class="coin" style="background:#F7931A">BTC</span><b>BTC/USDT</b></span></td><td>74</td><td class="grn">76%</td><td class="grn">+$3.12</td><td class="dim">$41.20</td><td class="grn"><b>+$230.88</b></td></tr>
+                <tr><td><span class="row"><span class="coin" style="background:#9945FF">SOL</span><b>SOL/USDT</b></span></td><td>46</td><td class="grn">72%</td><td class="grn">+$2.05</td><td class="dim">$18.64</td><td class="grn"><b>+$94.30</b></td></tr>
+                <tr><td><span class="row"><span class="coin" style="background:#627EEA">ETH</span><b>ETH/USDT</b></span></td><td>39</td><td class="grn">64%</td><td class="grn">+$1.71</td><td class="dim">$16.02</td><td class="grn"><b>+$66.69</b></td></tr>
+                <tr><td><span class="row"><span class="coin" style="background:#23292F">XRP</span><b>XRP/USDT</b></span></td><td>18</td><td class="grn">67%</td><td class="grn">+$1.64</td><td class="dim">$5.90</td><td class="grn"><b>+$29.52</b></td></tr>
+                <tr><td><span class="row"><span class="coin" style="background:#C2A633">DOGE</span><b>DOGE/USDT</b></span></td><td>9</td><td class="amb">56%</td><td class="grn">+$0.92</td><td class="dim">$2.40</td><td class="grn"><b>+$8.27</b></td></tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="two">
+        <div class="card" style="height:262px">
+            <div class="row"><b>📊 Cumulative P&amp;L</b><span class="mut">/ กำไรสะสม</span></div>
+            <svg id="cum" width="650" height="200" style="display:block;margin-top:10px"></svg>
+        </div>
+        <div class="card" style="height:262px;padding:12px 16px">
+            <div class="row"><b>🎯 Recent Trades</b><span class="mut">(186 trades) เทรดล่าสุด</span></div>
+            <table style="margin-top:4px">
+                <thead><tr><th>TIME</th><th>SYMBOL</th><th>BUY → SELL</th><th>SPREAD</th><th>P&amp;L</th></tr></thead>
+                <tbody>
+                    <tr><td class="mono dim">28/10 14:32</td><td><b>BTC/USDT</b></td><td>Binance → KuCoin</td><td>0.42%</td><td class="grn"><b>+$2.84</b></td></tr>
+                    <tr><td class="mono dim">28/10 14:31</td><td><b>SOL/USDT</b></td><td>KuCoin → Binance</td><td>0.31%</td><td class="grn"><b>+$1.12</b></td></tr>
+                    <tr><td class="mono dim">28/10 14:30</td><td><b>BTC/USDT</b></td><td>Bitkub → Binance</td><td>0.38%</td><td class="grn"><b>+$3.40</b></td></tr>
+                    <tr><td class="mono dim">28/10 14:29</td><td><b>SOL/USDT</b></td><td>Binance → KuCoin</td><td>0.27%</td><td class="grn"><b>+$0.96</b></td></tr>
+                    <tr><td class="mono dim">28/10 14:18</td><td><b>ETH/USDT</b></td><td>KuCoin → Binance</td><td>0.19%</td><td class="red"><b>-$0.84</b></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script src="chrome.js"></script>
+<script>
+    (function () {
+        var s = 21, pts = [], v = 0, w = 650, h = 196, n = 60;
+        function rnd() { s = (s * 9301 + 49297) % 233280; return s / 233280; }
+        for (var i = 0; i < n; i++) { v += (rnd() - .28) * 9; pts.push(v); }
+        var max = Math.max.apply(null, pts), min = Math.min(0, Math.min.apply(null, pts));
+        var xy = pts.map(function (p, i) { return [i * w / (n - 1), 8 + (h - 16) * (1 - (p - min) / (max - min))]; });
+        var line = xy.map(function (p, i) { return (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join(' ');
+        var g = '<defs><linearGradient id="f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7C3AED" stop-opacity=".5"/><stop offset="1" stop-color="#7C3AED" stop-opacity="0"/></linearGradient></defs>';
+        for (var k = 1; k < 5; k++) g += '<line x1="0" x2="' + w + '" y1="' + (k * h / 5) + '" y2="' + (k * h / 5) + '" stroke="rgba(255,255,255,.06)"/>';
+        g += '<path d="' + line + ' L' + w + ' ' + h + ' L0 ' + h + 'Z" fill="url(#f)"/><path d="' + line + '" fill="none" stroke="#A78BFA" stroke-width="2.4"/>';
+        document.getElementById('cum').innerHTML = g;
+    })();
+</script>
+</body></html>

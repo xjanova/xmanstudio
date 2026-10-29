@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .content { padding: 8px 8px 0; overflow: hidden; }
+    .head { border-radius: 8px; background: rgba(13, 27, 42, .6); padding: 10px 12px; display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .head .ico { font-size: 20px; }
+    .head .r { margin-left: auto; display: flex; gap: 8px; }
+    .sub { display: flex; border-bottom: 1px solid #1E3A5F; margin: 0 0 8px; }
+    .sub span { padding: 8px 14px 7px; font-size: 13px; color: #8892A0; border-bottom: 3px solid transparent; }
+    .sub span.on { color: #00D4FF; border-color: #00D4FF; }
+    .hint { font-size: 12px; color: #8892A0; margin: 0 0 8px 8px; }
+    .g { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 8px; }
+    .card { border-radius: 8px; background: rgba(13, 27, 42, .6); border: 1px solid #1E3A5F; padding: 12px 14px; }
+    .card .t { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .card .t i { font-style: normal; font-size: 23px; }
+    .card .t b { display: block; font-size: 14px; }
+    .card .t small { display: block; font-size: 10.5px; color: #F59E0B; }
+    .card > p { font-size: 11.5px; color: #8892A0; margin-bottom: 9px; }
+    .box { border-radius: 4px; background: rgba(27, 40, 56, .53); padding: 7px 9px; font-size: 10.5px; color: #8892A0; line-height: 1.5; margin-bottom: 9px; }
+    .box b { color: #8892A0; }
+    .acts { display: flex; gap: 4px; }
+    .ok { color: #10B981; font-size: 11px; margin-left: 8px; align-self: center; }
+</style></head>
+<body data-on="Tools" data-dev="Xiaomi Redmi Note 13 Pro (8f3EXAMPLE)" data-brand="Xiaomi" data-model="Redmi Note 13 Pro" data-op="Launching EDL Client...">
+<div class="head"><span class="ico">🧰</span><h2>ToolBox</h2><span class="mut" style="margin-left:16px;font-size:12px">Launching EDL Client...</span>
+    <span class="r"><span class="btn">📂 Open Tools Folder</span><span class="btn">🔄 Refresh</span></span></div>
+<div class="sub"><span>📱 Essential</span><span>📱 Samsung</span><span class="on">🔌 Qualcomm/MTK</span><span>🛠️ Utilities</span><span>📋 Device Info</span></div>
+<p class="hint">Qualcomm EDL and MediaTek BROM tools for low-level device access</p>
+<div class="g">
+    <div class="card">
+        <div class="t"><i>🔌</i><div><b>EDL Client (bkerler)</b><small>Qualcomm EDL/Firehose tool - Requires Python</small></div></div>
+        <p>Communicate with Qualcomm devices in EDL (Emergency Download) mode. Read/write partitions, unlock bootloader.</p>
+        <div class="box"><b>How to enter EDL mode:</b><br>• Turn off device + hold Vol- and plug USB<br>• Via ADB: adb reboot edl<br>• Hardware test point (device specific)</div>
+        <div class="acts"><span class="btn acc">▶ Launch</span><span class="btn">📥 Install</span><span class="ok">✓ Installed</span></div>
+    </div>
+    <div class="card">
+        <div class="t"><i>🆕</i><div><b>EDL-NG</b><small>Modern EDL with GUI - Requires .NET 9</small></div></div>
+        <p>Next-generation Qualcomm EDL tool with graphical interface. Easier to use than command-line EDL client.</p>
+        <div class="box"><b>Features:</b><br>• GUI-based operation<br>• Read/Write flash storage<br>• Firehose programmer loading</div>
+        <div class="acts"><span class="btn acc">▶ Launch</span><span class="btn">📥 Install</span></div>
+    </div>
+    <div class="card" style="grid-column: span 2">
+        <div class="t"><i>🔧</i><div><b>MTK Client (bkerler)</b><small>MediaTek BROM/Preloader tool - Requires Python</small></div></div>
+        <p>Communicate with MediaTek devices in BROM/Preloader mode. Flash stock ROM, unlock bootloader.</p>
+        <div class="box" style="max-width:520px"><b>How to enter BROM mode:</b><br>• Turn off device completely · Hold Vol- (or Vol+ on some devices)<br>• Connect USB cable while holding · Device should be detected as MediaTek USB</div>
+        <div class="acts"><span class="btn acc">▶ Launch</span><span class="btn">📥 Install</span><span class="ok">✓ Installed</span></div>
+    </div>
+</div>
+<script type="text/plain" id="log">
+[15:07:12] Refreshing device list...
+[15:07:13] Found 1 device(s)
+</script>
+<script src="chrome.js"></script>
+</body></html>

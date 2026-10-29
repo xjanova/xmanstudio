@@ -1,0 +1,115 @@
+{
+  "out_dir": "images/products/cluadex/v2",
+  "screens": [
+    {
+      "name": "editor",
+      "src": "E:/cluadex-bld/themes/editor-tools.png",
+      "blur": [
+        [
+          138,
+          6,
+          130,
+          30
+        ],
+        [
+          386,
+          6,
+          258,
+          30
+        ]
+      ]
+    },
+    {
+      "name": "chat",
+      "src": "E:/cluadex-bld/themes/renders/persona/midnight-claude.png",
+      "blur": [
+        [
+          138,
+          6,
+          130,
+          30
+        ],
+        [
+          386,
+          6,
+          258,
+          30
+        ]
+      ]
+    },
+    {
+      "name": "models",
+      "src": "E:/cluadex-bld/themes/renders/midnight/model-manager.png",
+      "blur": [
+        [
+          138,
+          6,
+          130,
+          30
+        ],
+        [
+          386,
+          6,
+          258,
+          30
+        ]
+      ]
+    },
+    {
+      "name": "skills",
+      "src": "E:/cluadex-bld/themes/renders/midnight/skills.png",
+      "blur": [
+        [
+          138,
+          6,
+          130,
+          30
+        ],
+        [
+          386,
+          6,
+          258,
+          30
+        ]
+      ]
+    },
+    {
+      "name": "features",
+      "src": "E:/cluadex-bld/themes/renders/midnight/features.png",
+      "blur": [
+        [
+          138,
+          6,
+          130,
+          30
+        ],
+        [
+          386,
+          6,
+          258,
+          30
+        ]
+      ]
+    },
+    {
+      "name": "art-hero",
+      "src": "D:/Code/xmanstudio-campaign-media/product-pages/cluadex/art-hero.png",
+      "width": 1536,
+      "quality": 82
+    },
+    {
+      "name": "art-2",
+      "src": "D:/Code/xmanstudio-campaign-media/product-pages/cluadex/art-2.png",
+      "width": 1536,
+      "quality": 82
+    },
+    {
+      "name": "og",
+      "ext": "jpg",
+      "w": 1200,
+      "h": 630,
+      "width": 1200,
+      "html": "../_shared/og.html?art=file%3A%2F%2F%2FD%3A%2FCode%2Fxmanstudio-campaign-media%2Fproduct-pages%2Fcluadex%2Fart-hero.png&name=CluadeX&glow=X&line=%E0%B8%9C%E0%B8%B9%E0%B9%89%E0%B8%8A%E0%B9%88%E0%B8%A7%E0%B8%A2%E0%B9%80%E0%B8%82%E0%B8%B5%E0%B8%A2%E0%B8%99%E0%B9%82%E0%B8%84%E0%B9%89%E0%B8%94+AI%7C%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%A3%E0%B8%B1%E0%B8%99%E0%B8%9A%E0%B8%99%E0%B9%80%E0%B8%84%E0%B8%A3%E0%B8%B7%E0%B9%88%E0%B8%AD%E0%B8%87%E0%B8%84%E0%B8%B8%E0%B8%93&sub=%E0%B8%A1%E0%B8%B5%E0%B8%A3%E0%B8%B8%E0%B9%88%E0%B8%99%E0%B8%9F%E0%B8%A3%E0%B8%B5+%C2%B7+%E0%B9%82%E0%B8%A1%E0%B9%80%E0%B8%94%E0%B8%A5%E0%B9%83%E0%B8%99%E0%B9%80%E0%B8%84%E0%B8%A3%E0%B8%B7%E0%B9%88%E0%B8%AD%E0%B8%87+%C2%B7+Pro+%E0%B8%95%E0%B9%88%E0%B8%AD+Claude+GPT+Gemini&c1=f472b6&c2=a78bfa&c3=67e8f9"
+    }
+  ]
+}

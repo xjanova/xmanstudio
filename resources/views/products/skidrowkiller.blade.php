@@ -1,759 +1,383 @@
 @extends($publicLayout ?? 'layouts.app')
+{{-- Coming Soon = ไม่มีปุ่มซื้อและไม่มีลิงก์ไฟล์ (กฎเจ้าของ 2026-10-12) --}}
+@php $csSkidrow = $product->isComingSoon(); @endphp
 
-@section('title', $product->name . ' - XMAN Studio')
+@section('title', 'Skidrow Killer — สแกนและกำจัดมัลแวร์ แครก โทรจัน บน Windows | XMAN Studio')
+@section('meta_description', 'Skidrow Killer สแกนถึงเนื้อไฟล์ ไม่ใช่แค่ชื่อ: hash, ลายเซ็น, heuristics และ entropy ป้องกันแบบเรียลไทม์ บล็อกเว็บอันตราย เฝ้า USB และ ransomware ลบมัลแวร์พร้อมจุดที่ทำให้มันกลับมา สำรองก่อนลบ กักกันแล้วคืนได้ ไม่ปิด Windows Defender · Malware scanner and remover for Windows 10/11.')
+@section('og_image', asset('images/products/skidrow-killer/v2/og.jpg'))
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-gray-900 via-red-950 to-gray-900">
-    <!-- Animated Background -->
-    <div class="fixed inset-0 overflow-hidden pointer-events-none">
-        <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%23DC2626\" fill-opacity=\"0.03\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]"></div>
-        <!-- Floating Orbs -->
-        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-red-500/10 rounded-full blur-3xl animate-pulse"></div>
-        <div class="absolute bottom-1/4 right-1/4 w-80 h-80 bg-orange-500/10 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s;"></div>
-        <div class="absolute top-1/2 right-1/3 w-64 h-64 bg-yellow-500/5 rounded-full blur-3xl animate-pulse" style="animation-delay: 2s;"></div>
-    </div>
+@php
+    // ราคาอ่านจากแถวสินค้าในร้าน (products.price) ที่เดียว ตะกร้าคิดราคานี้ — ห้ามเขียนตัวเลขราคาลงหน้านี้ตรง ๆ
+    $price = (float) $product->price;
+    $hasDiscount = $product->original_price && $product->original_price > $product->price;
+    $ownsSkidrow = auth()->check() && $hasPurchased;
 
-    <!-- Hero Section -->
-    <section class="relative py-16 lg:py-24 overflow-hidden">
-        <x-page-art art="card-skidrow" :opacity="38" />
-        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <!-- Breadcrumb -->
-            <nav class="mb-8 animate-fade-in">
-                <a href="{{ route('products.index') }}" class="text-red-400 hover:text-red-300 flex items-center group">
-                    <svg class="w-4 h-4 mr-2 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                    </svg>
-                    กลับไปรายการผลิตภัณฑ์
-                </a>
-            </nav>
+    // เวอร์ชันที่เว็บนี้ส่งให้ (อ่านจาก DB อย่างเดียว) — หน้าดาวน์โหลดตรวจว่าซื้อแล้วก่อนให้ไฟล์
+    $latest = $product->latestVersion();
+    $downloadHref = $latest ? route('download.page', ['slug' => $product->slug, 'version' => $latest->version]) : null;
 
+    // ภาพหน้าจอ: ยังไม่มีภาพจริงจากโปรแกรม ทุกภาพเป็น mockup วาดตามธีมของแอป (scripts/product-mockups/skidrow-killer)
+    $shot = fn (string $file) => asset('images/products/skidrow-killer/v2/' . $file);
+
+    // ข้อเท็จจริงจากโค้ดแอป D:\Code\skidrowkill (SafeScanner, ThreatAnalyzer.AnalyzeFileAsync, ThreatEradicator)
+    $coreRows = [
+        [
+            'img' => $shot('scan.webp'), 'mock' => true, 'name' => 'Smart Scan ดูถึงเนื้อไฟล์', 'eyebrow' => 'Quick · Deep · Custom',
+            'th' => 'Quick Scan ตรวจจุดเริ่มอัตโนมัติ โปรเซสที่รันอยู่ และที่ที่มัลแวร์ชอบซ่อน · Deep Scan ตรวจทุกไดรฟ์ที่เลือก รวม registry และโปรเซส · Custom เลือกเองว่าจะตรวจไฟล์ registry หรือหน่วยความจำ และเฉพาะโฟลเดอร์ไหน',
+            'en' => 'Every file is judged by its content, not just its name: hashes, content signatures and fuzzy hashes, with deeper analysis for programs and scripts.',
+            'points' => [
+                'ไฟล์ที่ตั้งชื่อหลอกก็เจอ: เทียบ hash กับฐานข้อมูลมัลแวร์ ลายเซ็นในเนื้อไฟล์ และ fuzzy hash (ssdeep) จับไฟล์ที่ดัดแปลงจากตัวเดิม',
+                'ไฟล์โปรแกรมและสคริปต์วิเคราะห์ละเอียด: โครงสร้าง PE, imphash, heuristics, API ที่น่าสงสัย และ entropy (ถูกแพ็กหรือเข้ารหัส)',
+                'ทุกไฟล์ได้คะแนน 0–100 พร้อมเหตุผล ไฟล์ในโฟลเดอร์ที่ปลอดภัยถูกลดคะแนน เพื่อลดการเตือนผิด',
+                'บันทึกรายงานผลสแกนเป็นไฟล์ HTML ได้',
+            ],
+            'alt' => 'ภาพตัวอย่างหน้า Smart Scan ของ Skidrow Killer ระหว่าง Deep Scan: แถบความคืบหน้า จำนวนไฟล์ที่ตรวจ และ Scan Log',
+        ],
+        [
+            'img' => $shot('threats.webp'), 'mock' => true, 'name' => 'ลบให้หมด ไม่ใช่แค่ไฟล์เดียว', 'eyebrow' => 'Remove the whole threat',
+            'th' => 'หน้า Threats บอกคะแนน ระดับความรุนแรง ประเภท (แครกเกม keygen activator โทรจัน ransomware ตัวขุดเหรียญ ตัวขโมยรหัส ฯลฯ) เหตุผลที่ตรวจเจอ และคำแนะนำ แล้วให้คุณเลือก กักกัน ลบ หรือข้าม',
+            'en' => 'Removal ends every process running the file, strips the Run keys, scheduled tasks and services that would bring it back, then deletes or quarantines it.',
+            'points' => [
+                'ปิดทุกโปรเซสที่รันไฟล์นั้นพร้อมโปรเซสลูก',
+                'ลบค่า Run / RunOnce งานตั้งเวลา และหยุดบริการที่ชี้มาที่ไฟล์ ไม่ให้กลับมาตอนเปิดเครื่องใหม่',
+                'ไฟล์ยังถูกล็อกอยู่? ตั้งให้ลบตอนรีสตาร์ตและบอกตรง ๆ ไม่รายงานว่าลบแล้วทั้งที่ยังอยู่',
+            ],
+            'alt' => 'ภาพตัวอย่างหน้า Threats Found ของ Skidrow Killer รายการไฟล์อันตรายพร้อมคะแนน ประเภท คำแนะนำ และปุ่มกักกัน ลบ ข้าม',
+        ],
+    ];
+
+    // ชั้นป้องกันที่ทำงานตลอดเวลา — ทุกข้อเช็กกับ Services/ ของแอป
+    $guards = [
+        [
+            'key' => 'realtime', 'name' => 'ป้องกันแบบเรียลไทม์', 'short' => 'เห็นทุกโปรเซสตั้งแต่เริ่มรัน',
+            'th' => 'Skidrow Killer เห็นทุกโปรเซสทันทีที่เริ่มรันผ่านเหตุการณ์ของ Windows จึงจับตัวปล่อยมัลแวร์ที่รันแล้วปิดตัวในเสี้ยววินาทีได้ ตรวจคำสั่งที่ใช้เรียก และตรวจไฟล์ใหม่ด้วยเนื้อไฟล์เหมือนตอนสแกน',
+            'en' => 'Sees every process the moment it starts, checks its command line, and content-checks new files.',
+            'points' => ['ตั้งได้ว่าเจอแล้วให้ทำอะไร: ถามทุกครั้ง · กักกันอัตโนมัติ · ลบอัตโนมัติ · บันทึกอย่างเดียว', 'โหมด "ถาม" จัดการเองเฉพาะระดับ Critical และใช้วิธีกักกันซึ่งคืนได้เสมอ'],
+        ],
+        [
+            'key' => 'web', 'name' => 'Web Protection', 'short' => 'บล็อกเว็บแครก มัลแวร์ และ C2',
+            'th' => 'บล็อกโดเมนเว็บแจกของเถื่อน เว็บปล่อยมัลแวร์ และเซิร์ฟเวอร์สั่งการ (C2) ทั้งระบบผ่านไฟล์ hosts และตัดการเชื่อมต่อ TCP ที่ต่ออยู่แล้วกับปลายทางนั้นทันที ไม่ใช่แค่บันทึกไว้',
+            'en' => 'Blocks warez, malware and C2 domains system-wide and tears down live connections to them.',
+            'points' => ['ปิด Web Protection เมื่อไร รายการที่เพิ่มใน hosts ถูกลบออกให้ด้วย'],
+        ],
+        [
+            'key' => 'ransomware', 'name' => 'กัน Ransomware', 'short' => 'เฝ้าโฟลเดอร์สำคัญ + ไฟล์ล่อ',
+            'img' => $shot('ransomware.webp'), 'mock' => true,
+            'th' => 'เฝ้าโฟลเดอร์ Documents, Pictures, Desktop (เพิ่มเองได้) และวางไฟล์ล่อที่ซ่อนไว้ เตือนทันทีเมื่อไฟล์ถูกเปลี่ยนชื่อเป็นนามสกุลของ ransomware มีไฟล์ชื่อแบบจดหมายเรียกค่าไถ่โผล่มา เนื้อไฟล์กลายเป็นข้อมูลเข้ารหัส หรือโปรเซสเดียวแก้ไฟล์จำนวนมากในเวลาสั้น ๆ',
+            'en' => 'Watches your folders with hidden decoys and alerts on ransomware extensions, ransom notes, files turning encrypted and mass edits.',
+            'points' => ['ปิดไฟล์ล่อได้ในหน้าตั้งค่า ระบบลบเฉพาะไฟล์ล่อที่ตัวเองวางไว้'],
+            'alt' => 'ภาพตัวอย่างหน้า Ransomware Protection ของ Skidrow Killer: โฟลเดอร์ที่เฝ้า ไฟล์ล่อ และ Activity Log',
+        ],
+        [
+            'key' => 'usb', 'name' => 'USB Protection', 'short' => 'สแกนแฟลชไดรฟ์ทันทีที่เสียบ',
+            'th' => 'ตรวจ USB และไดรฟ์ภายนอกทันทีที่เสียบ ด้วยการตรวจเนื้อไฟล์แบบเดียวกับ Smart Scan และกันไฟล์ autorun.inf ที่มัลแวร์ใช้ติดต่อข้ามเครื่อง',
+            'en' => 'Scans removable drives the moment they connect and blocks autorun.inf.',
+            'points' => [],
+        ],
+        [
+            'key' => 'startup', 'name' => 'จุดที่มัลแวร์ฝังตัว', 'short' => 'ตัวที่กลับมาหลังรีสตาร์ต',
+            'th' => 'ตรวจจุดที่ทำให้โปรแกรมรันเองตอนเปิดเครื่อง เกินกว่าแค่ Run key: โฟลเดอร์ Startup, Winlogon Shell/Userinit, AppInit_DLLs และการแฮ็ก Image File Execution Options',
+            'en' => 'Checks the auto-start points malware abuses to survive a reboot, well beyond the Run keys.',
+            'points' => ['Run / RunOnce ทั้ง HKCU, HKLM และฝั่ง 32-bit', 'การตั้งค่าที่อันตรายในตัว (IFEO debugger, AppInit DLL) ถูกเตือนแม้ไฟล์ปลายทางจะดูปกติ'],
+        ],
+        [
+            'key' => 'browser', 'name' => 'Browser Protection', 'short' => 'ส่วนขยายเบราว์เซอร์อันตราย',
+            'th' => 'ตรวจส่วนขยาย (extension) ของ Chrome, Edge, Firefox, Brave และ Opera หาตัวที่น่าสงสัย แล้วลบออกได้จากในโปรแกรม',
+            'en' => 'Checks Chrome, Edge, Firefox, Brave and Opera extensions and removes the bad ones.',
+            'points' => [],
+        ],
+        [
+            'key' => 'more', 'name' => 'สแกนตามเวลา · Gaming · Cleanup', 'short' => 'ตั้งแล้วลืมได้',
+            'th' => 'ตั้งสแกนอัตโนมัติรายวัน รายสัปดาห์ หรือรายเดือน · Gaming Mode ตรวจจับเกมหรือแอปเต็มจอแล้วพักการแจ้งเตือนให้ · System Cleanup ล้างไฟล์ชั่วคราว แคชเบราว์เซอร์ ถังขยะ แคชรูปย่อ และ log ของ Windows',
+            'en' => 'Scheduled scans, a Gaming Mode that holds pop-ups while you play, and a junk-file cleanup.',
+            'points' => [],
+        ],
+    ];
+
+    $ld = [
+        '@context' => 'https://schema.org',
+        '@type' => 'SoftwareApplication',
+        'name' => 'Skidrow Killer',
+        'operatingSystem' => 'Windows 10, Windows 11',
+        'applicationCategory' => 'SecurityApplication',
+        'inLanguage' => ['th', 'en'],
+        'description' => 'โปรแกรมสแกนและกำจัดมัลแวร์บน Windows ตรวจถึงเนื้อไฟล์ ป้องกันแบบเรียลไทม์ บล็อกเว็บอันตราย เฝ้า USB และ ransomware สำรองก่อนลบ กักกันแล้วคืนได้',
+        'image' => asset('images/products/skidrow-killer/v2/og.jpg'),
+        'url' => route('products.show', $product->slug),
+        'publisher' => ['@type' => 'Organization', 'name' => 'XMAN Studio', 'url' => url('/')],
+    ];
+    // ระหว่าง Coming Soon ยังขายไม่ได้ — ไม่ประกาศ Offer ให้เครื่องมือค้นหาเอาไปแสดงเป็นของที่ซื้อได้
+    if (! $csSkidrow && ! $product->is_custom && $price > 0) {
+        $ld['offers'] = ['@type' => 'Offer', 'price' => (string) $price, 'priceCurrency' => 'THB'];
+    }
+@endphp
+<x-xp.page a="#4dd0e1" b="#66bb6a" c="#81d4fa" glow="41 182 246" g1="#f43f5e" g2="#c084fc" g3="#4dd0e1">
+
+    {{-- ============================ HERO ============================ --}}
+    <x-xp.hero :art="$shot('art-hero.webp')"
+               tagline="สแกนและกำจัดมัลแวร์บน Windows"
+               tagline-en="Finds and removes malware, cracks and trojans on Windows."
+               lead="ตรวจถึงเนื้อไฟล์ ไม่ใช่แค่ชื่อ ป้องกันแบบเรียลไทม์ บล็อกเว็บอันตราย เฝ้า USB และ ransomware — เจอแล้วลบให้หมดทั้งโปรเซสและจุดที่ทำให้มันกลับมา โดยสำรองไฟล์ไว้ก่อนเสมอ"
+               lead-en="Content-based scanning, real-time protection, web, USB and ransomware guards, and removal that takes the whole threat out, with a backup first.">
+        <x-slot:chips>
+            <span class="xp-chip"><i></i>{{ $latest ? 'Skidrow Killer ' . $latest->version : 'Skidrow Killer' }}</span>
+            <span class="xp-chip">Windows 10 / 11 (64-bit)</span>
+            @if($csSkidrow)<x-xp.badge tier="soon" label="Coming Soon" />@endif
+        </x-slot:chips>
+        <x-slot:title>Skidrow <span class="xp-text-glow">Killer</span></x-slot:title>
+        <x-slot:actions>
+            @if($csSkidrow || $downloadHref)
+                <x-xp.download :href="$downloadHref" :coming-soon="$csSkidrow" th="ดาวน์โหลด" en="Download" />
+            @endif
+            @if(! $csSkidrow)
+                @if($product->is_custom)
+                    <a href="{{ route('quote.index') }}" class="xp-btn-pro inline-flex items-center px-6 py-4 rounded-xl font-extrabold transition">สอบถามราคา</a>
+                @else
+                    <a href="#pricing" class="xp-btn-pro inline-flex items-center px-6 py-4 rounded-xl font-extrabold transition">
+                        {{ $ownsSkidrow ? 'ซื้อ License เพิ่ม' : 'ซื้อ License' }} — ฿{{ number_format($price) }}
+                    </a>
+                @endif
+            @else
+                <a href="#pricing" class="xp-btn-ghost inline-flex items-center px-6 py-4 rounded-xl font-bold transition"><x-bi th="ราคา" en="Pricing" /></a>
+            @endif
+        </x-slot:actions>
+        <x-slot:notes>
             @if(session('success'))
-                <div class="mb-6 bg-green-500/20 border border-green-500/50 text-green-300 px-4 py-3 rounded-xl backdrop-blur-sm animate-fade-in-up">
-                    {{ session('success') }}
-                </div>
+                <p class="mt-4 text-sm text-emerald-200/90">{{ session('success') }}</p>
             @endif
-
-            {{-- License Status Banner --}}
+            @if($csSkidrow)
+                <p class="mt-4 text-sm text-gray-400">
+                    ยังไม่เปิดขายและยังไม่มีไฟล์ให้ดาวน์โหลด@if($product->coming_soon_until) · กำหนดเปิด {{ $product->coming_soon_until->format('d/m/Y H:i') }}@endif
+                </p>
+            @elseif($latest)
+                <p class="mt-4 text-sm text-gray-400">เวอร์ชันล่าสุด {{ $latest->version }}@if($latest->file_size) · {{ $latest->file_size_formatted }}@endif · ดาวน์โหลดได้หลังซื้อ License</p>
+            @endif
+            {{-- สถานะ License ของคนที่ล็อกอิน: ใช้ได้ / ใกล้หมด / หมดแล้ว --}}
             @if(isset($userLicense) && $userLicense)
-                @if($userLicense->isValid())
-                    @php $daysLeft = $userLicense->daysRemaining(); @endphp
-                    @if($daysLeft <= 7 && $userLicense->license_type !== 'lifetime')
-                        <div class="mb-6 bg-amber-500/20 border border-amber-500/50 text-amber-300 px-6 py-4 rounded-xl backdrop-blur-sm animate-fade-in-up">
-                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                                <div class="flex items-center">
-                                    <svg class="w-6 h-6 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                                    </svg>
-                                    <div>
-                                        <p class="font-semibold">License ใกล้หมดอายุ!</p>
-                                        <p class="text-sm text-amber-200">เหลืออีก {{ $daysLeft }} วัน ({{ $userLicense->expires_at->format('d/m/Y') }})</p>
-                                    </div>
-                                </div>
-                                <a href="{{ route('customer.licenses.show', $userLicense) }}" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors">
-                                    ต่ออายุตอนนี้
-                                </a>
-                            </div>
-                        </div>
-                    @else
-                        <div class="mb-6 bg-green-500/20 border border-green-500/50 text-green-300 px-6 py-4 rounded-xl backdrop-blur-sm animate-fade-in-up">
-                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                                <div class="flex items-center">
-                                    <svg class="w-6 h-6 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                                    </svg>
-                                    <div>
-                                        <p class="font-semibold">คุณมี License สำหรับผลิตภัณฑ์นี้แล้ว!</p>
-                                        <p class="text-sm text-green-200">
-                                            {{ $userLicense->license_type === 'lifetime' ? 'ใบอนุญาตตลอดชีพ' : 'หมดอายุ: ' . $userLicense->expires_at->format('d/m/Y') }}
-                                        </p>
-                                    </div>
-                                </div>
-                                <a href="{{ route('customer.licenses.show', $userLicense) }}" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors">
-                                    ดู License ของฉัน
-                                </a>
-                            </div>
-                        </div>
-                    @endif
+                @php($daysLeft = $userLicense->daysRemaining())
+                @if($userLicense->isValid() && ($daysLeft > 7 || ! $userLicense->expires_at))
+                    <p class="mt-3 text-sm text-emerald-200/90" data-license-state="active">
+                        คุณมี License แล้ว{{ $userLicense->expires_at ? ' · ใช้ได้ถึง ' . $userLicense->expires_at->format('d/m/Y') : ' · ไม่มีวันหมดอายุ' }} ·
+                        <a href="{{ route('customer.licenses.show', $userLicense) }}" class="font-semibold underline hover:text-white">ดู License ของฉัน</a>
+                    </p>
+                @elseif($userLicense->isValid())
+                    <p class="mt-3 text-sm text-amber-200" data-license-state="expiring">
+                        License ใกล้หมดอายุ · เหลืออีก {{ $daysLeft }} วัน@if($userLicense->expires_at) ({{ $userLicense->expires_at->format('d/m/Y') }})@endif ·
+                        <a href="{{ route('customer.licenses.show', $userLicense) }}" class="font-semibold underline hover:text-white">ต่ออายุตอนนี้</a>
+                    </p>
                 @else
-                    <div class="mb-6 bg-red-500/20 border border-red-500/50 text-red-300 px-6 py-4 rounded-xl backdrop-blur-sm animate-fade-in-up">
-                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                            <div class="flex items-center">
-                                <svg class="w-6 h-6 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                                </svg>
-                                <div>
-                                    <p class="font-semibold">License ของคุณหมดอายุแล้ว!</p>
-                                    <p class="text-sm text-red-200">หมดอายุเมื่อ {{ $userLicense->expires_at->format('d/m/Y') }}</p>
-                                </div>
-                            </div>
-                            <a href="{{ route('customer.licenses.show', $userLicense) }}" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors">
-                                ต่ออายุตอนนี้
-                            </a>
-                        </div>
-                    </div>
+                    <p class="mt-3 text-sm text-red-300" data-license-state="expired">
+                        License ของคุณหมดอายุแล้ว@if($userLicense->expires_at) เมื่อ {{ $userLicense->expires_at->format('d/m/Y') }}@endif ·
+                        <a href="{{ route('customer.licenses.show', $userLicense) }}" class="font-semibold underline hover:text-white">ต่ออายุตอนนี้</a>
+                    </p>
                 @endif
             @endif
+        </x-slot:notes>
+        <x-slot:badges>
+            <li class="flex items-center gap-2 text-gray-300"><span class="xp-dot"></span> ดูเนื้อไฟล์ ไม่ใช่แค่ชื่อ</li>
+            <li class="flex items-center gap-2 text-gray-300"><span class="xp-dot"></span> สำรองก่อนลบ คืนได้</li>
+            <li class="flex items-center gap-2 text-gray-300"><span class="xp-dot"></span> ไม่ปิด Windows Defender</li>
+        </x-slot:badges>
+        <x-slot:visual>
+            <div class="xp-tilt">
+                <x-xp.screen :src="$shot('home.webp')" :eager="true" :mock="true"
+                             alt="ภาพตัวอย่างหน้า Home ของ Skidrow Killer: สถานะการป้องกัน จำนวนภัยที่พบ ไฟล์ที่กักกัน และผล Engine Self-Test" />
+            </div>
+            <div class="xp-float absolute -left-3 sm:-left-8 bottom-6 sm:bottom-10 xp-card backdrop-blur-md px-4 py-3 shadow-2xl">
+                <p class="text-[11px] tracking-widest uppercase text-gray-400">ลบให้หมด · Remove it all</p>
+                <p class="text-white font-extrabold text-lg leading-tight">โปรเซส · Run key · <span class="text-cyan-300">ไฟล์</span></p>
+            </div>
+            <div class="xp-float-2 absolute -right-2 sm:-right-6 -top-5 xp-card backdrop-blur-md px-4 py-3 shadow-2xl hidden sm:block">
+                <p class="text-[11px] tracking-widest uppercase text-gray-400">ชื่อหลอกก็เจอ</p>
+                <p class="text-white font-bold leading-tight">เทียบ hash + ลายเซ็น<br><span class="text-gray-400 text-sm font-normal">ในเนื้อไฟล์ทุกไฟล์</span></p>
+            </div>
+        </x-slot:visual>
+    </x-xp.hero>
 
-            {{-- Coming Soon Banner --}}
-            @if($product->isComingSoon())
-                <div class="mb-6 bg-orange-500/20 border border-orange-500/50 text-orange-300 px-6 py-4 rounded-xl backdrop-blur-sm animate-fade-in-up">
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div class="flex items-center">
-                            <svg class="w-6 h-6 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            <div>
-                                <p class="font-semibold">Coming Soon!</p>
-                                <p class="text-sm text-orange-200">
-                                    @if($product->coming_soon_until)
-                                        เปิดขายวันที่ {{ $product->coming_soon_until->format('d/m/Y H:i') }}
-                                    @else
-                                        ผลิตภัณฑ์นี้จะเปิดขายเร็วๆ นี้
-                                    @endif
-                                </p>
-                            </div>
+    {{-- ============================ SCAN + REMOVE ============================ --}}
+    <section class="relative py-20" id="features">
+        <div class="xp-glow w-[34rem] h-[34rem] -right-40 top-10" style="background: rgb(var(--xp-glow) / .12)"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-xp.head class="mb-16" eyebrow="Scan · Remove" title="หาให้เจอ" title2="แล้วเอาออกให้หมด"
+                       sub="สแกนที่ตัดสินจากเนื้อไฟล์ แล้วลบทั้งตัวไฟล์ โปรเซส และจุดที่ทำให้มันกลับมา"
+                       en="A scan that reads the file, then a removal that takes out the file, its processes and its way back in." />
+            <x-xp.rows :items="$coreRows" />
+        </div>
+    </section>
+
+    {{-- =========================== ALWAYS ON =========================== --}}
+    <section class="relative py-20 isolate">
+        <x-xp.art :src="$shot('art-2.webp')" class="top-0 w-[130%] opacity-35 right-[-30%] lg:right-[-16%] lg:w-[68%] lg:opacity-80" />
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-xp.head align="left" class="mb-10" eyebrow="Always on" title="เฝ้าเครื่อง" title2="ตลอดเวลา"
+                       sub="นอกจากสแกน Skidrow Killer มีชั้นป้องกันที่ทำงานอยู่เบื้องหลัง เปิดปิดแต่ละชั้นได้ในหน้าตั้งค่า"
+                       en="Background guards beside the scanner, each one switched on or off in Settings." />
+            <x-xp.explorer id="guards" label="ชั้นป้องกันของ Skidrow Killer" :tools="$guards" />
+        </div>
+    </section>
+
+    {{-- ========================= THREAT INTEL ========================= --}}
+    <section class="relative py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-xp.rows :items="[[
+                'img' => $shot('intel.webp'), 'mock' => true, 'name' => 'ฐานข้อมูลภัยคุกคามที่อัปเดตเอง', 'eyebrow' => 'Threat intelligence',
+                'th' => 'ดึง hash มัลแวร์ URL อันตราย และ IP ของเซิร์ฟเวอร์สั่งการ จากแหล่งเปิดอย่าง abuse.ch (MalwareBazaar, ThreatFox, URLhaus, Feodo Tracker), DigitalSide OSINT และรายชื่อ IP อันตรายอื่น ๆ ผ่าน HTTPS อัปเดตตอนเปิดโปรแกรมและตามรอบที่ตั้งไว้ แล้วป้อนเข้าเครื่องสแกนทันที',
+                'en' => 'Malware hashes, bad URLs and C2 addresses from public feeds, refreshed on start-up and on a schedule, fed straight into the scanner.',
+                'points' => ['หน้า Detection Engine บอกตรง ๆ ว่าชั้นตรวจไหนทำงานอยู่ ชั้นที่ปิดหรือยังขาดข้อมูลแสดงเป็นสีเทา', 'ใส่ VirusTotal API key ของคุณเองได้ (ไม่บังคับ) เพื่อเปิดการเช็กบนคลาวด์ ซึ่งส่งไปแค่ค่า hash ไม่ส่งตัวไฟล์'],
+                'alt' => 'ภาพตัวอย่างหน้า Threat Intelligence ของ Skidrow Killer: จำนวน hash URL IP ชั้นตรวจที่ทำงาน และรายการแหล่งข้อมูล',
+            ]]" />
+        </div>
+    </section>
+
+    {{-- ============================ SAFETY ============================ --}}
+    <section class="relative py-20">
+        <div class="xp-glow w-[36rem] h-[24rem] left-1/2 -translate-x-1/2 top-24" style="background: rgb(var(--xp-glow) / .1)"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-xp.head class="mb-12" eyebrow="Careful by design" title="กำจัดมัลแวร์" title2="โดยไม่ทำเครื่องพัง"
+                       sub="โปรแกรมลบไฟล์ได้ต้องรู้ด้วยว่าอะไรห้ามแตะ และต้องย้อนกลับได้"
+                       en="A tool that deletes files must know what never to touch, and must be able to undo." />
+            <x-xp.cards :items="[
+                ['icon' => 'shield', 'title' => 'อยู่ร่วมกับ Windows Defender', 'body' => 'ไม่ปิดการป้องกันของ Defender เด็ดขาด เพิ่มแค่โฟลเดอร์ของ Skidrow Killer เองเป็นข้อยกเว้น เพื่อไม่ให้ Defender กักตัวโปรแกรมเราผิด', 'en' => 'Never switches Defender off'],
+                ['icon' => 'undo', 'title' => 'สำรองก่อนลบ · กักกันแล้วคืนได้', 'body' => 'สำรองไฟล์ก่อนลบเป็นค่าเริ่มต้น (เก็บ 7 วัน ปรับได้) ไฟล์ที่กักกันถูกเข้ารหัสเก็บไว้และคืนกลับที่เดิมได้ครบทุกไบต์', 'en' => 'Backup first, restorable quarantine'],
+                ['icon' => 'lock', 'title' => 'ไม่แตะไฟล์ของ Windows', 'body' => 'ปฏิเสธการลบไฟล์ใน System32, SysWOW64, WinSxS, Boot และโฟลเดอร์หลักของ Windows รวมถึงไฟล์ที่คุณใส่ไวท์ลิสต์ไว้', 'en' => 'Windows’ own files are off limits'],
+                ['icon' => 'sparkles', 'title' => 'เรียนรู้จากการตัดสินใจของคุณ', 'body' => 'จำว่าไฟล์ไหนคุณยืนยันว่าอันตรายหรือปลอดภัย ผูกกับ hash ของไฟล์ ไม่ใช่ที่อยู่ไฟล์ และต้องได้หลายเสียงก่อนจะเชื่อ ทุกการปรับคะแนนตรวจย้อนได้', 'en' => 'Local learning you can audit'],
+                ['icon' => 'bolt', 'title' => 'ทดสอบตัวเองได้', 'body' => 'ปุ่ม Run Self-Test ใช้ไฟล์ตัวอย่างที่ไม่อันตราย พิสูจน์ว่าการตรวจ การลบ การสำรอง และการกักกันทำงานจริงบนเครื่องคุณ', 'en' => 'A self-test on harmless samples'],
+                ['icon' => 'eye', 'title' => 'บอกผลตามจริง', 'body' => 'ลบไม่สำเร็จก็บอกว่าไม่สำเร็จ ไฟล์ที่ต้องรอรีสตาร์ตก็บอกว่ารอรีสตาร์ต ไม่นับเป็นภัยที่บล็อกแล้วถ้ายังไม่ได้บล็อกจริง', 'en' => 'Results that say what really happened'],
+            ]" />
+        </div>
+    </section>
+
+    {{-- =========================== PRICING =========================== --}}
+    <section class="relative py-20 scroll-mt-20" id="pricing">
+        <div class="xp-glow w-[40rem] h-[26rem] left-1/2 -translate-x-1/2 top-32 bg-amber-500/10"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-xp.head class="mb-12" eyebrow="Pricing" title="ราคา" :title2="$csSkidrow ? 'เมื่อเปิดขาย' : '1 คีย์ ใช้ได้ 1 ปี'"
+                       :sub="$csSkidrow ? 'Skidrow Killer ยังไม่เปิดขาย ราคาด้านล่างคือราคาที่ตั้งไว้ในร้านตอนนี้' : 'ราคาจากร้านโดยตรง · 1 คีย์ใช้ได้ 1 เครื่อง'"
+                       :en="$csSkidrow ? 'Not on sale yet: this is the price currently set in the shop.' : 'The price straight from the shop. One key per machine.'" />
+
+            <div class="max-w-md mx-auto">
+                <div class="xp-featured">
+                    <div class="p-7 flex flex-col h-full">
+                        <div class="flex items-center justify-between mb-1">
+                            <h3 class="text-2xl font-black text-white">Skidrow Killer</h3>
+                            @if($csSkidrow)<x-xp.badge tier="soon" label="Coming Soon" />@endif
                         </div>
-                        <a href="{{ route('quote.index') }}" class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg transition-colors">
-                            แจ้งเตือนเมื่อเปิดขาย
-                        </a>
-                    </div>
-                </div>
-            @endif
-
-            <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-                <!-- Left: Product Info -->
-                <div class="space-y-8 animate-fade-in-up">
-                    @if($product->category)
-                        <div class="inline-flex items-center px-4 py-2 bg-red-500/20 rounded-full text-red-300 text-sm backdrop-blur-sm border border-red-500/30">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
-                            </svg>
-                            {{ $product->category->name }}
-                        </div>
-                    @endif
-
-                    <!-- Product Name with Gradient -->
-                    <h1 class="text-4xl md:text-6xl font-black leading-tight">
-                        <span class="text-white">Skidrow</span>
-                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500"> Killer</span>
-                    </h1>
-
-                    @if($product->short_description)
-                        <p class="text-xl text-gray-300 leading-relaxed">{{ $product->short_description }}</p>
-                    @endif
-
-                    <!-- Feature Tags -->
-                    <div class="flex flex-wrap gap-3">
-                        @if($product->requires_license)
-                            <span class="px-4 py-2 bg-purple-500/20 text-purple-300 rounded-full text-sm border border-purple-500/30 flex items-center">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
-                                </svg>
-                                License Protected
-                            </span>
-                        @endif
-                        <span class="px-4 py-2 bg-red-500/20 text-red-300 rounded-full text-sm border border-red-500/30 flex items-center">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                            </svg>
-                            Anti-Piracy Tool
-                        </span>
-                        <span class="px-4 py-2 bg-orange-500/20 text-orange-300 rounded-full text-sm border border-orange-500/30 flex items-center">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                            </svg>
-                            High Performance
-                        </span>
-                    </div>
-
-                    <!-- Price Card -->
-                    <div class="bg-gray-800/60 rounded-2xl p-6 border border-gray-700/50 backdrop-blur-sm">
+                        <p class="text-gray-400 text-sm mb-6">License · Windows 10 / 11</p>
                         @if($product->is_custom)
-                            <p class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400">สอบถามราคา</p>
-                            <p class="text-gray-400 mt-2">ติดต่อเราเพื่อรับใบเสนอราคา</p>
+                            <p class="mb-6 text-3xl font-black text-white">สอบถามราคา</p>
+                        @elseif($price > 0)
+                            <div class="mb-6 flex flex-wrap items-baseline gap-3">
+                                <span class="text-5xl font-black text-white">฿{{ number_format($price) }}</span>
+                                @if($hasDiscount)
+                                    <span class="text-xl text-gray-500 line-through">฿{{ number_format($product->original_price) }}</span>
+                                    <x-xp.badge tier="pro" :label="'ลด ' . round((1 - $product->price / $product->original_price) * 100) . '%'" />
+                                @endif
+                            </div>
+                            <x-tpix-price variant="detail" :thb="$product->price" :tpix="$product->price_tpix" class="-mt-4 mb-6" />
                         @else
-                            <div class="flex items-baseline gap-4">
-                                <span class="text-4xl font-black text-white">฿{{ number_format($product->price, 0) }}</span>
-                                @if($product->original_price && $product->original_price > $product->price)
-                                    <span class="text-xl text-gray-500 line-through">฿{{ number_format($product->original_price, 0) }}</span>
-                                    <span class="px-3 py-1 bg-red-500/20 text-red-400 text-sm rounded-full font-semibold">
-                                        ลด {{ round((1 - $product->price / $product->original_price) * 100) }}%
-                                    </span>
-                                @endif
-                            </div>
-                            <x-tpix-price variant="detail" :thb="$product->price" :tpix="$product->price_tpix" class="mt-2" />
+                            <p class="mb-6 text-lg font-bold text-white">ยังไม่ประกาศราคา</p>
                         @endif
-                    </div>
-
-                    <!-- CTA Buttons -->
-                    @if($product->isComingSoon())
-                        <div class="flex-1 px-8 py-4 bg-orange-600/50 text-orange-200 font-bold rounded-xl text-center cursor-not-allowed flex items-center justify-center gap-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            Coming Soon
-                            @if($product->coming_soon_until)
-                                - {{ $product->coming_soon_until->format('d/m/Y') }}
-                            @endif
-                        </div>
-                    @elseif(!$product->is_custom)
-                        <form action="{{ route('cart.add', $product) }}" method="POST" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-                            @csrf
-                            <div class="flex items-center bg-gray-800 border border-gray-700 rounded-xl overflow-hidden">
-                                <button type="button" onclick="decrementQty()" class="px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
-                                    </svg>
-                                </button>
-                                <input type="number" name="quantity" id="quantity" value="1" min="1" max="99"
-                                       class="w-16 text-center bg-transparent text-white border-x border-gray-700 py-3 focus:outline-none">
-                                <button type="button" onclick="incrementQty()" class="px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                                    </svg>
-                                </button>
-                            </div>
-                            <button type="submit"
-                                    class="flex-1 px-8 py-4 bg-gradient-to-r from-red-600 via-orange-600 to-red-600 hover:from-red-700 hover:via-orange-700 hover:to-red-700 text-white font-bold rounded-xl transition-all transform hover:scale-[1.02] shadow-lg shadow-red-500/25 flex items-center justify-center gap-2 group">
-                                <svg class="w-5 h-5 transform group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
-                                </svg>
-                                เพิ่มลงตะกร้า
-                            </button>
-                        </form>
-                    @else
-                        <a href="{{ route('quote.index') }}"
-                           class="block w-full text-center px-8 py-4 bg-gradient-to-r from-red-600 via-orange-600 to-red-600 hover:from-red-700 hover:via-orange-700 hover:to-red-700 text-white font-bold rounded-xl transition-all transform hover:scale-[1.02] shadow-lg shadow-red-500/25">
-                            <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                            </svg>
-                            ติดต่อสอบถาม
-                        </a>
-                    @endif
-                </div>
-
-                <!-- Right: Product Image -->
-                <div class="relative animate-fade-in" style="animation-delay: 0.2s;">
-                    <div class="relative">
-                        <!-- Glow Effect -->
-                        <div class="absolute -inset-4 bg-gradient-to-r from-red-500/20 via-orange-500/20 to-yellow-500/20 rounded-3xl blur-2xl"></div>
-
-                        <!-- Main Image Container -->
-                        <div class="relative bg-gradient-to-br from-red-500/10 to-orange-500/10 rounded-2xl p-6 backdrop-blur-sm border border-red-500/20 overflow-hidden">
-                            <!-- Corner Decorations -->
-                            <div class="absolute top-0 left-0 w-20 h-20 border-t-2 border-l-2 border-red-500/50 rounded-tl-2xl"></div>
-                            <div class="absolute bottom-0 right-0 w-20 h-20 border-b-2 border-r-2 border-orange-500/50 rounded-br-2xl"></div>
-
-                            @if($product->artwork_url)
-                                <img src="{{ $product->artwork_url }}" alt="{{ $product->name }}"
-                                     class="w-full rounded-xl shadow-2xl" id="main-image">
-                            @else
-                                <div class="w-full aspect-video bg-gray-800/50 rounded-xl flex items-center justify-center">
-                                    <div class="text-center">
-                                        <svg class="w-24 h-24 mx-auto text-red-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                                        </svg>
-                                        <p class="text-gray-400 font-medium">{{ $product->name }}</p>
-                                    </div>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-
-                    {{-- Screenshots Gallery --}}
-                    @if($product->images && is_array($product->images) && count($product->images) > 0)
-                        <div class="grid grid-cols-4 gap-3 mt-4">
-                            @if($product->artwork_url)
-                                <div class="bg-gray-800/50 rounded-lg p-1 border-2 border-red-500 cursor-pointer transform hover:scale-105 transition-all"
-                                     onclick="document.getElementById('main-image').src='{{ $product->artwork_url }}'">
-                                    <img src="{{ $product->artwork_url }}" alt="Main"
-                                         class="w-full rounded-lg aspect-video object-cover">
-                                </div>
-                            @endif
-                            @foreach($product->images as $screenshot)
-                                <div class="bg-gray-800/50 rounded-lg p-1 border-2 border-transparent hover:border-red-500/50 cursor-pointer transition-all transform hover:scale-105"
-                                     onclick="document.getElementById('main-image').src='{{ Storage::url($screenshot) }}'">
-                                    <img src="{{ Storage::url($screenshot) }}" alt="Screenshot"
-                                         class="w-full rounded-lg aspect-video object-cover">
-                                </div>
-                            @endforeach
-                        </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Description Section -->
-    @if($product->description)
-        <section class="relative py-16 bg-gray-900/50">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex items-center gap-4 mb-8">
-                    <div class="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center">
-                        <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                    </div>
-                    <h2 class="text-3xl font-bold text-white">รายละเอียดผลิตภัณฑ์</h2>
-                </div>
-                <div class="bg-gray-800/50 rounded-2xl p-8 border border-gray-700/50 backdrop-blur-sm">
-                    <div class="prose prose-lg prose-invert max-w-none
-                                prose-headings:text-white prose-headings:font-bold
-                                prose-p:text-gray-300
-                                prose-a:text-red-400 prose-a:no-underline hover:prose-a:underline
-                                prose-strong:text-white
-                                prose-ul:text-gray-300 prose-ol:text-gray-300
-                                prose-li:marker:text-red-400
-                                prose-table:border-gray-700
-                                prose-th:bg-gray-700/50 prose-th:text-white prose-th:p-3
-                                prose-td:border-gray-700 prose-td:p-3">
-                        {!! $product->description !!}
-                    </div>
-                </div>
-            </div>
-        </section>
-    @endif
-
-    <!-- Features Section -->
-    @if($product->features && count($product->features) > 0)
-        <section class="relative py-20">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="text-center mb-16">
-                    <h2 class="text-4xl font-bold text-white mb-4">คุณสมบัติเด่น</h2>
-                    <p class="text-gray-400 max-w-2xl mx-auto">เครื่องมือป้องกันการละเมิดลิขสิทธิ์ที่ทรงพลังที่สุด</p>
-                </div>
-
-                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    @php
-                        $features = is_array($product->features) ? $product->features : explode("\n", $product->features);
-                        $featureColors = [
-                            ['bg' => 'red', 'border' => 'red'],
-                            ['bg' => 'orange', 'border' => 'orange'],
-                            ['bg' => 'yellow', 'border' => 'yellow'],
-                            ['bg' => 'green', 'border' => 'green'],
-                            ['bg' => 'blue', 'border' => 'blue'],
-                            ['bg' => 'purple', 'border' => 'purple'],
-                        ];
-                    @endphp
-                    @foreach($features as $index => $feature)
-                        @php $color = $featureColors[$index % count($featureColors)]; @endphp
-                        @if(is_array($feature))
-                            <div class="group bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50 hover:border-{{ $color['border'] }}-500/50 transition-all duration-300 hover:transform hover:-translate-y-1 backdrop-blur-sm">
-                                <div class="w-14 h-14 bg-{{ $color['bg'] }}-500/20 rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
-                                    <svg class="w-7 h-7 text-{{ $color['bg'] }}-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                    </svg>
-                                </div>
-                                <h3 class="text-xl font-bold text-white mb-3">{{ $feature['title'] ?? '' }}</h3>
-                                @if(isset($feature['description']))
-                                    <p class="text-gray-400 leading-relaxed">{{ $feature['description'] }}</p>
-                                @endif
-                            </div>
-                        @elseif(trim($feature))
-                            <div class="group bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50 hover:border-{{ $color['border'] }}-500/50 transition-all duration-300 hover:transform hover:-translate-y-1 backdrop-blur-sm">
-                                <div class="flex items-start gap-4">
-                                    <div class="w-12 h-12 bg-{{ $color['bg'] }}-500/20 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                                        <svg class="w-6 h-6 text-{{ $color['bg'] }}-400" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                        </svg>
-                                    </div>
-                                    <span class="text-gray-300 text-lg leading-relaxed pt-2">{{ trim($feature) }}</span>
-                                </div>
-                            </div>
-                        @endif
-                    @endforeach
-                </div>
-            </div>
-        </section>
-    @endif
-
-    <!-- How It Works Section -->
-    <section class="relative py-20 bg-gray-900/50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-4xl font-bold text-white mb-4">วิธีการใช้งาน</h2>
-                <p class="text-gray-400 max-w-2xl mx-auto">เริ่มต้นใช้งาน {{ $product->name }} ได้ง่ายๆ เพียง 3 ขั้นตอน</p>
-            </div>
-
-            <div class="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-                <!-- Step 1 -->
-                <div class="relative text-center group">
-                    <div class="w-20 h-20 bg-gradient-to-br from-red-500 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-red-500/25 group-hover:scale-110 transition-transform">
-                        <span class="text-3xl font-black text-white">1</span>
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-3">ดาวน์โหลดและติดตั้ง</h3>
-                    <p class="text-gray-400">ดาวน์โหลดโปรแกรมจากเว็บไซต์และติดตั้งบนเครื่องของคุณ</p>
-                    <!-- Connector Line -->
-                    <div class="hidden md:block absolute top-10 left-[calc(100%+0.5rem)] w-[calc(100%-1rem)] h-0.5 bg-gradient-to-r from-red-500/50 to-orange-500/50"></div>
-                </div>
-
-                <!-- Step 2 -->
-                <div class="relative text-center group">
-                    <div class="w-20 h-20 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-orange-500/25 group-hover:scale-110 transition-transform">
-                        <span class="text-3xl font-black text-white">2</span>
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-3">เปิดใช้งาน License</h3>
-                    <p class="text-gray-400">ใส่ License Key ที่ได้รับเพื่อเปิดใช้งานฟีเจอร์เต็มรูปแบบ</p>
-                    <!-- Connector Line -->
-                    <div class="hidden md:block absolute top-10 left-[calc(100%+0.5rem)] w-[calc(100%-1rem)] h-0.5 bg-gradient-to-r from-orange-500/50 to-yellow-500/50"></div>
-                </div>
-
-                <!-- Step 3 -->
-                <div class="text-center group">
-                    <div class="w-20 h-20 bg-gradient-to-br from-yellow-500 to-green-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-yellow-500/25 group-hover:scale-110 transition-transform">
-                        <span class="text-3xl font-black text-white">3</span>
-                    </div>
-                    <h3 class="text-xl font-bold text-white mb-3">เริ่มใช้งาน</h3>
-                    <p class="text-gray-400">ตั้งค่าตามคู่มือและเริ่มต้นปกป้องซอฟต์แวร์ของคุณได้ทันที</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- System Requirements Section -->
-    <section class="relative py-20">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-4xl font-bold text-white mb-4">ความต้องการระบบ</h2>
-                <p class="text-gray-400">สเปคเครื่องที่แนะนำสำหรับการใช้งาน</p>
-            </div>
-
-            <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                <!-- Minimum Requirements -->
-                <div class="bg-gray-800/50 rounded-2xl p-8 border border-gray-700/50 backdrop-blur-sm">
-                    <div class="flex items-center gap-4 mb-6">
-                        <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
-                            <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                            </svg>
-                        </div>
-                        <h3 class="text-xl font-bold text-white">ขั้นต่ำ</h3>
-                    </div>
-                    <ul class="space-y-4">
-                        <li class="flex items-center gap-3 text-gray-400">
-                            <svg class="w-5 h-5 text-gray-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
-                            </svg>
-                            Windows 10 (64-bit)
-                        </li>
-                        <li class="flex items-center gap-3 text-gray-400">
-                            <svg class="w-5 h-5 text-gray-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
-                            </svg>
-                            RAM 4GB
-                        </li>
-                        <li class="flex items-center gap-3 text-gray-400">
-                            <svg class="w-5 h-5 text-gray-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
-                            </svg>
-                            พื้นที่ว่าง 500MB
-                        </li>
-                        <li class="flex items-center gap-3 text-gray-400">
-                            <svg class="w-5 h-5 text-gray-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
-                            </svg>
-                            การเชื่อมต่ออินเทอร์เน็ต
-                        </li>
-                    </ul>
-                </div>
-
-                <!-- Recommended Requirements -->
-                <div class="bg-gradient-to-br from-red-500/10 to-orange-500/10 rounded-2xl p-8 border border-red-500/30 backdrop-blur-sm">
-                    <div class="flex items-center gap-4 mb-6">
-                        <div class="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center">
-                            <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                            </svg>
-                        </div>
-                        <h3 class="text-xl font-bold text-white">แนะนำ</h3>
-                    </div>
-                    <ul class="space-y-4">
-                        <li class="flex items-center gap-3 text-gray-300">
-                            <svg class="w-5 h-5 text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                            </svg>
-                            Windows 11 (64-bit)
-                        </li>
-                        <li class="flex items-center gap-3 text-gray-300">
-                            <svg class="w-5 h-5 text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                            </svg>
-                            RAM 8GB ขึ้นไป
-                        </li>
-                        <li class="flex items-center gap-3 text-gray-300">
-                            <svg class="w-5 h-5 text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                            </svg>
-                            SSD Storage
-                        </li>
-                        <li class="flex items-center gap-3 text-gray-300">
-                            <svg class="w-5 h-5 text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                            </svg>
-                            อินเทอร์เน็ตความเร็วสูง
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Download Section -->
-    @php
-        $latestVersion = $product->latestVersion();
-    @endphp
-    @if($latestVersion)
-    <section class="relative py-20 bg-gray-900/50" id="download">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 class="text-4xl font-bold text-white mb-4">ดาวน์โหลด {{ $product->name }}</h2>
-            <p class="text-gray-400 mb-12 max-w-2xl mx-auto">{{ $product->isComingSoon() ? 'ผลิตภัณฑ์นี้ยังเป็น Coming Soon — เปิดให้ดาวน์โหลดเมื่อเปิดตัว' : 'ดาวน์โหลดโปรแกรมเวอร์ชันล่าสุดและเริ่มต้นปกป้องซอฟต์แวร์ของคุณ' }}</p>
-
-            <div class="bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-3xl p-10 border border-gray-700/50 max-w-2xl mx-auto backdrop-blur-sm">
-                <div class="flex items-center justify-between mb-8">
-                    <div class="text-left">
-                        <p class="text-gray-400 text-sm mb-1">เวอร์ชันล่าสุด</p>
-                        <p class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400">v{{ $latestVersion->version }}</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-gray-400 text-sm mb-1">ขนาดไฟล์</p>
-                        <p class="text-xl font-semibold text-white">{{ $latestVersion->file_size_formatted }}</p>
-                    </div>
-                </div>
-
-                @if($latestVersion->changelog)
-                    <div class="text-left mb-8 bg-gray-700/30 rounded-xl p-5">
-                        <p class="text-gray-400 text-sm mb-2 font-medium">Changelog</p>
-                        <p class="text-gray-300 text-sm whitespace-pre-wrap">{{ Str::limit($latestVersion->changelog, 200) }}</p>
-                    </div>
-                @endif
-
-                @if($product->isComingSoon())
-                    <x-coming-soon-download :product="$product" />
-                @else
-                <a href="{{ route('download.page', ['slug' => $product->slug, 'version' => $latestVersion->version]) }}"
-                   class="inline-flex items-center px-10 py-5 bg-gradient-to-r from-red-600 via-orange-600 to-red-600 hover:from-red-700 hover:via-orange-700 hover:to-red-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-red-500/25 group">
-                    <svg class="w-6 h-6 mr-3 transform group-hover:translate-y-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                    </svg>
-                    ดาวน์โหลดตอนนี้
-                </a>
-                @endif
-            </div>
-
-            <p class="text-gray-500 text-sm mt-6">
-                อัปเดตเมื่อ: {{ $latestVersion->synced_at?->format('d/m/Y') ?? 'N/A' }} |
-                รองรับ Windows 10/11 (64-bit)
-            </p>
-        </div>
-    </section>
-    @endif
-
-    <!-- License Info Section -->
-    @if($product->requires_license)
-    <section class="relative py-20">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-4xl font-bold text-white mb-4">การลงทะเบียน License</h2>
-                <p class="text-gray-400 max-w-2xl mx-auto">ขั้นตอนการเปิดใช้งาน {{ $product->name }} อย่างง่าย</p>
-            </div>
-
-            <div class="grid md:grid-cols-2 gap-10 max-w-5xl mx-auto">
-                <!-- Steps -->
-                <div class="space-y-6">
-                    <div class="flex items-start gap-4 group">
-                        <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-red-500 to-orange-500 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-red-500/25 group-hover:scale-110 transition-transform">1</div>
-                        <div class="pt-1">
-                            <h3 class="text-lg font-bold text-white mb-1">ซื้อ License</h3>
-                            <p class="text-gray-400">เลือกแพ็กเกจที่เหมาะสมและทำการชำระเงิน</p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-start gap-4 group">
-                        <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-orange-500/25 group-hover:scale-110 transition-transform">2</div>
-                        <div class="pt-1">
-                            <h3 class="text-lg font-bold text-white mb-1">รับ License Key</h3>
-                            <p class="text-gray-400">License Key จะถูกส่งไปยังอีเมลที่ลงทะเบียน</p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-start gap-4 group">
-                        <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-yellow-500 to-green-500 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-yellow-500/25 group-hover:scale-110 transition-transform">3</div>
-                        <div class="pt-1">
-                            <h3 class="text-lg font-bold text-white mb-1">เปิดโปรแกรม</h3>
-                            <p class="text-gray-400">ดาวน์โหลดและติดตั้งโปรแกรมบนเครื่องของคุณ</p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-start gap-4 group">
-                        <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-green-500 to-blue-500 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-green-500/25 group-hover:scale-110 transition-transform">4</div>
-                        <div class="pt-1">
-                            <h3 class="text-lg font-bold text-white mb-1">Activate License</h3>
-                            <p class="text-gray-400">ใส่ License Key ในโปรแกรมเพื่อเปิดใช้งานเต็มรูปแบบ</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- License Info Card -->
-                <div class="bg-gradient-to-br from-red-500/10 to-orange-500/10 rounded-2xl p-8 border border-red-500/30 backdrop-blur-sm">
-                    <h3 class="text-2xl font-bold text-white mb-6">ข้อมูล License</h3>
-                    <ul class="space-y-4 mb-8">
-                        <li class="flex items-center gap-3">
-                            <div class="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <span class="text-gray-300">License ผูกกับเครื่อง (Machine ID)</span>
-                        </li>
-                        <li class="flex items-center gap-3">
-                            <div class="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <span class="text-gray-300">ใช้งานได้ 1 เครื่องต่อ 1 License</span>
-                        </li>
-                        <li class="flex items-center gap-3">
-                            <div class="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <span class="text-gray-300">สามารถย้ายเครื่องได้ (ติดต่อ Support)</span>
-                        </li>
-                        <li class="flex items-center gap-3">
-                            <div class="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                            <span class="text-gray-300">อัปเดตฟรีตลอดอายุ License</span>
-                        </li>
-                    </ul>
-
-                    <div class="pt-6 border-t border-gray-700/50">
-                        @if(!$product->is_custom)
-                            <form action="{{ route('cart.add', $product) }}" method="POST">
+                        <x-xp.ticks class="!space-y-2.5 text-sm mb-8 flex-1" :items="['ทุกฟีเจอร์ในหน้านี้', '1 คีย์ ใช้ได้ 1 เครื่อง', 'อายุ License 1 ปีนับจากวันที่ชำระเงิน', 'ดาวน์โหลดไฟล์ได้ในหน้า ดาวน์โหลด หลังซื้อ']" />
+                        @if($csSkidrow)
+                            {{-- ComingSoonPurchase ปฏิเสธทุกทางซื้ออยู่แล้ว — หน้านี้ก็ไม่มีฟอร์มตะกร้าหรือลิงก์ไฟล์ --}}
+                            <span class="xp-btn-ghost xp-btn-off block w-full py-3.5 text-center rounded-xl font-extrabold" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดขาย</span>
+                        @elseif($product->is_custom)
+                            <a href="{{ route('quote.index') }}" class="xp-btn-pro block w-full py-3.5 text-center rounded-xl font-extrabold transition">ติดต่อสอบถามราคา</a>
+                        @else
+                            {{-- ตะกร้าคิดราคาจากแถวสินค้า (products.price) ไม่ใช่จากฟอร์ม · หนึ่งคีย์ต่อหนึ่งเครื่อง ซื้อหลายเครื่องได้ --}}
+                            <form action="{{ route('cart.add', $product) }}" method="POST" class="flex items-stretch gap-3">
                                 @csrf
-                                <input type="hidden" name="quantity" value="1">
-                                <button type="submit"
-                                        class="w-full py-4 bg-gradient-to-r from-red-600 via-orange-600 to-red-600 hover:from-red-700 hover:via-orange-700 hover:to-red-700 text-white text-center font-bold rounded-xl transition-all transform hover:scale-[1.02] shadow-lg shadow-red-500/25">
-                                    ซื้อ License - ฿{{ number_format($product->price, 0) }}
+                                <label class="sr-only" for="quantity">จำนวนคีย์ (เครื่อง)</label>
+                                <input type="number" name="quantity" id="quantity" value="1" min="1" max="99"
+                                       class="xp-btn-ghost w-20 rounded-xl text-center font-bold" title="จำนวนคีย์ · 1 คีย์ต่อ 1 เครื่อง">
+                                <button type="submit" class="xp-btn-pro flex-1 py-3.5 text-center rounded-xl font-extrabold transition cursor-pointer">
+                                    {{ $ownsSkidrow ? 'ซื้อ License เพิ่ม' : 'เพิ่มลงตะกร้า' }} — ฿{{ number_format($price) }}
                                 </button>
                             </form>
-                        @else
-                            <a href="{{ route('quote.index') }}"
-                               class="block w-full py-4 bg-gradient-to-r from-red-600 via-orange-600 to-red-600 hover:from-red-700 hover:via-orange-700 hover:to-red-700 text-white text-center font-bold rounded-xl transition-all">
-                                ติดต่อสอบถามราคา
-                            </a>
                         @endif
                     </div>
                 </div>
             </div>
+            @if($ownsSkidrow)
+                <p class="text-center mt-6">
+                    <a href="{{ route('customer.licenses') }}" class="xp-link text-sm font-semibold">มี License แล้ว? ดูคีย์ของคุณ →</a>
+                </p>
+            @endif
+            <p class="text-center text-xs text-gray-500 mt-6 max-w-2xl mx-auto">ซื้อแล้วได้ License key ในหน้า บัญชีของฉัน › License · ใส่คีย์ในหน้า License ของโปรแกรม · ใช้ได้ 1 เครื่องต่อ 1 คีย์ มีหลายเครื่องซื้อหลายคีย์ได้</p>
         </div>
     </section>
-    @endif
 
-    <!-- Related Products -->
-    @if($relatedProducts && $relatedProducts->count() > 0)
-        <section class="relative py-20 bg-gray-900/50">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <h2 class="text-4xl font-bold text-white text-center mb-12">ผลิตภัณฑ์ที่เกี่ยวข้อง</h2>
-
-                <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    @foreach($relatedProducts as $related)
-                        <a href="{{ route('products.show', $related->slug) }}"
-                           class="group bg-gray-800/50 rounded-2xl overflow-hidden border border-gray-700/50 hover:border-red-500/50 transition-all hover:transform hover:-translate-y-2 backdrop-blur-sm">
-                            <div class="aspect-video bg-gray-700 overflow-hidden">
-                                @if($related->artwork_url)
-                                    <img src="{{ $related->artwork_url }}" alt="{{ $related->name }}"
-                                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
-                                @else
-                                    <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-red-500/20 to-orange-500/20">
-                                        <svg class="w-12 h-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                                        </svg>
-                                    </div>
-                                @endif
-                            </div>
-                            <div class="p-5">
-                                <h3 class="font-bold text-white group-hover:text-red-400 transition-colors mb-2">{{ $related->name }}</h3>
-                                @if($related->short_description)
-                                    <p class="text-gray-400 text-sm mb-3 line-clamp-2">{{ $related->short_description }}</p>
-                                @endif
-                                @if(!$related->is_custom)
-                                    <p class="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400 font-bold text-lg">฿{{ number_format($related->price, 0) }}</p>
-                                    <x-tpix-price :thb="$related->price" :tpix="$related->price_tpix" />
-                                @else
-                                    <p class="text-gray-400">สอบถามราคา</p>
-                                @endif
-                            </div>
-                        </a>
-                    @endforeach
+    {{-- =========================== DOWNLOAD =========================== --}}
+    @if($latest)
+        <section class="relative py-12 scroll-mt-20" id="download">
+            <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="xp-card p-6 sm:p-8">
+                    <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
+                        <div>
+                            <p class="xp-eyebrow mb-1">Download</p>
+                            <h2 class="text-2xl md:text-3xl font-black text-white">Skidrow Killer {{ $latest->version }}</h2>
+                            <p class="text-sm text-gray-400 mt-1">
+                                @if($latest->file_size){{ $latest->file_size_formatted }} · @endif
+                                อัปเดตเมื่อ {{ $latest->synced_at?->format('d/m/Y') ?? $latest->created_at?->format('d/m/Y') ?? '—' }} · Windows 10 / 11 (64-bit)
+                            </p>
+                        </div>
+                        <x-xp.download :href="$downloadHref" :coming-soon="$csSkidrow" th="ดาวน์โหลด" en="Download" :big="false" />
+                    </div>
+                    @if($latest->changelog)
+                        <div class="rounded-xl bg-white/[.03] border border-white/5 p-4">
+                            <p class="text-xs text-gray-400 mb-2 font-semibold">มีอะไรใหม่ · Changelog</p>
+                            <p class="text-sm text-gray-300 whitespace-pre-line">{{ \Illuminate\Support\Str::limit($latest->changelog, 300) }}</p>
+                        </div>
+                    @endif
+                    <p class="text-xs text-gray-500 mt-4">{{ $csSkidrow ? 'เปิดให้ดาวน์โหลดเมื่อ Skidrow Killer เปิดตัว' : 'หน้าดาวน์โหลดให้ไฟล์เฉพาะบัญชีที่ซื้อ License แล้ว (ต้องเข้าสู่ระบบ)' }}</p>
                 </div>
             </div>
         </section>
     @endif
 
-    <!-- CTA Section -->
-    <section class="relative py-24 overflow-hidden">
-        <!-- Animated Background -->
-        <div class="absolute inset-0 bg-gradient-to-r from-red-900/50 via-orange-900/50 to-red-900/50"></div>
-        <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%23ffffff\" fill-opacity=\"0.03\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]"></div>
+    <x-xp.setup
+        :specs="[
+            ['ระบบปฏิบัติการ', 'Windows 10 หรือ Windows 11 แบบ 64-bit', 'Windows 10 / 11, 64-bit'],
+            ['สิทธิ์ Administrator', 'โปรแกรมขอสิทธิ์ผู้ดูแลทุกครั้งที่เปิด เพราะต้องตรวจโปรเซส registry และลบไฟล์ที่ถูกล็อก', 'Runs as administrator'],
+            ['อินเทอร์เน็ต', 'ใช้ดาวน์โหลดฐานข้อมูลภัยคุกคามและเปิดใช้ License · สแกนได้แม้ออฟไลน์ด้วยฐานข้อมูลที่โหลดไว้แล้ว', 'For threat feeds and activation'],
+            ['1 คีย์ = 1 เครื่อง', 'คีย์ผูกกับเครื่องที่เปิดใช้ มีหลายเครื่องซื้อคีย์เพิ่มได้', 'One key per machine'],
+        ]"
+        :steps-title="$csSkidrow ? 'เมื่อเปิดขาย: 3 ขั้น' : null"
+        :steps="[
+            ['ซื้อ License', 'เข้าสู่ระบบแล้วซื้อในหน้านี้ คีย์จะอยู่ในหน้า บัญชีของฉัน › License', 'Buy a license'],
+            ['ดาวน์โหลดแล้วเปิดโปรแกรม', 'ดาวน์โหลดไฟล์ .zip จากหน้า ดาวน์โหลด แตกไฟล์ แล้วเปิด SkidrowKiller.exe (ยืนยันสิทธิ์ผู้ดูแล)', 'Download, unzip and run as administrator'],
+            ['ใส่คีย์ แล้วกด Quick Scan', 'ใส่ License key ในหน้า License ของโปรแกรม จากนั้นสแกนครั้งแรกจากหน้า Home', 'Enter your key and run a Quick Scan'],
+        ]" />
 
-        <div class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 class="text-4xl md:text-5xl font-black text-white mb-6">พร้อมปกป้องซอฟต์แวร์ของคุณ?</h2>
-            <p class="text-xl text-gray-300 mb-10 max-w-2xl mx-auto">
-                @if($product->requires_license)
-                    เลือกแพ็กเกจ License ที่เหมาะกับความต้องการของคุณ หรือติดต่อเราสำหรับข้อมูลเพิ่มเติม
-                @else
-                    ดาวน์โหลดและเริ่มต้นใช้งาน {{ $product->name }} ได้ทันที
-                @endif
-            </p>
+    <x-xp.faq :items="[
+        ['ตอนนี้ซื้อหรือดาวน์โหลดได้ไหม?', $csSkidrow ? 'ยังไม่ได้ Skidrow Killer อยู่ในสถานะ Coming Soon ยังไม่เปิดขายและยังไม่มีไฟล์ให้ดาวน์โหลด เมื่อเปิดแล้วการซื้อและปุ่มดาวน์โหลดจะขึ้นในหน้านี้' : 'ได้ ซื้อ License ในหน้านี้ แล้วดาวน์โหลดได้ที่หน้า ดาวน์โหลด ด้วยบัญชีที่ซื้อ'],
+        ['มีรุ่นฟรีไหม?', 'ไม่มี ไฟล์โปรแกรมดาวน์โหลดได้เฉพาะบัญชีที่ซื้อ License แล้ว'],
+        ['ราคาเท่าไร ใช้ได้กี่เครื่อง นานแค่ไหน?', ($product->is_custom ? 'สอบถามราคาได้ที่หน้าติดต่อ' : ($price > 0 ? 'ราคาในร้านตอนนี้ ฿' . number_format($price) . ' ต่อคีย์' : 'ยังไม่ประกาศราคา')) . ' · 1 คีย์ใช้ได้ 1 เครื่อง · อายุ License 1 ปีนับจากวันที่ชำระเงิน มีหลายเครื่องซื้อหลายคีย์ได้'],
+        ['ใช้คู่กับ Windows Defender ได้ไหม?', 'ได้ Skidrow Killer ไม่ปิดการป้องกันของ Defender เพิ่มแค่โฟลเดอร์ของตัวเองเป็นข้อยกเว้น เพื่อไม่ให้ Defender เข้าใจผิดว่าโปรแกรมเราเป็นมัลแวร์ (เพราะในตัวมีลายเซ็นมัลแวร์ไว้เทียบ)'],
+        ['จะลบไฟล์ของ Windows ผิดไหม?', 'โปรแกรมปฏิเสธการลบไฟล์ใน System32, SysWOW64, WinSxS, Boot และโฟลเดอร์หลักของ Windows และไฟล์ในไวท์ลิสต์ ส่วนไฟล์อื่นสำรองไว้ก่อนลบเป็นค่าเริ่มต้น'],
+        ['ลบผิดแล้วเอาคืนได้ไหม?', 'ได้ ไฟล์ที่ลบถูกสำรองไว้ในหน้า Backups (เก็บ 7 วันเป็นค่าเริ่มต้น ปรับได้) และไฟล์ที่กักกันคืนกลับที่เดิมได้จากหน้า Quarantine กดคืนหรือใส่ไวท์ลิสต์แล้วโปรแกรมจะจำไว้'],
+        ['ไฟล์ของฉันถูกส่งขึ้นอินเทอร์เน็ตไหม?', 'ไม่ การสแกนทำในเครื่อง ประวัติ ไฟล์ที่กักกัน และการตั้งค่าเก็บในเครื่องของคุณ ถ้าคุณใส่ VirusTotal API key เอง โปรแกรมจะส่งไปเช็กแค่ค่า hash ของไฟล์ ไม่ส่งตัวไฟล์'],
+        ['ทำไมชื่อ Skidrow Killer?', 'เริ่มจากการกำจัดไฟล์แครกเกมและตัวโหลดของกลุ่มแครก (เช่น Skidrow) ที่มักแอบพ่วงโทรจันมา ปัจจุบันตรวจมัลแวร์ทั่วไปด้วย: โทรจัน ransomware ตัวขุดเหรียญ ตัวขโมยรหัส RAT และ adware'],
+    ]" />
 
-            <div class="flex flex-wrap justify-center gap-4">
-                @if(!$product->is_custom)
-                    <form action="{{ route('cart.add', $product) }}" method="POST">
-                        @csrf
-                        <input type="hidden" name="quantity" value="1">
-                        <button type="submit"
-                                class="px-10 py-5 bg-gradient-to-r from-red-600 via-orange-600 to-red-600 hover:from-red-700 hover:via-orange-700 hover:to-red-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-2xl shadow-red-500/30">
-                            @if($product->requires_license)
-                                ซื้อ License - ฿{{ number_format($product->price, 0) }}
-                            @else
-                                สั่งซื้อตอนนี้ - ฿{{ number_format($product->price, 0) }}
-                            @endif
-                        </button>
-                    </form>
-                @endif
-                <a href="{{ route('quote.index') }}"
-                   class="px-10 py-5 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl border border-white/20 transition-all backdrop-blur-sm">
-                    ติดต่อสอบถาม
-                </a>
-            </div>
-        </div>
-    </section>
-</div>
+    {{-- =========================== FINAL CTA =========================== --}}
+    <x-xp.cta :art="$shot('art-hero.webp')" title="เครื่องสะอาด" glow="ไม่มีของแถม"
+              :sub="$csSkidrow ? 'Skidrow Killer กำลังจะเปิดตัว กลับมาที่หน้านี้เมื่อเปิดขาย' : 'สแกนถึงเนื้อไฟล์ ลบให้หมด และสำรองไว้ก่อนเสมอ'"
+              en="A clean machine, with nothing riding along.">
+        @if($csSkidrow || $downloadHref)
+            <x-xp.download :href="$downloadHref" :coming-soon="$csSkidrow" th="ดาวน์โหลด" en="Download" class="!px-8" />
+        @endif
+        @unless($csSkidrow)
+            <a href="#pricing" class="xp-btn-pro inline-flex items-center px-8 py-4 rounded-xl font-extrabold text-lg transition">{{ $product->is_custom ? 'สอบถามราคา' : 'ซื้อ License' }}</a>
+        @endunless
+        <a href="{{ route('quote.index') }}" class="xp-btn-ghost inline-flex items-center px-6 py-4 rounded-xl font-semibold transition">ติดต่อสอบถาม</a>
+        <x-slot:footnote>
+            <p class="text-gray-500 text-sm mt-7">Windows 10 / 11 (64-bit) · สิทธิ์ Administrator · 1 คีย์ = 1 เครื่อง</p>
+        </x-slot:footnote>
+    </x-xp.cta>
 
-@push('scripts')
-<script>
-function incrementQty() {
-    const input = document.getElementById('quantity');
-    const max = parseInt(input.max);
-    const current = parseInt(input.value);
-    if (current < max) {
-        input.value = current + 1;
-    }
-}
+</x-xp.page>
 
-function decrementQty() {
-    const input = document.getElementById('quantity');
-    const min = parseInt(input.min);
-    const current = parseInt(input.value);
-    if (current > min) {
-        input.value = current - 1;
-    }
-}
-</script>
-@endpush
+<script type="application/ld+json">{!! json_encode($ld, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) !!}</script>
 @endsection

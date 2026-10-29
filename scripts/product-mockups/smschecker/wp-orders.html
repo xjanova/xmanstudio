@@ -1,0 +1,77 @@
+<!doctype html>
+<!-- SMS Payment Checker for WordPress — "Pending Orders" (wordpress-plugin/sms-payment-checker/admin/class-spc-admin.php
+     render_pending_orders(), v1.7.0): WordPress admin chrome, the orders table (unique amount, original total,
+     Bank Transfer badge, Confirm / Reject) and the "Unmatched SMS" column. Labels are the plugin's own English strings;
+     the shop, customers, orders and amounts are made up (example.com). -->
+<html lang="en"><head><meta charset="utf-8">
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 1440px; height: 900px; overflow: hidden; background: #f0f0f1; font: 13px/1.4 "Segoe UI", -apple-system, Roboto, sans-serif; color: #1d2327; }
+    .bar { height: 32px; background: #1d2327; color: #c3c4c7; display: flex; align-items: center; gap: 18px; padding: 0 12px; font-size: 13px; }
+    .bar b { color: #fff; font-weight: 400; }
+    .bar .r { margin-left: auto; }
+    .side { position: absolute; left: 0; top: 32px; bottom: 0; width: 160px; background: #1d2327; padding-top: 10px; }
+    .side a { display: block; padding: 8px 12px; color: #f0f0f1; font-size: 14px; }
+    .side a.cur { background: #2271b1; color: #fff; }
+    .side .subm { background: #2c3338; padding: 6px 0; }
+    .side .subm a { padding: 5px 12px 5px 14px; font-size: 13px; color: #c3c4c7; }
+    .side .subm a.on { color: #fff; font-weight: 600; }
+    .main { position: absolute; left: 160px; top: 32px; right: 0; bottom: 0; padding: 18px 22px; }
+    h1 { font-size: 23px; font-weight: 400; margin: 2px 0 4px; }
+    .desc { color: #646970; font-style: italic; }
+    .search { margin: 18px 0; display: flex; gap: 6px; }
+    .search span { display: inline-block; width: 340px; height: 30px; background: #fff; border: 1px solid #8c8f94; border-radius: 4px; padding: 5px 8px; color: #8c8f94; }
+    .btn { display: inline-flex; align-items: center; gap: 4px; height: 30px; padding: 0 10px; border-radius: 3px; border: 1px solid #2271b1; color: #2271b1; background: #f6f7f7; font-size: 13px; }
+    .btn.p { background: #2271b1; color: #fff; }
+    .grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+    h2 { font-size: 16px; font-weight: 600; margin: 4px 0 10px; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #c3c4c7; box-shadow: 0 1px 1px rgba(0, 0, 0, .04); }
+    th { text-align: left; font-weight: 400; padding: 8px 10px; border-bottom: 1px solid #c3c4c7; color: #2c3338; }
+    td { padding: 10px; vertical-align: top; }
+    tr:nth-child(even) td { background: #f6f7f7; }
+    .order { color: #2271b1; font-weight: 600; }
+    .amt { text-align: right; font-weight: 700; font-size: 14px; }
+    .amt small { display: block; font-weight: 400; font-size: 12px; color: #666; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11.5px; }
+    .info { background: #e5f5fa; color: #0a4b78; }
+    .warn { background: #fcf9e8; color: #8a6d00; border: 1px solid #f0d77b; }
+    .card { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 10px; }
+    .card .t { display: flex; justify-content: space-between; align-items: center; }
+    .card .a { font-size: 18px; font-weight: 700; color: #00a32a; margin-top: 6px; }
+    .card .m { color: #646970; font-size: 12px; margin-top: 4px; }
+</style></head>
+<body>
+<div class="bar"><b>⌂ Example Shop</b><span>+ New</span><span class="r">Howdy, admin</span></div>
+<div class="side">
+    <a>Dashboard</a><a>Posts</a><a>Media</a><a>Pages</a><a>WooCommerce</a><a>Products</a>
+    <a class="cur">SMS Payment</a>
+    <div class="subm"><a>📊 Dashboard</a><a>⚙️ Settings</a><a>📱 Devices</a><a>📨 Notifications</a><a class="on">⏳ Pending Orders</a></div>
+    <a>Appearance</a><a>Plugins</a><a>Users</a><a>Settings</a>
+</div>
+<div class="main">
+    <h1>⏳ Pending Orders</h1>
+    <p class="desc">Orders waiting for SMS payment verification</p>
+    <div class="search"><span>Search Order ID, Name, Email...</span><span class="btn">🔍 Search</span></div>
+    <div class="grid">
+        <div>
+            <h2>📦 Orders Pending Payment</h2>
+            <table>
+                <thead><tr><th>Order</th><th>Customer</th><th style="text-align:right">Amount</th><th>Method</th><th>Date</th><th>Actions</th></tr></thead>
+                <tbody>
+                    <tr><td class="order">#1482</td><td>Somying J.<br><span style="color:#646970">somying@example.com</span></td><td class="amt">฿1,250.37<small>(Original: ฿1,250.00)</small></td><td><span class="badge info">🏦 Bank Transfer</span></td><td>Oct 29, 09:31</td><td><span class="btn p">✅ Confirm</span> <span class="btn">Reject</span></td></tr>
+                    <tr><td class="order">#1481</td><td>Manop R.<br><span style="color:#646970">manop@example.com</span></td><td class="amt">฿890.12<small>(Original: ฿890.00)</small></td><td><span class="badge info">🏦 Bank Transfer</span></td><td>Oct 29, 09:12</td><td><span class="btn p">✅ Confirm</span> <span class="btn">Reject</span></td></tr>
+                    <tr><td class="order">#1479</td><td>Tonkla Shop<br><span style="color:#646970">tonkla@example.net</span></td><td class="amt">฿499.08<small>(Original: ฿499.00)</small></td><td><span class="badge info">🏦 Bank Transfer</span></td><td>Oct 29, 08:04</td><td><span class="btn p">✅ Confirm</span> <span class="btn">Reject</span></td></tr>
+                    <tr><td class="order">#1476</td><td>Kanya P.<br><span style="color:#646970">kanya@example.com</span></td><td class="amt">฿2,400.55<small>(Original: ฿2,400.00)</small></td><td><span class="badge info">🏦 Bank Transfer</span></td><td>Oct 28, 21:47</td><td><span class="btn p">✅ Confirm</span> <span class="btn">Reject</span></td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div>
+            <h2>📨 Unmatched SMS</h2>
+            <p class="desc" style="margin-bottom:10px">SMS received but not matched to any order</p>
+            <div class="card"><div class="t"><span class="badge warn">KBANK</span><span style="color:#646970;font-size:12px">4 mins ago</span></div><p class="a">+฿300.00</p><p class="m">Mr. Example A.</p></div>
+            <div class="card"><div class="t"><span class="badge warn">SCB</span><span style="color:#646970;font-size:12px">46 mins ago</span></div><p class="a">+฿1,000.00</p><p class="m">Ms. Sample B.</p></div>
+            <span class="btn">View All →</span>
+        </div>
+    </div>
+</div>
+</body></html>

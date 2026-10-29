@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .cols { display: grid; grid-template-columns: 300px 1fr 330px; height: 100%; }
+    .left { border-right: 1px solid var(--hair); padding-bottom: 16px; position: relative; }
+    .left .body { padding: 0 16px; display: flex; flex-direction: column; gap: 13px; }
+    .tpl { display: flex; flex-direction: column; gap: 6px; }
+    .tpl span { padding: 8px 11px; border-radius: 8px; border: 1px solid var(--hair); font-family: PlexThai; color: var(--t2); background: rgba(255, 255, 255, .02); }
+    .tpl span.on { border-color: var(--gold); color: var(--gold-hi); background: rgba(212, 167, 106, .08); }
+    .ta { padding: 10px 11px; font-family: PlexThai; line-height: 1.55; color: var(--t1); }
+    .refs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .refs .thumb { aspect-ratio: 1; }
+    .refs p { font-family: PlexThai; font-size: 9.5px; color: var(--t3); margin-top: 4px; }
+    .left .foot { position: absolute; left: 16px; right: 16px; bottom: 16px; }
+    .mid { min-width: 0; }
+    .mbar { display: flex; align-items: center; gap: 10px; padding: 0 18px; height: 50px; border-bottom: 1px solid var(--hair); }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 14px 18px; }
+    .card { border-radius: 10px; border: 1px solid var(--hair); background: rgba(255, 255, 255, .015); padding: 8px; }
+    .card .thumb { aspect-ratio: 16/9; }
+    .card h4 { font-weight: 500; margin: 8px 2px 3px; font-size: 12px; display: flex; gap: 6px; }
+    .card h4 b { font-family: PlexMono; font-weight: 400; color: var(--gold); font-size: 10.5px; }
+    .card p { font-family: PlexThai; font-size: 10.5px; color: var(--t3); line-height: 1.5; margin: 0 2px; }
+    .card .meta { font-family: PlexMono; font-size: 9px; color: var(--t4); margin: 5px 2px 7px; }
+    .card .acts { display: flex; gap: 5px; }
+    .card .acts span { flex: 1; height: 24px; border-radius: 6px; border: 1px solid var(--hair); display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--t2); }
+    .right { border-left: 1px solid var(--hair); padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; }
+    .ap { padding: 14px; border-color: var(--line-gold); background: linear-gradient(180deg, rgba(212, 167, 106, .07), rgba(22, 15, 34, .9)); }
+    .ap h3 { font-family: PlexThai; font-weight: 500; font-size: 13.5px; color: var(--gold-hi); margin-bottom: 4px; }
+    .steps { list-style: none; margin: 12px 0; display: flex; flex-direction: column; gap: 9px; }
+    .steps li { display: flex; align-items: center; gap: 9px; font-family: PlexThai; font-size: 11.5px; color: var(--t2); }
+    .steps li i { width: 18px; height: 18px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center; font-style: normal; font-size: 10px; border: 1px solid var(--hair); color: var(--t4); }
+    .steps li.done i { background: rgba(109, 191, 140, .15); border-color: rgba(109, 191, 140, .5); color: var(--ok); }
+    .steps li.now i { border-color: var(--gold); color: var(--gold-hi); box-shadow: 0 0 8px rgba(212, 167, 106, .5); }
+    .steps li .r { margin-left: auto; font-family: PlexMono; font-size: 10px; color: var(--t4); }
+    .chk { display: flex; align-items: center; gap: 8px; font-family: PlexThai; font-size: 11.5px; color: var(--t2); }
+    .chk b { width: 14px; height: 14px; border-radius: 4px; background: linear-gradient(135deg, #8b6938, #f0cb88); color: #1a0d05; font-size: 10px; display: flex; align-items: center; justify-content: center; }
+    .post { padding: 12px; font-family: PlexThai; font-size: 11.5px; line-height: 1.6; color: var(--t1); }
+    .post .h { color: #8fb3ff; }
+</style></head>
+<body data-on="storyboard">
+<main class="work"><div class="cols">
+    <section class="left">
+        <div class="panel-h"><h2><span class="s">✦</span>Storyboard</h2><small class="th">เทมเพลต → สตอรี่บอร์ด → คลิป</small></div>
+        <div class="body">
+            <div><p class="lbl">Template</p>
+                <div class="tpl"><span>เลิกจน · สัญญาณความรวย</span><span>ดวงความรัก · เนื้อคู่</span><span>ดวงวันนี้ · เลขมงคล</span><span class="on">อิสระ · เขียนคอนเซ็ปต์เอง</span></div></div>
+            <div><p class="lbl">Concept / hook</p>
+                <div class="box gold ta">นางพญาแห่งจันทราตื่นขึ้นกลางเมืองแห่งอนาคต เดินผ่านห้องบัลลังก์ไปยังระเบียงที่มองเห็นแสงจันทร์เต็มดวง</div></div>
+            <div style="display:flex;gap:8px"><div style="flex:1"><p class="lbl">Aspect</p><span class="chip on">9:16</span> <span class="chip">16:9</span></div>
+                <div style="flex:1"><p class="lbl">Clips</p><span class="chip on">6</span></div></div>
+            <div><p class="lbl">Default engine</p><div class="box" style="padding:8px 11px">Seedance 2.0 · ByteDance</div></div>
+            <div><p class="lbl">Character · locked</p>
+                <div class="refs">
+                    <div><div class="thumb" style="background-image:url(assets/empress-portrait.jpg)"></div><p>ภาพต้นแบบ · @ref1 ตัวละคร</p></div>
+                    <div><div class="thumb" style="background-image:url(assets/empress-wide.jpg)"></div><p>@ref2 ฉาก / สถานที่</p></div>
+                    <div><div class="thumb" style="background-image:url(assets/empress-fullbody.jpg);background-position:center 40%"></div><p>@ref3 เสื้อผ้า / ชุด</p></div>
+                </div></div>
+        </div>
+        <div class="foot"><div class="cta">✦ Generate storyboard</div></div>
+    </section>
+
+    <section class="mid">
+        <div class="mbar"><span class="th" style="font-size:14px;white-space:nowrap">นางพญาแห่งจันทรา</span><span class="mono mut" style="font-size:10px;white-space:nowrap">6 CLIPS · 9:16</span>
+            <span class="btn" style="margin-left:auto">⧉ Copy board</span><span class="btn">⬇ Export all ComfyUI workflows</span><span class="btn out">→ Send all clips to Queue</span></div>
+        <div class="grid">
+            <div class="card"><div class="thumb" style="background-image:url(assets/empress-portrait.jpg)"><span class="tc">CLIP 1</span><span class="st"></span><span class="du">6s</span></div>
+                <h4><b>01</b>ตื่นบนบัลลังก์</h4><p>ดวงตาเปิดช้า ๆ แสงเทียนสะท้อนมงกุฎทอง</p><div class="meta">CAMERA — push-in · SFX — wind chime</div><div class="acts"><span>Copy prompt</span><span>Queue</span></div></div>
+            <div class="card"><div class="thumb" style="background-image:url(assets/empress-wide.jpg)"><span class="tc">CLIP 2</span><span class="st"></span><span class="du">6s</span></div>
+                <h4><b>02</b>เมืองใต้แสงจันทร์</h4><p>มุมกว้าง เมืองแห่งอนาคต ยานลอยผ่านหน้าต่าง</p><div class="meta">CAMERA — orbit · AUDIO — city hum</div><div class="acts"><span>Copy prompt</span><span>Queue</span></div></div>
+            <div class="card"><div class="thumb" style="background-image:url(assets/empress-tall-1.jpg);background-position:center 30%"><span class="tc">CLIP 3</span><span class="st gen"></span><span class="du">6s</span><span class="pr" style="width:48%"></span></div>
+                <h4><b>03</b>ผ้าคลุมร่วง</h4><p>ผ้าไหมม่วงร่วงลงแบบสโลว์โมชัน</p><div class="meta">CAMERA — locked · SFX — silk rustle</div><div class="acts"><span>Copy prompt</span><span>Queue</span></div></div>
+            <div class="card"><div class="thumb" style="background-image:url(assets/empress-tall-2.jpg);background-position:center 25%"><span class="tc">CLIP 4</span><span class="st q"></span><span class="du">6s</span></div>
+                <h4><b>04</b>ประตูสีชาด</h4><p>เดินผ่านประตูแดง แสงทองลอดเข้ามา</p><div class="meta">CAMERA — dolly · VOICE — narrator</div><div class="acts"><span>Copy prompt</span><span>Queue</span></div></div>
+            <div class="card"><div class="thumb" style="background-image:url(assets/empress-fullbody.jpg);background-position:center 30%"><span class="tc">CLIP 5</span><span class="st q"></span><span class="du">6s</span></div>
+                <h4><b>05</b>ระเบียงจันทร์เต็มดวง</h4><p>ยืนนิ่งรับลม ผ้าคลุมพลิ้ว</p><div class="meta">CAMERA — pan · AUDIO — choir pad</div><div class="acts"><span>Copy prompt</span><span>Queue</span></div></div>
+            <div class="card"><div class="thumb" style="background-image:url(assets/empress-portrait.jpg);background-position:center 20%"><span class="tc">CLIP 6</span><span class="st q"></span><span class="du">6s</span></div>
+                <h4><b>06</b>รัศมีทอง</h4><p>รัศมีทองเปล่งประกาย แล้วค่อย ๆ มืดลง</p><div class="meta">CAMERA — push-in · SFX — shimmer</div><div class="acts"><span>Copy prompt</span><span>Queue</span></div></div>
+        </div>
+    </section>
+
+    <section class="right">
+        <div class="box ap">
+            <p class="lbl g" style="color:var(--gold)">⚡ Auto pilot</p>
+            <h3>⚡ Auto Pilot — สร้าง · รวม · โพสต์</h3>
+            <p class="th t2" style="font-size:11px;line-height:1.5">สร้างทุกคลิป → รวมเป็นไฟล์เดียว → โพสต์ขึ้น Facebook Page อัตโนมัติ</p>
+            <ul class="steps">
+                <li class="done"><i>✓</i>คลิป 1–2 เสร็จแล้ว<span class="r">2 / 6</span></li>
+                <li class="now"><i>3</i>กำลังสร้างคลิป 3<span class="r">48%</span></li>
+                <li><i>4</i>รวมเป็น MP4 ไฟล์เดียว<span class="r">ffmpeg</span></li>
+                <li><i>5</i>เก็บเข้า Library</li>
+                <li><i>6</i>โพสต์ขึ้น Facebook Page</li>
+            </ul>
+            <div class="chk"><b>✓</b>โพสต์ขึ้น Facebook เมื่อเสร็จ</div>
+            <div style="display:flex;gap:8px;margin-top:12px"><span class="btn" style="flex:1;justify-content:center">✕ ยกเลิก</span></div>
+        </div>
+        <div><p class="lbl">Facebook post</p>
+            <div class="box post">นางพญาแห่งจันทราตื่นขึ้นแล้ว ✨ คืนนี้จันทร์เต็มดวง ขอให้ทุกคำอธิษฐานเป็นจริง 🌕</div></div>
+        <div><p class="lbl">Hashtags</p>
+            <div class="box post"><span class="h">#จันทรา #นางพญา #AIart #ChanthraStudio</span></div></div>
+        <div style="display:flex;gap:8px"><span class="btn">⧉ Copy post</span></div>
+    </section>
+</div></main>
+<script src="chrome.js"></script>
+</body></html>

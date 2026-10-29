@@ -1,0 +1,139 @@
+{
+  "out_dir": "images/products/brainx/v2",
+  "screens": [
+    {
+      "name": "hud",
+      "src": "D:/Code/xmanstudio/sites/product.xman4289.com/assets/img/hero-hud.jpg",
+      "crop": [
+        0,
+        0,
+        1120,
+        685
+      ],
+      "width": 1120,
+      "blur": [
+        [
+          186,
+          5,
+          144,
+          19
+        ],
+        [
+          10,
+          30,
+          176,
+          18
+        ],
+        [
+          816,
+          100,
+          130,
+          18
+        ],
+        [
+          592,
+          396,
+          56,
+          20
+        ]
+      ]
+    },
+    {
+      "name": "hud-wide",
+      "src": "D:/Code/xmanstudio/sites/product.xman4289.com/assets/img/hero-hud.jpg",
+      "width": 1700,
+      "blur": [
+        [
+          186,
+          5,
+          144,
+          19
+        ],
+        [
+          10,
+          30,
+          176,
+          18
+        ],
+        [
+          816,
+          100,
+          130,
+          18
+        ],
+        [
+          1426,
+          48,
+          274,
+          62
+        ],
+        [
+          1442,
+          130,
+          258,
+          42
+        ],
+        [
+          1598,
+          343,
+          94,
+          17
+        ],
+        [
+          1526,
+          664,
+          58,
+          17
+        ],
+        [
+          1650,
+          664,
+          48,
+          17
+        ],
+        [
+          592,
+          396,
+          56,
+          20
+        ]
+      ]
+    },
+    {
+      "name": "search",
+      "html": "search.html"
+    },
+    {
+      "name": "agents",
+      "html": "agents.html"
+    },
+    {
+      "name": "cowork",
+      "html": "cowork.html"
+    },
+    {
+      "name": "cloud",
+      "html": "cloud.html"
+    },
+    {
+      "name": "art-hero",
+      "src": "D:/Code/xmanstudio-campaign-media/product-pages/brainx/art-hero.png",
+      "width": 1536,
+      "quality": 82
+    },
+    {
+      "name": "art-2",
+      "src": "D:/Code/xmanstudio-campaign-media/product-pages/brainx/art-2.png",
+      "width": 1536,
+      "quality": 82
+    },
+    {
+      "name": "og",
+      "ext": "jpg",
+      "w": 1200,
+      "h": 630,
+      "width": 1200,
+      "html": "../_shared/og.html?art=file%3A%2F%2F%2FD%3A%2FCode%2Fxmanstudio-campaign-media%2Fproduct-pages%2Fbrainx%2Fart-hero.png&name=BrainX&glow=X&line=%E0%B8%AA%E0%B8%A1%E0%B8%AD%E0%B8%87%E0%B8%97%E0%B8%B5%E0%B9%88%E0%B8%AA%E0%B8%AD%E0%B8%87%E0%B8%97%E0%B8%B5%E0%B9%88%7CAI+%E0%B8%97%E0%B8%B8%E0%B8%81%E0%B8%95%E0%B8%B1%E0%B8%A7%E0%B9%83%E0%B8%8A%E0%B9%89%E0%B8%A3%E0%B9%88%E0%B8%A7%E0%B8%A1%E0%B8%81%E0%B8%B1%E0%B8%99&sub=%E0%B8%81%E0%B8%A3%E0%B8%B2%E0%B8%9F%E0%B8%84%E0%B8%A7%E0%B8%B2%E0%B8%A1%E0%B8%A3%E0%B8%B9%E0%B9%89+3+%E0%B8%A1%E0%B8%B4%E0%B8%95%E0%B8%B4+%C2%B7+MCP+%C2%B7+BrainX+Cloud&c1=ff5fa8&c2=9d7bff&c3=5be9e9"
+    }
+  ]
+}

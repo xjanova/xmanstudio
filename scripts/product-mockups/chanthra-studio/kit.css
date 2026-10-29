@@ -1,0 +1,93 @@
+/* Chanthra Studio mock-ups — drawn in the app's own "Lunar" palette and type (Themes/Colors.xaml, Typography.xaml,
+   the fonts it ships in Assets/Fonts) and its shell: 38px title bar, 64px icon rail, 28px status bar.
+   No real capture of the app exists yet; every screen here is a mock-up with made-up, safe data. */
+@font-face { font-family: Cormorant; src: url(fonts/CormorantGaramond-Medium.ttf); font-weight: 500; }
+@font-face { font-family: Cormorant; src: url(fonts/CormorantGaramond-MediumItalic.ttf); font-weight: 500; font-style: italic; }
+@font-face { font-family: Plex; src: url(fonts/IBMPlexSans-Regular.ttf); font-weight: 400; }
+@font-face { font-family: Plex; src: url(fonts/IBMPlexSans-Medium.ttf); font-weight: 500; }
+@font-face { font-family: PlexThai; src: url(fonts/IBMPlexSansThai-Regular.ttf); font-weight: 400; }
+@font-face { font-family: PlexThai; src: url(fonts/IBMPlexSansThai-Medium.ttf); font-weight: 500; }
+@font-face { font-family: PlexMono; src: url(fonts/IBMPlexMono-Regular.ttf); font-weight: 400; }
+:root {
+    --void: #060409; --base: #0c0814; --mica: #120c1c; --surface: #160f22; --elev: #1d1530; --inset: #0a0612;
+    --gold: #d4a76a; --gold-hi: #f0cb88; --gold-lo: #8b6938; --crimson: #b03346; --crimson-deep: #6e1f2c;
+    --moon: #d8d0e6; --moon-deep: #6c5e85; --plum: #2a1b3d; --plum-l: #4a2e6a;
+    --t1: #f0e7d4; --t2: #b8aec0; --t3: #9e93ac; --t4: #857c94; --ok: #6dbf8c; --warn: #e0b056; --err: #d05a5a;
+    --hair: rgba(232, 213, 179, .06); --line-gold: rgba(212, 167, 106, .22);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1440px; height: 900px; overflow: hidden; }
+body { font-family: Plex, PlexThai, sans-serif; font-size: 12.5px; color: var(--t1); background: var(--mica);
+    background-image:
+        radial-gradient(ellipse 60% 50% at 80% 0%, rgba(176, 50, 70, .12), transparent 70%),
+        radial-gradient(ellipse 50% 40% at 0% 100%, rgba(212, 167, 106, .08), transparent 70%),
+        radial-gradient(ellipse 40% 60% at 50% 30%, rgba(108, 94, 133, .07), transparent 70%); }
+.mono { font-family: PlexMono, monospace; }
+.disp { font-family: Cormorant, serif; font-style: italic; }
+.th { font-family: PlexThai, Plex, sans-serif; }
+
+/* shell */
+.titlebar { position: absolute; left: 0; top: 0; width: 1440px; height: 38px; display: grid; grid-template-columns: 220px 1fr auto 138px; align-items: center;
+    border-bottom: 1px solid var(--hair); background: rgba(6, 4, 9, .35); }
+.brand { display: flex; align-items: center; gap: 9px; padding-left: 16px; font-family: Cormorant; font-size: 15px; }
+.brand em { color: var(--gold-hi); }
+.search { width: 320px; height: 26px; border-radius: 99px; background: rgba(255, 255, 255, .03); border: 1px solid var(--hair); display: flex; align-items: center; gap: 8px; padding: 0 12px; color: var(--t4); font-size: 11.5px; margin-right: 18px; }
+.search kbd { margin-left: auto; font-family: PlexMono; font-size: 9.5px; padding: 1px 6px; border: 1px solid var(--hair); border-radius: 4px; }
+.wc { display: flex; justify-content: flex-end; }
+.wc span { width: 46px; height: 38px; display: flex; align-items: center; justify-content: center; color: var(--t3); }
+.rail { position: absolute; left: 0; top: 38px; width: 64px; height: 834px; border-right: 1px solid var(--hair); padding-top: 6px; background: rgba(6, 4, 9, .25); }
+.rail i { position: relative; display: flex; align-items: center; justify-content: center; height: 44px; color: var(--t3); }
+.rail i.on { color: var(--gold-hi); background: rgba(212, 167, 106, .08); }
+.rail i.on::before { content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 2px; background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+.rail svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.rail .bottom { position: absolute; left: 0; right: 0; bottom: 10px; }
+.avatar { width: 32px; height: 32px; margin: 8px auto 0; border-radius: 50%; background: linear-gradient(135deg, #b5915c, #b03346); border: 1px solid var(--gold);
+    display: flex; align-items: center; justify-content: center; font-family: Cormorant; font-size: 16px; color: #1a0d05; }
+.statusbar { position: absolute; left: 0; bottom: 0; width: 1440px; height: 28px; display: flex; align-items: center; gap: 14px; padding: 0 14px;
+    font-family: PlexMono; font-size: 10px; color: var(--t3); background: rgba(0, 0, 0, .35); border-top: 1px solid var(--hair); }
+.statusbar .sp { flex: 1; }
+.statusbar .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 6px var(--ok); margin-right: 6px; }
+.statusbar .bar { display: inline-block; width: 60px; height: 3px; border-radius: 3px; background: rgba(255, 255, 255, .08); vertical-align: middle; margin-left: 6px; position: relative; overflow: hidden; }
+.statusbar .bar b { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, var(--gold-lo), var(--gold-hi)); }
+.statusbar .g { color: var(--gold-hi); }
+.work { position: absolute; left: 64px; top: 38px; width: 1376px; height: 834px; }
+
+/* parts */
+.panel-h { display: flex; align-items: baseline; gap: 10px; padding: 14px 18px 10px; }
+.panel-h h2 { font-family: Cormorant; font-style: italic; font-weight: 500; font-size: 20px; color: var(--t1); }
+.panel-h h2 .s { color: var(--gold); font-style: normal; margin-right: 6px; }
+.panel-h small { font-family: PlexMono; font-size: 10px; color: var(--t4); }
+.lbl { font-family: PlexMono; font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--t4); margin-bottom: 7px; }
+.box { background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; }
+.box.gold { border-color: var(--line-gold); }
+.chip { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 6px; font-family: PlexMono; font-size: 10px; color: var(--t2); border: 1px solid var(--hair); background: rgba(255, 255, 255, .02); }
+.chip.on { color: var(--gold-hi); border-color: var(--gold); background: rgba(212, 167, 106, .12); }
+.chip.cr { color: #e88a98; border-color: rgba(176, 50, 70, .4); background: rgba(176, 50, 70, .12); }
+.chip.mv { color: var(--moon); border-color: rgba(108, 94, 133, .45); background: rgba(108, 94, 133, .14); }
+.cta { height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: Cormorant; font-style: italic; font-size: 17px; color: #1a0d05; letter-spacing: .04em;
+    background: linear-gradient(180deg, rgba(255, 255, 255, .08), transparent), linear-gradient(135deg, #8b6938 0%, #d4a76a 50%, #f0cb88 100%);
+    box-shadow: 0 0 0 1px rgba(212, 167, 106, .4), 0 4px 20px rgba(212, 167, 106, .25), inset 0 1px 0 rgba(255, 255, 255, .3); }
+.btn { height: 28px; padding: 0 12px; border-radius: 7px; display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--t1); border: 1px solid var(--hair); background: rgba(255, 255, 255, .03); white-space: nowrap; }
+.btn.gold { color: #1a0d05; border: 0; background: linear-gradient(135deg, #8b6938, #d4a76a 55%, #f0cb88); }
+.btn.out { border-color: var(--line-gold); color: var(--gold-hi); }
+.slider { position: relative; height: 4px; border-radius: 4px; background: rgba(255, 255, 255, .07); }
+.slider b { position: absolute; inset: 0 auto 0 0; border-radius: 4px; background: linear-gradient(90deg, var(--gold-lo), var(--gold-hi)); }
+.slider b::after { content: ""; position: absolute; right: -5px; top: -3px; width: 10px; height: 10px; border-radius: 50%; background: var(--gold-hi); box-shadow: 0 0 8px var(--gold); }
+.tog { display: inline-block; width: 28px; height: 16px; border-radius: 99px; background: rgba(212, 167, 106, .35); position: relative; }
+.tog::after { content: ""; position: absolute; right: 2px; top: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--gold-hi); }
+.tog.off { background: rgba(255, 255, 255, .08); }
+.tog.off::after { left: 2px; right: auto; background: var(--t4); }
+.row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-top: 1px solid var(--hair); }
+.row:first-child { border-top: 0; }
+.row .k { width: 92px; color: var(--t2); }
+.row .v { margin-left: auto; font-family: PlexMono; font-size: 10.5px; color: var(--gold-hi); }
+.pill { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 9px; border-radius: 99px; font-family: PlexMono; font-size: 10px; color: var(--gold-hi); border: 1px solid var(--line-gold); background: rgba(212, 167, 106, .08); }
+.pill i { width: 5px; height: 5px; border-radius: 50%; background: var(--gold-hi); box-shadow: 0 0 6px var(--gold-hi); }
+.thumb { position: relative; border-radius: 8px; overflow: hidden; background: var(--inset) center/cover no-repeat; border: 1px solid var(--hair); }
+.thumb .tc { position: absolute; left: 6px; top: 6px; font-family: PlexMono; font-size: 9px; padding: 2px 6px; border-radius: 5px; background: rgba(0, 0, 0, .6); color: var(--t1); }
+.thumb .du { position: absolute; right: 6px; bottom: 6px; font-family: PlexMono; font-size: 9px; padding: 2px 6px; border-radius: 5px; background: rgba(0, 0, 0, .6); color: var(--t1); }
+.thumb .st { position: absolute; right: 7px; top: 7px; width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 6px var(--ok); }
+.thumb .st.gen { background: var(--gold-hi); box-shadow: 0 0 8px var(--gold-hi); }
+.thumb .st.q { background: var(--moon-deep); box-shadow: none; }
+.thumb .pr { position: absolute; left: 0; bottom: 0; height: 2px; background: linear-gradient(90deg, var(--gold-lo), var(--gold-hi)); box-shadow: 0 0 6px var(--gold); }
+.ok { color: var(--ok); } .warn { color: var(--warn); } .err { color: var(--err); } .g { color: var(--gold-hi); } .mut { color: var(--t4); } .t2 { color: var(--t2); }

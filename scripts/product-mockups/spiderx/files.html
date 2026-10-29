@@ -1,0 +1,53 @@
+<!doctype html>
+<!-- Files tab — Views/FileSharingPage.xaml: header + Share File, search, Active Downloads (progress, chunks, peers),
+     Available from Peers (Download), My Shared Files -->
+<html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .page { background: linear-gradient(135deg, #0A0A1A, #10102A 60%, #0A1020); display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto 1fr; gap: 14px; }
+    .head { grid-column: 1 / 3; display: flex; align-items: center; gap: 14px; border-radius: 20px; padding: 18px 20px; background: linear-gradient(135deg, #1A1A3A, #2A1040); }
+    .head .ico { width: 52px; height: 52px; border-radius: 16px; font-size: 24px; }
+    .search { height: 44px; width: 360px; border-radius: 12px; background: #0A0A1A; border: 1px solid #2A2A4A; display: flex; align-items: center; gap: 10px; padding: 0 14px; color: #64748B; }
+    .sec { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+    .sec .ico { width: 36px; height: 36px; font-size: 18px; border-radius: 10px; }
+    .sec b { font-size: 12px; padding: 2px 9px; border-radius: 9px; background: #7C3AED; }
+    .item { border-radius: 14px; background: #12121F; border: 1px solid #2A2A4A; padding: 14px; margin-bottom: 10px; }
+    .fi { width: 48px; height: 48px; border-radius: 12px; background: #1A1A3A; display: flex; align-items: center; justify-content: center; font-size: 26px; flex: none; }
+    .sm { font-size: 12px; color: #94A3B8; }
+    .mini { width: 36px; height: 36px; border-radius: 10px; background: #1A1A2E; border: 1px solid #3A3A5A; display: inline-flex; align-items: center; justify-content: center; font-size: 15px; }
+</style></head>
+<body data-on="Files">
+<div class="page">
+    <div class="head">
+        <span class="ico g-cyan">📁</span>
+        <div><div class="h1">P2P File Sharing</div><div class="sub">5 files available from 3 peers</div></div>
+        <div class="search" style="margin-left:auto">🔍 Search files...</div>
+        <span class="mini" style="width:44px;height:44px">🔄</span>
+        <span class="btn vp" style="height:44px">📤 Share File</span>
+    </div>
+
+    <div>
+        <div class="sec"><span class="ico g-green">⬇️</span>Active Downloads <b>2</b></div>
+        <div class="item">
+            <div class="row"><span class="fi">🎬</span><div style="flex:1"><div style="font-weight:700">team-meetup-2026.mp4</div><div class="sm">1.8 GB • <span class="gr" style="font-weight:700">6.2 MB/s</span> • 2m 41s left</div></div><span class="mini">⏸️</span><span class="mini">❌</span></div>
+            <div class="bar" style="margin-top:12px"><i style="width:64%"></i></div>
+            <div class="row" style="gap:16px;margin-top:8px;font-size:12px"><span class="gr" style="font-weight:700;font-size:13px">64%</span><span class="mut">Chunks: 1180/1843</span><span class="mut">3 peers</span><span class="cy" style="margin-left:auto;font-size:11px">Downloading</span></div>
+        </div>
+        <div class="item">
+            <div class="row"><span class="fi">📦</span><div style="flex:1"><div style="font-weight:700">design-assets.zip</div><div class="sm">412 MB • Paused</div></div><span class="mini">▶️</span><span class="mini">❌</span></div>
+            <div class="bar" style="margin-top:12px"><i style="width:27%;background:#F59E0B"></i></div>
+            <div class="row" style="gap:16px;margin-top:8px;font-size:12px"><span style="color:#F59E0B;font-weight:700;font-size:13px">27%</span><span class="mut">Chunks: 112/412</span><span class="mut">1 peers</span><span class="cy" style="margin-left:auto;font-size:11px">Paused</span></div>
+        </div>
+        <div class="sec" style="margin-top:18px"><span class="ico g-violet">📤</span>My Shared Files <b>3</b></div>
+        <div class="item row"><span class="fi">📄</span><div style="flex:1"><div style="font-weight:700">project-brief.pdf</div><div class="sm">2.1 MB • <span class="pk" style="font-size:11px">Documents</span></div><div class="mut" style="font-size:11px">Shared: 2 hours ago</div></div><span class="mini">📂</span><span class="mini">🗑️</span></div>
+    </div>
+
+    <div>
+        <div class="sec"><span class="ico g-blue">🌐</span>Available from Peers <b>5</b></div>
+        <div class="item row"><span class="fi">🎬</span><div style="flex:1"><div style="font-weight:700">team-meetup-2026.mp4</div><div class="sm">Recording from the weekend trip</div><div class="sm">1.8 GB • <span style="color:#A855F7;font-size:11px">Videos</span> • <span class="mut" style="font-size:11px">From: Nok-Laptop</span></div></div><span class="btn gh" style="height:36px">Downloading</span></div>
+        <div class="item row"><span class="fi">🎵</span><div style="flex:1"><div style="font-weight:700">demo-track-v3.wav</div><div class="sm">Final mix for review</div><div class="sm">58 MB • <span style="color:#A855F7;font-size:11px">Audio</span> • <span class="mut" style="font-size:11px">From: Studio-PC</span></div></div><span class="btn vp" style="height:36px">⬇️ Download</span></div>
+        <div class="item row"><span class="fi">🖼️</span><div style="flex:1"><div style="font-weight:700">poster-draft.png</div><div class="sm">A3 poster, second draft</div><div class="sm">8.4 MB • <span style="color:#A855F7;font-size:11px">Images</span> • <span class="mut" style="font-size:11px">From: Studio-PC</span></div></div><span class="btn sc" style="height:36px">📂 Open</span></div>
+        <div class="item row"><span class="fi">📦</span><div style="flex:1"><div style="font-weight:700">design-assets.zip</div><div class="sm">Icons and fonts for the app</div><div class="sm">412 MB • <span style="color:#A855F7;font-size:11px">Archives</span> • <span class="mut" style="font-size:11px">From: Mint-Desktop</span></div></div><span class="btn gh" style="height:36px">Paused</span></div>
+    </div>
+</div>
+<script src="chrome.js"></script>
+</body></html>

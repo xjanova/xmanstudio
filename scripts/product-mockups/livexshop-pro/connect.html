@@ -1,0 +1,50 @@
+<!doctype html>
+<!-- The phone app's เชื่อมต่อ page — src/Mobile/Views/ConnectPage.xaml with Resources/Styles (CardFrame, PrimaryButton,
+     SecondaryButton, DefaultEntry, Sarabun): pair with the desktop program by QR code or by its IP on the same network.
+     The page exists in the code; pairing itself is not built yet. -->
+<html lang="th"><head><meta charset="utf-8">
+<style>
+    @font-face { font-family: Sarabun; src: url(../../../storage/fonts/Sarabun-Regular.ttf); font-weight: 400; }
+    @font-face { font-family: Sarabun; src: url(../../../storage/fonts/Sarabun-Bold.ttf); font-weight: 700; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 390px; height: 845px; overflow: hidden; }
+    body { font-family: Sarabun, sans-serif; background: #0D0D15; color: #fff; }
+    .sb { height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 22px; font-size: 14px; font-weight: 700; }
+    .nav { height: 52px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; border-bottom: 1px solid #2D2D50; background: #1A1A2E; }
+    .wrap { padding: 22px 24px; display: flex; flex-direction: column; gap: 20px; }
+    .logo { text-align: center; }
+    .logo h1 { font-size: 24px; }
+    .logo p, .body { font-size: 14px; color: #A0A0B8; }
+    .card { background: #1E1E35; border: 1px solid #2D2D50; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 8px 20px rgba(0, 0, 0, .35); }
+    .h2 { font-size: 18px; font-weight: 700; }
+    .b1 { background: #6C63FF; border-radius: 12px; padding: 13px 20px; text-align: center; font-weight: 700; font-size: 16px; }
+    .b2 { border: 2px solid #6C63FF; color: #8B83FF; border-radius: 12px; padding: 11px 20px; text-align: center; font-weight: 700; font-size: 16px; }
+    .entry { background: #252542; border-radius: 8px; padding: 12px; font-size: 14px; color: #6B6B80; }
+    .or { text-align: center; }
+</style></head>
+<body>
+<div class="sb"><span>20:41</span><span>●●● ▮</span></div>
+<div class="nav">เชื่อมต่อ</div>
+<div class="wrap">
+    <div class="logo"><h1>Live x Shop Pro</h1><p>Mobile Chat Capture</p></div>
+    <div class="card">
+        <div class="h2">เชื่อมต่อกับโปรแกรมหลัก</div>
+        <div class="body">สแกน QR Code จากโปรแกรม Desktop เพื่อเชื่อมต่อ</div>
+        <div class="b1">สแกน QR Code</div>
+        <div class="body or">หรือ</div>
+        <div class="entry">ใส่ IP Address (เช่น 192.168.1.100)</div>
+        <div class="b2">เชื่อมต่อ</div>
+    </div>
+    <div class="card" style="gap:6px">
+        <div class="h2">สถานะ</div>
+        <div style="color:#FBBF24">ยังไม่ได้เชื่อมต่อ</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+        <div class="h2">คำแนะนำ</div>
+        <div class="body">1. เปิดโปรแกรม Live x Shop Pro บน Desktop</div>
+        <div class="body">2. ไปที่ ตั้งค่า &gt; Mobile App</div>
+        <div class="body">3. สแกน QR Code ที่แสดง</div>
+        <div class="body">4. มือถือและ Desktop ต้องอยู่ในเครือข่ายเดียวกัน</div>
+    </div>
+</div>
+</body></html>

@@ -1,0 +1,117 @@
+/* SmsChecker mock-ups — drawn to the app's own "Millennium 3D / Frutiger Aero" kit
+   (D:/Code/SmsChecker app/src/main/java/com/thaiprompt/smschecker/ui/theme/Theme.kt AeroPalette,
+   ui/components/AeroComponents.kt, AeroScreen.kt HeaderTone, MainActivity.kt bottom bar).
+   The light theme (sky canvas) is shown; the app also has a dark one. Words are the app's own strings
+   (ui/theme/AppStrings.kt); every name, amount, account and order number is made up.
+   A phone screen is 390×845 drawn at 2× (780×1690) so the picture stays sharp on retina screens.
+   Bank coins are the app's own fallback: initials on the bank's brand colour (bankBrandColor()). */
+@font-face { font-family: Thai; src: url(../_fonts/NotoSansThai-500.ttf); font-weight: 400 500; }
+@font-face { font-family: Thai; src: url(../_fonts/NotoSansThai-600.ttf); font-weight: 600; }
+@font-face { font-family: Thai; src: url(../_fonts/NotoSansThai-700.ttf); font-weight: 700 900; }
+:root {
+    --green: #22b34a; --green-hi: #5ce98a; --green-lo: #1a8a3c; --green-deep: #0f6e30;
+    --aqua: #5ec8d6; --aqua-hi: #c1e8ef; --sky: #9fcfe6;
+    --navy: #2a3a63; --navy-hi: #46587f; --navy-deep: #16223f;
+    --gold: #d8a93f; --gold-hi: #f2dd9a; --gold-text: #8a6a1e;
+    --orange: #e8821e; --red: #d6452e; --red-hi: #ef6a4d; --red-lo: #a8331f;
+    --ink: #36404e; --ink-soft: #5d6775; --ink-faint: #8b95a1;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 780px; height: 1690px; overflow: hidden; background: #e6f1f4; }
+.phone { zoom: 2; width: 390px; height: 845px; position: relative; overflow: hidden; font-family: Thai, sans-serif; font-size: 13px; color: var(--ink);
+    background: linear-gradient(180deg, #eaf6f3 0%, #e6f1f4 50%, #e9f3ee 100%); }
+/* the per-screen header tone that bleeds from the top and fades into the sky (aeroHeaderBleed) */
+.phone::before { content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; background: linear-gradient(180deg, var(--t1) 0%, var(--t2) 16%, transparent 42%); }
+.t-green { --t1: var(--green-lo); --t2: var(--green); }
+.t-navy { --t1: var(--navy); --t2: var(--navy-deep); }
+.t-aqua { --t1: var(--aqua); --t2: #3fa6bc; }
+.phone > * { position: relative; z-index: 1; }
+
+/* Android status bar, white icons over the tone */
+.sb { height: 28px; display: flex; align-items: center; padding: 0 18px; font-size: 12px; font-weight: 600; color: #fff; }
+.sb .r { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+.sb .r i { display: inline-block; width: 15px; height: 9px; border-radius: 2px; border: 1.5px solid #fff; position: relative; }
+.sb .r i::after { content: ""; position: absolute; left: 1px; top: 1px; bottom: 1px; width: 9px; background: #fff; border-radius: 1px; }
+.sb .r b { width: 12px; height: 9px; background: linear-gradient(45deg, transparent 50%, #fff 50%); }
+
+/* .appbar: padding 6/18/16, white text */
+.appbar { padding: 6px 18px 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #fff; }
+.appbar h1 { font-size: 18px; font-weight: 700; line-height: 1.25; }
+.appbar p { font-size: 12.5px; opacity: .92; }
+.logo { width: 38px; height: 38px; border-radius: 30%; background: #fff; border: 1.5px solid rgba(255, 255, 255, .9); box-shadow: 0 3px 8px rgba(22, 34, 63, .35);
+    display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 15px; color: var(--green-lo); }
+
+/* AeroGlass: translucent fill, white rim, soft deep shadow, top gloss sweep */
+.glass { position: relative; border-radius: 18px; border: 1px solid rgba(255, 255, 255, .9);
+    background: linear-gradient(180deg, rgba(255, 255, 255, .82), rgba(255, 255, 255, .55), rgba(241, 248, 250, .62));
+    box-shadow: 0 10px 22px -8px rgba(22, 34, 63, .28); overflow: hidden; }
+.glass::before { content: ""; position: absolute; left: 6px; right: 6px; top: 4px; bottom: 4px; border-radius: inherit; pointer-events: none;
+    background: linear-gradient(180deg, rgba(255, 255, 255, .85) 0%, rgba(255, 255, 255, 0) 42%); }
+.glass > * { position: relative; }
+.mx { margin-left: 16px; margin-right: 16px; }
+
+/* chips (AeroChip) */
+.chip { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 10px; border-radius: 99px; font-size: 11.5px; font-weight: 700; border: 1px solid rgba(255, 255, 255, .7); white-space: nowrap; }
+.chip.green { background: linear-gradient(180deg, #cbf3d7, #a9e9be); color: var(--green-deep); }
+.chip.amber { background: linear-gradient(180deg, #fcefc4, #f6e2a0); color: var(--gold-text); }
+.chip.red { background: linear-gradient(180deg, #f8d2cb, #f1b5ab); color: var(--red-lo); }
+.chip.aqua { background: linear-gradient(180deg, #cfeaf1, #b2dce7); color: #114a55; }
+.chip.glass-c { background: linear-gradient(180deg, rgba(255, 255, 255, .9), rgba(241, 248, 250, .7)); color: var(--navy); }
+.chip.on-dark { background: linear-gradient(180deg, rgba(255, 255, 255, .3), rgba(255, 255, 255, .12)); color: #fff; border-color: rgba(255, 255, 255, .45); }
+
+/* glossy orb / bank coin */
+.orb { width: 30px; height: 30px; border-radius: 50%; position: relative; display: flex; align-items: center; justify-content: center; color: #fff;
+    border: 1px solid rgba(255, 255, 255, .3); box-shadow: 0 3px 6px rgba(22, 34, 63, .25); flex: none; }
+.orb::before { content: ""; position: absolute; top: 10%; left: 18%; width: 64%; height: 38%; border-radius: 50%; background: linear-gradient(180deg, rgba(255, 255, 255, .85), rgba(255, 255, 255, 0)); }
+.orb svg { width: 15px; height: 15px; position: relative; }
+.o-aqua { background: linear-gradient(180deg, var(--aqua-hi), var(--aqua), #3fa6bc); }
+.o-green { background: linear-gradient(180deg, var(--green-hi), var(--green), var(--green-lo)); }
+.o-gold { background: linear-gradient(180deg, var(--gold-hi), var(--gold), #a8812a); }
+.o-navy { background: linear-gradient(180deg, var(--navy-hi), var(--navy), var(--navy-deep)); }
+.coin { width: 40px; height: 40px; border-radius: 30%; flex: none; position: relative; display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 800; font-size: 12px; letter-spacing: -.2px; border: 1.5px solid rgba(255, 255, 255, .92); box-shadow: 0 3px 6px rgba(22, 34, 63, .25); }
+.coin::before { content: ""; position: absolute; top: 7%; left: 19%; width: 62%; height: 40%; border-radius: 50%; background: linear-gradient(180deg, rgba(255, 255, 255, .35), rgba(255, 255, 255, 0)); }
+.kbank { background: linear-gradient(180deg, #3fb257, #138f2d); }
+.scb { background: linear-gradient(180deg, #7a56aa, #4e2a84); }
+.ktb { background: linear-gradient(180deg, #3dbcef, #00a4e4); }
+.bbl { background: linear-gradient(180deg, #4a6cb2, #1e4598); }
+.gsb { background: linear-gradient(180deg, #f24fa9, #eb198d); }
+.bay { background: linear-gradient(180deg, #ffd56e, #fec43b); color: #333; }
+.ttb { background: linear-gradient(180deg, #4a9ad0, #1279be); }
+.pp { background: linear-gradient(180deg, #2f6194, #003b71); }
+
+/* section header */
+.sec { display: flex; align-items: center; gap: 6px; margin: 16px 16px 8px; font-size: 14px; font-weight: 700; color: var(--navy-deep); }
+.sec .act { margin-left: auto; font-size: 12px; font-weight: 700; color: var(--green-lo); }
+.sec svg { width: 16px; height: 16px; color: var(--green-lo); }
+
+/* gloss buttons */
+.gbtn { display: inline-flex; align-items: center; justify-content: center; gap: 5px; height: 34px; padding: 0 14px; border-radius: 12px; font-size: 13px; font-weight: 800; color: #fff;
+    border: 1px solid rgba(255, 255, 255, .4); position: relative; overflow: hidden; box-shadow: 0 4px 10px -3px rgba(22, 34, 63, .4); }
+.gbtn::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 50%; background: linear-gradient(180deg, rgba(255, 255, 255, .55), rgba(255, 255, 255, 0)); }
+.gbtn.green { background: linear-gradient(180deg, var(--green-hi), var(--green), var(--green-lo)); }
+.gbtn.navy { background: linear-gradient(180deg, var(--navy-hi), var(--navy), var(--navy-deep)); }
+.gbtn.ghost { background: linear-gradient(180deg, rgba(255, 255, 255, .92), rgba(242, 247, 250, .8)); color: var(--navy); border-color: #fff; }
+.gbtn.red { background: linear-gradient(180deg, var(--red-hi), var(--red), var(--red-lo)); }
+
+/* chrome segmented control */
+.seg { display: flex; gap: 3px; padding: 4px; border-radius: 99px; border: 1px solid rgba(255, 255, 255, .5);
+    background: linear-gradient(180deg, #fdfefe, #d6dde4 45%, #a7b2bd 55%, #d6dde4); }
+.seg span { flex: 1; text-align: center; padding: 6px 0; border-radius: 99px; font-size: 12.5px; font-weight: 600; color: var(--navy-deep); }
+.seg span.on { background: linear-gradient(180deg, var(--green-hi), var(--green-lo)); color: #fff; font-weight: 800; border: 1px solid rgba(255, 255, 255, .4); }
+
+/* bottom bar: a glass pill with five tabs, the selected one a green gloss tile */
+.nav { position: absolute; left: 14px; right: 14px; bottom: 12px; z-index: 5; border-radius: 26px; padding: 8px 6px; display: flex; gap: 2px; }
+.nav a { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10.5px; font-weight: 600; color: var(--ink-soft); text-decoration: none; position: relative; }
+.nav a i { width: 34px; height: 28px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+.nav a i svg { width: 18px; height: 18px; }
+.nav a.on { color: var(--green-lo); font-weight: 800; }
+.nav a.on i { background: linear-gradient(180deg, var(--green-hi), var(--green-lo)); color: #fff; box-shadow: 0 3px 8px -2px rgba(26, 138, 60, .6); }
+.nav a b { position: absolute; top: -3px; left: 50%; margin-left: 8px; min-width: 15px; height: 15px; padding: 0 4px; border-radius: 99px; background: var(--red); color: #fff; font-size: 8.5px; display: flex; align-items: center; justify-content: center; border: 1.5px solid #fff; }
+
+.faint { color: var(--ink-faint); }
+.soft { color: var(--ink-soft); }
+.num { font-variant-numeric: tabular-nums; }
+.credit { color: var(--green-deep); }
+.debit { color: var(--red-lo); }
+.div { height: 1px; background: rgba(159, 184, 200, .3); }

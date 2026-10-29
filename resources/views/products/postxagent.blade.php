@@ -1,384 +1,388 @@
 @extends($publicLayout ?? 'layouts.app')
+{{-- PostXAgent — ยังเป็น Coming Soon: ไม่มีปุ่มดาวน์โหลดหรือปุ่มซื้อที่ใช้ได้ จนกว่าหลังร้านจะเปิดขาย (กฎเจ้าของ 2026-10-12, ComingSoonPurchase) --}}
+@php $comingSoon = $product->isComingSoon(); @endphp
 
-@section('title', 'PostXAgent - AI Brand Promotion Manager | XMAN Studio')
+@section('title', 'PostXAgent — AI ช่วยโปรโมตแบรนด์ เขียนโพสต์ ตั้งเวลา โพสต์ให้เอง' . ($comingSoon ? ' · Coming Soon' : '') . ' | XMAN Studio')
+@section('meta_description', 'PostXAgent โปรแกรม Windows ที่ใช้ AI เขียนแคปชันและแฮชแท็ก (Ollama ฟรีในเครื่อง หรือ Gemini / OpenAI / Claude ด้วย key ของคุณ) ตั้งเวลาโพสต์ล่วงหน้า แล้วโพสต์ขึ้น Facebook Page และ Instagram Business ให้ตามเวลา · An AI assistant that writes, schedules and publishes your brand\'s posts.')
+@section('og_image', asset('images/products/postx-agent/v2/og.jpg'))
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-gray-900 via-orange-900 to-gray-900">
-    <!-- Hero Section -->
-    <section class="relative py-20 overflow-hidden">
-        <x-page-art art="product/postx-agent" :opacity="38" />
-        <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%23F97316\" fill-opacity=\"0.05\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]"></div>
+@php
+    // ราคามาจากแถวสินค้า (products.price) ที่เดียว — ตะกร้าคิดตามนี้ ห้ามเขียนตัวเลขราคาลงหน้านี้ตรง ๆ
+    // PostXAgent ขายแบบราคาเดียว ไม่มีแผนรายเดือน/รายปีใน config/licenses.php (LicensePlans::for ว่าง — LicensePlansTest)
+    $price = (float) $product->price;
+    $priceText = number_format($price, 0);
+    $hasDiscount = $product->original_price && $product->original_price > $product->price;
 
-        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <!-- Breadcrumb -->
-            <nav class="mb-8">
-                <a href="{{ route('products.index') }}" class="text-orange-400 hover:text-orange-300 flex items-center">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                    </svg>
-                    กลับไปรายการผลิตภัณฑ์
-                </a>
-            </nav>
+    // เวอร์ชันที่เว็บนี้ส่งให้ (อ่านจาก DB อย่างเดียว)
+    $latest = $product->latestVersion();
 
-            <div class="grid lg:grid-cols-2 gap-12 items-center">
-                <!-- Left: Product Info -->
-                <div>
-                    <div class="inline-flex items-center px-4 py-2 bg-orange-500/20 rounded-full text-orange-300 text-sm mb-6 backdrop-blur-sm border border-orange-500/30">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
-                        </svg>
-                        AI Brand Promotion
-                    </div>
+    // ภาพหน้าจอ: ยังไม่มีภาพจริงของโปรแกรม — ทุกภาพเป็น mockup ตามธีมของแอป (MyPostXAgent.UI)
+    // สร้างใหม่ได้ด้วย scripts/product-mockups/build.py postx-agent
+    $shot = fn (string $file) => asset('images/products/postx-agent/v2/' . $file);
 
-                    <h1 class="text-5xl md:text-6xl font-black text-white mb-6">
-                        Post<span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-400">X</span>Agent
-                    </h1>
+    $openDate = $product->coming_soon_until?->format('d/m/Y');
 
-                    <p class="text-xl text-gray-300 mb-8">
-                        AI Agent สำหรับจัดการการโปรโมทแบรนด์อัตโนมัติ สร้างคอนเทนต์, วางแผนโพสต์, และวิเคราะห์ผลลัพธ์ด้วย AI
-                    </p>
+    // ทุกข้อเช็กกับโค้ดโปรแกรม Windows ใน repo PostXAgent (MyPostXAgent/src)
+    $rows = [
+        [
+            'img' => $shot('content.webp'), 'mock' => true, 'name' => 'เขียนโพสต์ด้วย AI', 'eyebrow' => 'AI content generator',
+            'th' => 'บอกหัวข้อ คีย์เวิร์ด ประเภทโพสต์ (โปรโมท เล่าเรื่อง รีวิวสินค้า ข่าวสาร Tips คำถาม/Poll แรงบันดาลใจ) และโทนเสียง แล้ว AI เขียนแคปชันพร้อมแฮชแท็กแนะนำให้ เลือกความยาว ภาษาไทย อังกฤษ หรือผสม และจะใส่อีโมจิหรือคำชวนให้กด (Call-to-Action) หรือไม่ก็ได้',
+            'en' => 'Give it a topic, keywords, a post type and a tone; it writes the caption and suggests hashtags, in Thai, English or both.',
+            'points' => [
+                'Ollama ทำงานในเครื่องคุณเอง ไม่ต้องมี API key — เปิดโปรแกรมครั้งแรกจะถามว่าจะติดตั้ง Ollama และโมเดล llama3.2:3b ให้ไหม',
+                'Gemini, OpenAI และ Claude ใช้ API key ของคุณเอง ใส่ในหน้า ตั้งค่า',
+                'ถ้าตัวที่เลือกใช้ไม่ได้ ลองตัวถัดไปให้เอง: Ollama → Gemini → OpenAI → Claude',
+            ],
+            'alt' => 'ภาพตัวอย่างหน้าสร้างเนื้อหา AI ของ PostXAgent: เลือก AI ประเภทโพสต์ โทนเสียง และตัวอย่างแคปชันพร้อมแฮชแท็ก',
+        ],
+        [
+            'img' => $shot('schedule.webp'), 'mock' => true, 'name' => 'ตั้งเวลา แล้วโพสต์ให้เอง', 'eyebrow' => 'Scheduler',
+            'th' => 'เลือกโพสต์จาก Draft กำหนดวันและเวลา โปรแกรมตรวจคิวทุก 1 นาที แล้วโพสต์ขึ้น Facebook Page และ Instagram Business ให้เมื่อถึงเวลา เห็นได้ทันทีว่าโพสต์ไหนขึ้นแล้ว โพสต์ไหนรอคิว',
+            'en' => 'Pick a draft, set a date and time; the queue is checked every minute and the post goes out on time.',
+            'points' => [
+                'โพสต์ผ่าน Graph API ของ Meta ด้วย access token ของบัญชีคุณ',
+                'Instagram ต้องเป็นบัญชี Business ที่ผูกกับ Facebook Page และโพสต์ต้องมีรูป',
+                'โพสต์ บัญชี และการตั้งค่าเก็บในฐานข้อมูลในเครื่อง',
+            ],
+            'alt' => 'ภาพตัวอย่างหน้าตั้งเวลาโพสต์ของ PostXAgent: ปฏิทิน รายการ Draft และโพสต์ที่ตั้งเวลาไว้ในวันนั้น',
+        ],
+    ];
 
-                    <!-- Key Features Tags -->
-                    <div class="flex flex-wrap gap-3 mb-8">
-                        <span class="px-3 py-1 bg-orange-500/20 text-orange-300 rounded-full text-sm border border-orange-500/30">AI Content</span>
-                        <span class="px-3 py-1 bg-amber-500/20 text-amber-300 rounded-full text-sm border border-amber-500/30">Auto Posting</span>
-                        <span class="px-3 py-1 bg-yellow-500/20 text-yellow-300 rounded-full text-sm border border-yellow-500/30">Multi-Platform</span>
-                        <span class="px-3 py-1 bg-red-500/20 text-red-300 rounded-full text-sm border border-red-500/30">Analytics</span>
-                    </div>
+    // ส่วนที่มีในโค้ดของระบบ PostXAgent แล้ว (AIManagerCore) แต่ยังไม่ได้รวมเข้าโปรแกรม Windows ที่จะขาย
+    $engine = [
+        [
+            'key' => 'platforms', 'name' => '9 แพลตฟอร์ม', 'short' => 'TikTok · X · LINE · YouTube …', 'tier' => 'soon',
+            'th' => 'ตัวโพสต์ของแต่ละแพลตฟอร์มในระบบเบื้องหลังมีครบ 9 ตัว: Facebook, Instagram, TikTok, X (Twitter), LINE, YouTube, Threads, LinkedIn และ Pinterest ตอนนี้โปรแกรม Windows โพสต์ได้เฉพาะ Facebook Page และ Instagram Business',
+            'en' => 'Workers for nine networks exist in the engine. The Windows app posts to Facebook Pages and Instagram Business today.',
+            'points' => [],
+        ],
+        [
+            'key' => 'pool', 'name' => 'พูลบัญชี', 'short' => 'หมุนบัญชี · พักบัญชีที่มีปัญหา', 'tier' => 'soon',
+            'th' => 'รวมหลายบัญชีของแบรนด์ไว้เป็นพูล แล้วเลือกบัญชีที่จะโพสต์ตามลำดับ (Round-robin) ตามที่ใช้น้อยที่สุด ตามลำดับความสำคัญ หรือสุ่ม บัญชีที่โดนจำกัดการโพสต์จะถูกข้ามจนกว่าจะหมดเวลาจำกัด',
+            'en' => 'Several accounts per brand, picked round-robin, least-used, by priority or at random; rate-limited accounts are skipped until they reset.',
+            'points' => ['บัญชีที่ล้มเหลวติดกันจะถูกพักอัตโนมัติ นานขึ้นทีละเท่าตัว สูงสุด 24 ชั่วโมง'],
+        ],
+        [
+            'key' => 'teach', 'name' => 'สอนให้ทำบนหน้าเว็บ', 'short' => 'Teaching mode · ซ่อมขั้นตอนเอง', 'tier' => 'soon',
+            'th' => 'สำหรับเว็บที่ไม่มี API: ทำให้ดูหนึ่งรอบ ระบบเรียนขั้นตอนเป็นเวิร์กโฟลว์ จำปุ่มและช่องด้วยหลายวิธี (CSS, XPath, ID, ข้อความ ฯลฯ) และเมื่อหน้าเว็บเปลี่ยนจนขั้นตอนเดิมใช้ไม่ได้ จะพยายามหาทางซ่อมขั้นตอนให้เอง',
+            'en' => 'Show it once on a site with no API; it learns the steps, finds elements several ways and tries to repair the workflow when the page changes.',
+            'points' => [],
+        ],
+        [
+            'key' => 'images', 'name' => 'สร้างรูปประกอบ', 'short' => 'Stable Diffusion · Leonardo · DALL·E', 'tier' => 'soon',
+            'th' => 'ตัวสร้างรูปประกอบโพสต์มีในโค้ดแล้ว ทั้ง Stable Diffusion ในเครื่อง, Leonardo และ DALL·E แต่ยังไม่มีหน้าจอให้ใช้ในโปรแกรม',
+            'en' => 'Image generators (local Stable Diffusion, Leonardo, DALL·E) are in the code, not yet in the app\'s screens.',
+            'points' => [],
+        ],
+    ];
 
-                    <!-- CTA Buttons -->
-                    <div class="flex flex-wrap gap-4">
-                        @auth
-                            @if($hasPurchased)
-                                <a href="{{ route('customer.downloads') }}"
-                                   class="px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-green-500/25">
-                                    ดาวน์โหลด
-                                </a>
-                            @else
-                                <a href="{{ route('products.index') }}"
-                                   class="px-8 py-4 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25">
-                                    ดูแพคเกจ
-                                </a>
-                            @endif
-                        @else
-                            <a href="{{ route('products.index') }}"
-                               class="px-8 py-4 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25">
-                                ดูแพคเกจ
-                            </a>
-                        @endauth
-                    </div>
-                </div>
+    $ld = [
+        '@context' => 'https://schema.org',
+        '@type' => 'SoftwareApplication',
+        'name' => 'PostXAgent',
+        'operatingSystem' => 'Windows 10/11 (64-bit)',
+        'applicationCategory' => 'BusinessApplication',
+        'inLanguage' => ['th', 'en'],
+        'description' => 'โปรแกรม Windows ที่ใช้ AI เขียนโพสต์ ตั้งเวลา และโพสต์ขึ้น Facebook Page และ Instagram Business ให้อัตโนมัติ',
+        'image' => asset('images/products/postx-agent/v2/og.jpg'),
+        'url' => route('products.show', $product->slug),
+        'publisher' => ['@type' => 'Organization', 'name' => 'XMAN Studio', 'url' => url('/')],
+    ];
+    if (! $product->is_custom) {
+        $ld['offers'] = ['@type' => 'Offer', 'price' => (string) $price, 'priceCurrency' => 'THB'];
+    }
+@endphp
+<x-xp.page a="#38f0ff" b="#c084fc" c="#f0abfc" glow="139 92 246" g1="#00f5ff" g2="#8b5cf6" g3="#ec4899">
 
-                <!-- Right: Preview Image -->
-                <div class="relative">
-                    <div class="bg-gradient-to-br from-orange-500/20 to-amber-500/20 rounded-2xl p-8 backdrop-blur-sm border border-orange-500/30">
-                        <div class="aspect-video bg-gray-800 rounded-xl flex items-center justify-center overflow-hidden">
-                            @if($product->artwork_url)
-                                <img src="{{ $product->artwork_url }}" alt="PostXAgent" class="w-full h-full object-cover">
-                            @else
-                                <div class="text-center">
-                                    <svg class="w-24 h-24 mx-auto text-orange-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
-                                    </svg>
-                                    <p class="text-gray-400">PostXAgent Dashboard</p>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- AI Features -->
-    <section class="py-16 bg-gray-900/50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-3xl font-bold text-white text-center mb-4">AI-Powered Marketing</h2>
-            <p class="text-gray-400 text-center mb-12 max-w-2xl mx-auto">ใช้พลัง AI สร้างและจัดการคอนเทนต์การตลาดอัตโนมัติ</p>
-
-            <div class="grid md:grid-cols-3 gap-8">
-                <!-- Content Generation -->
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:border-orange-500/50 transition-all">
-                    <div class="w-12 h-12 bg-orange-500/20 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">AI Content Generation</h3>
-                    <p class="text-gray-400">สร้างเนื้อหาโพสต์, แคปชัน, แฮชแท็กอัตโนมัติตามธีมแบรนด์</p>
-                </div>
-
-                <!-- Image Analysis -->
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:border-orange-500/50 transition-all">
-                    <div class="w-12 h-12 bg-amber-500/20 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Image Analysis</h3>
-                    <p class="text-gray-400">วิเคราะห์รูปภาพและแนะนำแคปชันที่เหมาะสม</p>
-                </div>
-
-                <!-- Trend Analysis -->
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:border-orange-500/50 transition-all">
-                    <div class="w-12 h-12 bg-yellow-500/20 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Trend Analysis</h3>
-                    <p class="text-gray-400">ติดตาม Trends และแนะนำหัวข้อที่กำลังมาแรง</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Features Section -->
-    <section class="py-16">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-3xl font-bold text-white text-center mb-12">ฟีเจอร์หลัก</h2>
-
-            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Feature 1 -->
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:border-orange-500/50 transition-all">
-                    <div class="w-12 h-12 bg-orange-500/20 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Post Scheduling</h3>
-                    <p class="text-gray-400">ตั้งเวลาโพสต์ล่วงหน้า รองรับ Timezone ต่างๆ</p>
-                </div>
-
-                <!-- Feature 2 -->
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:border-orange-500/50 transition-all">
-                    <div class="w-12 h-12 bg-amber-500/20 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Content Calendar</h3>
-                    <p class="text-gray-400">ปฏิทินคอนเทนต์ วางแผนการโพสต์ทั้งเดือน</p>
-                </div>
-
-                <!-- Feature 3 -->
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:border-orange-500/50 transition-all">
-                    <div class="w-12 h-12 bg-yellow-500/20 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Hashtag Manager</h3>
-                    <p class="text-gray-400">จัดการ Hashtag Sets แนะนำแฮชแท็กยอดนิยม</p>
-                </div>
-
-                <!-- Feature 4 -->
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:border-orange-500/50 transition-all">
-                    <div class="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Analytics Dashboard</h3>
-                    <p class="text-gray-400">แดชบอร์ดวิเคราะห์ Engagement, Reach, Impressions</p>
-                </div>
-
-                <!-- Feature 5 -->
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:border-orange-500/50 transition-all">
-                    <div class="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Team Collaboration</h3>
-                    <p class="text-gray-400">ทำงานร่วมกันในทีม อนุมัติโพสต์ก่อนเผยแพร่</p>
-                </div>
-
-                <!-- Feature 6 -->
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:border-orange-500/50 transition-all">
-                    <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Template Library</h3>
-                    <p class="text-gray-400">คลัง Template สำเร็จรูปสำหรับทุกโอกาส</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Supported Platforms -->
-    <section class="py-16 bg-gray-900/50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-3xl font-bold text-white text-center mb-12">แพลตฟอร์มที่รองรับ</h2>
-
-            <div class="flex flex-wrap justify-center gap-6">
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 text-center w-32">
-                    <div class="w-14 h-14 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <svg class="w-7 h-7 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                        </svg>
-                    </div>
-                    <span class="text-white font-semibold">Facebook</span>
-                </div>
-
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 text-center w-32">
-                    <div class="w-14 h-14 bg-pink-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <svg class="w-7 h-7 text-pink-400" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                        </svg>
-                    </div>
-                    <span class="text-white font-semibold">Instagram</span>
-                </div>
-
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 text-center w-32">
-                    <div class="w-14 h-14 bg-sky-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <svg class="w-7 h-7 text-sky-400" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                        </svg>
-                    </div>
-                    <span class="text-white font-semibold">X (Twitter)</span>
-                </div>
-
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 text-center w-32">
-                    <div class="w-14 h-14 bg-blue-600/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <svg class="w-7 h-7 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                        </svg>
-                    </div>
-                    <span class="text-white font-semibold">LinkedIn</span>
-                </div>
-
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 text-center w-32">
-                    <div class="w-14 h-14 bg-black/50 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
-                        </svg>
-                    </div>
-                    <span class="text-white font-semibold">TikTok</span>
-                </div>
-
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 text-center w-32">
-                    <div class="w-14 h-14 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <svg class="w-7 h-7 text-green-400" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 5.17 3.98 9.48 9.15 9.97l.02.02h.05c.47.04.95.06 1.43.06 5.46 0 9.91-4.45 9.91-9.91 0-5.46-4.45-9.91-9.91-9.91-.23 0-.47.01-.7.02h-.04z"/>
-                        </svg>
-                    </div>
-                    <span class="text-white font-semibold">LINE</span>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- How It Works -->
-    <section class="py-16">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-3xl font-bold text-white text-center mb-4">วิธีการทำงาน</h2>
-            <p class="text-gray-400 text-center mb-12 max-w-2xl mx-auto">ให้ AI ช่วยจัดการการตลาดของคุณใน 4 ขั้นตอน</p>
-
-            <div class="grid md:grid-cols-4 gap-6">
-                <div class="text-center">
-                    <div class="w-16 h-16 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-orange-500">
-                        <span class="text-2xl font-bold text-orange-400">1</span>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">ตั้งค่าแบรนด์</h3>
-                    <p class="text-gray-400 text-sm">กำหนด Brand Voice, โทนสี และ Guidelines</p>
-                </div>
-
-                <div class="text-center">
-                    <div class="w-16 h-16 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-orange-500">
-                        <span class="text-2xl font-bold text-orange-400">2</span>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">สร้างคอนเทนต์</h3>
-                    <p class="text-gray-400 text-sm">AI สร้างเนื้อหาตาม Brand Guidelines</p>
-                </div>
-
-                <div class="text-center">
-                    <div class="w-16 h-16 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-orange-500">
-                        <span class="text-2xl font-bold text-orange-400">3</span>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">ตั้งเวลาโพสต์</h3>
-                    <p class="text-gray-400 text-sm">กำหนดเวลาโพสต์ที่เหมาะสมที่สุด</p>
-                </div>
-
-                <div class="text-center">
-                    <div class="w-16 h-16 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-orange-500">
-                        <span class="text-2xl font-bold text-orange-400">4</span>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">วิเคราะห์ผล</h3>
-                    <p class="text-gray-400 text-sm">ดูรายงานและปรับปรุงกลยุทธ์</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- System Requirements -->
-    <section class="py-16 bg-gray-900/50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-3xl font-bold text-white text-center mb-12">ความต้องการระบบ</h2>
-
-            <div class="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
-                    <h3 class="text-lg font-bold text-white mb-4 flex items-center">
-                        <svg class="w-6 h-6 text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                        </svg>
-                        ขั้นต่ำ
-                    </h3>
-                    <ul class="space-y-2 text-gray-400">
-                        <li>Windows 10/11 (64-bit)</li>
-                        <li>.NET 8.0 Runtime</li>
-                        <li>RAM 4GB</li>
-                        <li>พื้นที่ว่าง 500MB</li>
-                        <li>Internet Connection</li>
-                    </ul>
-                </div>
-
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-orange-500/50">
-                    <h3 class="text-lg font-bold text-white mb-4 flex items-center">
-                        <svg class="w-6 h-6 text-orange-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                        </svg>
-                        ต้องการเพิ่มเติม
-                    </h3>
-                    <ul class="space-y-2 text-gray-300">
-                        <li>OpenAI API Key หรือ Claude API Key</li>
-                        <li>Social Media API Access</li>
-                        <li>Facebook/Instagram Business Account</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="py-16">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 class="text-3xl font-bold text-white mb-4">เริ่มต้นใช้งาน PostXAgent</h2>
-            <p class="text-gray-400 mb-8">ให้ AI ช่วยจัดการการตลาดของคุณวันนี้</p>
-
-            <div class="flex flex-wrap justify-center gap-4">
-                @auth
-                    @if($hasPurchased)
-                        <a href="{{ route('customer.downloads') }}"
-                           class="px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-green-500/25">
-                            ดาวน์โหลด
-                        </a>
-                    @else
-                        <a href="{{ route('products.index') }}"
-                           class="px-8 py-4 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25">
-                            ดูแพคเกจ
-                        </a>
-                    @endif
+    {{-- ============================ HERO ============================ --}}
+    <x-xp.hero :art="$shot('art-hero.webp')"
+               tagline="AI ช่วยโปรโมตแบรนด์ เขียน ตั้งเวลา โพสต์ให้เอง"
+               tagline-en="An AI assistant that writes your brand's posts, schedules them and publishes them for you."
+               lead="เขียนแคปชันและแฮชแท็กด้วย AI ได้ทั้งแบบฟรีในเครื่อง (Ollama) หรือใช้ key ของ Gemini, OpenAI, Claude ของคุณเอง ตั้งเวลาไว้ล่วงหน้า แล้วโปรแกรมโพสต์ขึ้น Facebook Page และ Instagram Business ให้ตามเวลา"
+               lead-en="Free local AI or your own Gemini, OpenAI or Claude key; scheduled posts to Facebook Pages and Instagram Business.">
+        <x-slot:chips>
+            @if($comingSoon)
+                <x-xp.badge tier="soon" label="COMING SOON" />
+            @endif
+            <span class="xp-chip"><i></i>{{ $latest ? 'PostXAgent ' . $latest->version : 'PostXAgent' }}</span>
+            <span class="xp-chip">Windows 10/11 · 64-bit</span>
+        </x-slot:chips>
+        <x-slot:title>Post<span class="xp-text-glow">X</span>Agent</x-slot:title>
+        <x-slot:actions>
+            @if($comingSoon)
+                <x-xp.download :href="route('customer.downloads')" :coming-soon="true" />
+                <a href="{{ route('quote.index') }}" class="xp-btn-ghost inline-flex items-center px-6 py-4 rounded-xl font-bold transition">แจ้งเตือนเมื่อเปิดขาย</a>
+            @else
+                @if(auth()->check() && $hasPurchased)
+                    <x-xp.download :href="route('customer.downloads')" th="ดาวน์โหลด" en="Download" />
+                @endif
+                @unless($product->is_custom)
+                    <a href="#pricing" class="xp-btn-pro inline-flex items-center px-6 py-4 rounded-xl font-extrabold transition">ซื้อ License — ฿{{ $priceText }}</a>
                 @else
-                    <a href="{{ route('products.index') }}"
-                       class="px-8 py-4 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25">
-                        ดูแพคเกจ
-                    </a>
-                @endauth
+                    <a href="{{ route('quote.index') }}" class="xp-btn-pro inline-flex items-center px-6 py-4 rounded-xl font-extrabold transition">ติดต่อสอบถามราคา</a>
+                @endunless
+            @endif
+        </x-slot:actions>
+        <x-slot:notes>
+            @if(session('success'))
+                <p class="mt-4 text-sm text-emerald-200/90">{{ session('success') }}</p>
+            @endif
+            @if($comingSoon)
+                <p class="mt-4 text-sm text-gray-400">
+                    @if($openDate)เปิดขายวันที่ {{ $product->coming_soon_until->format('d/m/Y H:i') }}@else กำลังพัฒนา — ยังไม่เปิดขายและยังไม่เปิดให้ดาวน์โหลด@endif
+                </p>
+            @elseif($latest)
+                <p class="mt-4 text-sm text-gray-400">เวอร์ชันล่าสุด {{ $latest->version }}@if($latest->file_size) · {{ $latest->file_size_formatted }}@endif · ดาวน์โหลดได้หลังซื้อ จากหน้า ดาวน์โหลดของฉัน</p>
+            @endif
+            @if(isset($userLicense) && $userLicense)
+                @if(! $userLicense->isValid())
+                    <p class="mt-3 text-sm text-red-300">
+                        License ของคุณหมดอายุแล้ว @if($userLicense->expires_at)เมื่อ {{ $userLicense->expires_at->format('d/m/Y') }}@endif ·
+                        <a href="{{ route('customer.licenses.show', $userLicense) }}" class="font-semibold underline hover:text-white">ต่ออายุตอนนี้</a>
+                    </p>
+                @elseif($userLicense->license_type !== 'lifetime' && $userLicense->daysRemaining() <= 7)
+                    <p class="mt-3 text-sm text-amber-200">
+                        License ใกล้หมดอายุ — เหลืออีก {{ $userLicense->daysRemaining() }} วัน ({{ $userLicense->expires_at->format('d/m/Y') }}) ·
+                        <a href="{{ route('customer.licenses.show', $userLicense) }}" class="font-semibold underline hover:text-white">ต่ออายุตอนนี้</a>
+                    </p>
+                @else
+                    <p class="mt-3 text-sm text-emerald-200/90">
+                        คุณมี License แล้ว · {{ $userLicense->license_type === 'lifetime' ? 'ตลอดชีพ' : 'หมดอายุ ' . $userLicense->expires_at->format('d/m/Y') }} ·
+                        <a href="{{ route('customer.licenses.show', $userLicense) }}" class="font-semibold underline decoration-emerald-300/50 hover:text-white">ดู License ของฉัน</a>
+                    </p>
+                @endif
+            @endif
+        </x-slot:notes>
+        <x-slot:badges>
+            <li class="flex items-center gap-2 text-gray-300"><x-xp.badge tier="soon" label="กำลังพัฒนา" /> ยังไม่เปิดขาย</li>
+            <li class="flex items-center gap-2 text-gray-300"><span class="xp-dot"></span> AI ฟรีในเครื่องด้วย Ollama</li>
+            <li class="flex items-center gap-2 text-gray-300"><span class="xp-dot"></span> 1 License = 1 เครื่อง</li>
+        </x-slot:badges>
+        <x-slot:visual>
+            <div class="xp-tilt">
+                <x-xp.screen :src="$shot('dashboard.webp')" :eager="true" :mock="true"
+                             alt="ภาพตัวอย่างหน้าแดชบอร์ดของ PostXAgent: จำนวนบัญชี โพสต์วันนี้ โพสต์ที่รอคิว และสถานะ AI" />
             </div>
+            <div class="xp-float absolute -left-3 sm:-left-8 bottom-6 sm:bottom-10 xp-card backdrop-blur-md px-4 py-3 shadow-2xl">
+                <p class="text-[11px] tracking-widest uppercase text-gray-400">Ollama · ในเครื่อง</p>
+                <p class="text-white font-extrabold text-lg leading-tight">เขียนโพสต์ด้วย AI<br><span style="color: var(--xp-c)">ไม่ต้องมี API key</span></p>
+            </div>
+            <div class="xp-float-2 absolute -right-2 sm:-right-6 -top-5 xp-card backdrop-blur-md px-4 py-3 shadow-2xl hidden sm:block">
+                <p class="text-[11px] tracking-widest uppercase text-gray-400">Scheduler</p>
+                <p class="text-white font-bold leading-tight">ตรวจคิวทุก 1 นาที<br><span class="text-gray-400 text-sm font-normal">→ ถึงเวลาก็โพสต์ให้เอง</span></p>
+            </div>
+        </x-slot:visual>
+    </x-xp.hero>
+
+    {{-- ========================== WINDOWS APP ========================== --}}
+    <section class="relative py-20" id="features">
+        <div class="xp-glow w-[34rem] h-[34rem] -right-40 top-10" style="background: rgb(var(--xp-glow) / .12)"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-xp.head class="mb-16" eyebrow="Windows app · in development" title="เขียน ตั้งเวลา" title2="แล้วปล่อยให้โพสต์เอง"
+                       sub="งานโพสต์ประจำวันของแบรนด์ ตั้งแต่คิดแคปชันจนโพสต์ขึ้นเพจ ทำจบในโปรแกรมเดียวบน Windows"
+                       en="From the caption to the published post, in one Windows app." />
+            <x-xp.rows :items="$rows" />
         </div>
     </section>
-</div>
+
+    {{-- ============================ ENGINE (ยังไม่อยู่ในโปรแกรม) ============================ --}}
+    <section class="relative py-20 isolate" id="engine">
+        <x-xp.art :src="$shot('art-2.webp')" class="top-0 w-[130%] opacity-35 right-[-30%] lg:right-[-16%] lg:w-[68%] lg:opacity-80" />
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-xp.head align="left" class="mb-10" eyebrow="On the way · not in the app yet" title="กำลังมา" title2="ในรุ่นถัดไป"
+                       sub="ส่วนเหล่านี้มีในโค้ดของระบบ PostXAgent แล้ว แต่ยังไม่ได้รวมเข้าโปรแกรม Windows — จะเปิดให้ใช้เมื่อพร้อมและทดสอบครบ"
+                       en="Already in PostXAgent's engine code, not yet part of the Windows app." />
+            <x-xp.explorer id="engine" label="ส่วนที่กำลังพัฒนาของ PostXAgent" :tools="$engine" />
+        </div>
+    </section>
+
+    {{-- ============================ TRUST ============================ --}}
+    <section class="relative py-20">
+        <div class="xp-glow w-[36rem] h-[24rem] left-1/2 -translate-x-1/2 top-24" style="background: rgb(var(--xp-glow) / .1)"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-xp.head class="mb-12" eyebrow="Your data, your keys" title="ข้อมูลอยู่ในเครื่อง" title2="key เป็นของคุณ"
+                       sub="ไม่มีตัวกลางคิดค่า AI เพิ่ม และไม่ต้องย้ายข้อมูลแบรนด์ไปไว้ที่อื่น"
+                       en="No middleman on AI costs, no brand data moved elsewhere." />
+            <x-xp.cards :items="[
+                ['icon' => 'chip', 'title' => 'AI ในเครื่องได้', 'body' => 'ใช้ Ollama สร้างเนื้อหาบนคอมของคุณเอง ไม่ต้องส่งหัวข้อไปที่ผู้ให้บริการ AI ภายนอก', 'en' => 'Local AI with Ollama'],
+                ['icon' => 'key', 'title' => 'ใช้ API key ของคุณเอง', 'body' => 'Gemini, OpenAI และ Claude คิดค่าใช้งานกับบัญชีของคุณโดยตรง ใส่หรือไม่ใส่ก็ได้', 'en' => 'Your own provider keys, billed to you'],
+                ['icon' => 'server', 'title' => 'ข้อมูลเก็บในเครื่อง', 'body' => 'โพสต์ บัญชี และการตั้งค่าอยู่ในฐานข้อมูล SQLite บนเครื่องที่ติดตั้ง', 'en' => 'Posts and settings in a local database'],
+                ['icon' => 'shield', 'title' => 'โพสต์ผ่าน API ทางการ', 'body' => 'Facebook และ Instagram โพสต์ผ่าน Graph API ของ Meta ด้วย access token ของบัญชีคุณ', 'en' => 'Meta\'s Graph API with your access token'],
+                ['icon' => 'lock', 'title' => '1 License ต่อ 1 เครื่อง', 'body' => 'License ผูกกับรหัสเครื่องที่คำนวณจากฮาร์ดแวร์ของคอมเครื่องนั้น', 'en' => 'Bound to the machine it is activated on'],
+                ['icon' => 'globe', 'title' => 'ไทย / English', 'body' => 'สลับภาษาหน้าจอโปรแกรมได้จากปุ่มบนแถบด้านบน และเขียนโพสต์ได้ทั้งไทย อังกฤษ หรือผสม', 'en' => 'Thai or English, in the app and in posts'],
+            ]" />
+        </div>
+    </section>
+
+    {{-- =========================== PRICING =========================== --}}
+    <section class="relative py-20 scroll-mt-20" id="pricing">
+        <div class="xp-glow w-[40rem] h-[26rem] left-1/2 -translate-x-1/2 top-32 bg-amber-500/10"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-xp.head class="mb-12" eyebrow="Pricing" title="ราคาเดียว" title2="ไม่มีแพ็กเกจให้งง"
+                       :sub="$comingSoon ? 'ยังไม่เปิดขาย — ราคาด้านล่างคือราคาที่ตั้งไว้ในร้านตอนนี้' : '1 License ใช้ได้ 1 เครื่อง · ได้คีย์ทางอีเมลและในหน้า บัญชีของฉัน'"
+                       en="One price, one licence per machine." />
+
+            <div class="max-w-md mx-auto">
+                <div class="xp-featured">
+                    <div class="p-7 flex flex-col h-full">
+                        <div class="flex items-center justify-between mb-1">
+                            <h3 class="text-2xl font-black text-white">PostXAgent License</h3>
+                            @if($comingSoon)<x-xp.badge tier="soon" />@endif
+                        </div>
+                        <p class="text-amber-100/80 text-sm mb-6">โปรแกรม Windows · 1 License = 1 เครื่อง</p>
+                        @if($product->is_custom)
+                            <div class="mb-6"><span class="text-4xl font-black text-white">สอบถามราคา</span></div>
+                        @else
+                            <div class="mb-6 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                                <span class="text-5xl font-black text-white">฿{{ $priceText }}</span>
+                                @if($hasDiscount)
+                                    <span class="text-xl text-gray-500 line-through">฿{{ number_format($product->original_price, 0) }}</span>
+                                    <span class="xp-badge xp-pro">-{{ round((1 - $product->price / $product->original_price) * 100) }}%</span>
+                                @endif
+                            </div>
+                            <x-tpix-price variant="detail" :thb="$product->price" :tpix="$product->price_tpix" class="-mt-4 mb-6" />
+                        @endif
+                        <x-xp.ticks pro class="!space-y-2.5 text-sm mb-8 flex-1" :items="[
+                            'เขียนโพสต์ด้วย AI: Ollama (ฟรีในเครื่อง) · Gemini · OpenAI · Claude',
+                            'ตั้งเวลาโพสต์ Facebook Page + Instagram Business',
+                            'แดชบอร์ด · Draft · ปฏิทินโพสต์',
+                            '1 License ใช้ได้ 1 เครื่อง',
+                        ]" />
+                        @if($product->is_custom)
+                            <a href="{{ route('quote.index') }}" class="xp-btn-pro block w-full py-3.5 text-center rounded-xl font-extrabold transition">ติดต่อสอบถามราคา</a>
+                        @elseif($comingSoon)
+                            <x-coming-soon-download :product="$product" label="Coming Soon — ยังไม่เปิดขาย" class="w-full" />
+                            <a href="{{ route('quote.index') }}" class="xp-link block text-center text-sm mt-4">แจ้งเตือนเมื่อเปิดขาย →</a>
+                        @else
+                            {{-- ราคามาจาก products.price ไม่ใช่จากฟอร์ม — ตะกร้าคิดตามแถวสินค้า --}}
+                            <form action="{{ route('cart.add', $product) }}" method="POST">
+                                @csrf
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit" class="xp-btn-pro block w-full py-3.5 text-center rounded-xl font-extrabold transition cursor-pointer">
+                                    ซื้อ License — ฿{{ $priceText }}
+                                </button>
+                            </form>
+                        @endif
+                        @if(isset($userLicense) && $userLicense)
+                            <a href="{{ route('customer.licenses.show', $userLicense) }}" class="xp-link block text-center text-sm mt-4">ดู License ของฉัน →</a>
+                        @endif
+                    </div>
+                </div>
+            </div>
+            <p class="text-center text-xs text-gray-500 mt-6 max-w-2xl mx-auto">ค่าใช้งาน Gemini / OpenAI / Claude (ถ้าเลือกใช้) จ่ายกับผู้ให้บริการนั้นโดยตรง ไม่รวมในราคานี้ · Ollama ใช้ฟรีในเครื่อง</p>
+        </div>
+    </section>
+
+    {{-- =========================== DOWNLOAD =========================== --}}
+    @if($latest)
+        <section class="relative py-16 scroll-mt-20" id="download">
+            <div class="max-w-xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="xp-card p-7">
+                    <div class="flex items-center justify-between gap-4 mb-5">
+                        <div>
+                            <p class="text-xs text-gray-400">เวอร์ชันล่าสุด · Latest</p>
+                            <p class="text-2xl font-black text-white">v{{ $latest->version }}</p>
+                        </div>
+                        @if($latest->file_size)
+                            <div class="text-right">
+                                <p class="text-xs text-gray-400">ขนาดไฟล์</p>
+                                <p class="text-lg font-bold text-white">{{ $latest->file_size_formatted }}</p>
+                            </div>
+                        @endif
+                    </div>
+                    @if($latest->changelog)
+                        <p class="text-sm text-gray-300 whitespace-pre-wrap mb-6 rounded-lg bg-white/[.03] p-4">{{ \Illuminate\Support\Str::limit($latest->changelog, 200) }}</p>
+                    @endif
+                    @if($comingSoon)
+                        <x-xp.download block :href="route('customer.downloads')" :coming-soon="true" />
+                    @elseif(auth()->check() && $hasPurchased)
+                        <x-xp.download block :href="route('customer.downloads')" th="ดาวน์โหลด" en="Download" />
+                    @else
+                        <a href="#pricing" class="xp-btn-ghost block w-full py-3.5 text-center rounded-xl font-bold transition">ซื้อ License ก่อน แล้วดาวน์โหลดได้จากหน้า ดาวน์โหลดของฉัน</a>
+                    @endif
+                </div>
+            </div>
+        </section>
+    @endif
+
+    <x-xp.setup
+        :specs="[
+            ['ระบบปฏิบัติการ', 'Windows 10 หรือ 11 แบบ 64-bit', 'Windows 10/11, 64-bit'],
+            ['ไม่ต้องติดตั้ง .NET', 'โปรแกรมมาเป็นไฟล์เดียวพร้อมทุกอย่างที่ต้องใช้', 'Self-contained single file'],
+            ['บัญชีที่จะโพสต์', 'Facebook Page และ/หรือ Instagram Business ที่ผูกกับเพจ พร้อม access token', 'A Facebook Page / Instagram Business account'],
+            ['อินเทอร์เน็ต', 'ใช้ตอนเปิดใช้งาน License ตอนโพสต์ และตอนใช้ AI ออนไลน์ (Ollama ทำงานในเครื่อง)', 'Online to activate, post and use cloud AI'],
+        ]"
+        specs-note="Ollama ใช้พื้นที่และแรมของเครื่องเพิ่มตามโมเดลที่เลือก — โมเดลเริ่มต้นคือ llama3.2:3b ไม่ติดตั้ง Ollama ก็ใช้ Gemini / OpenAI / Claude ด้วย key ของคุณแทนได้"
+        :steps="[
+            ['ซื้อ License เมื่อเปิดขาย', 'ได้ License key ทางอีเมลและในหน้า บัญชีของฉัน', 'Buy a licence once it is on sale'],
+            ['ดาวน์โหลดแล้วเปิดโปรแกรม', 'ดาวน์โหลดจากหน้า ดาวน์โหลดของฉัน ใส่ License key แล้วเลือกว่าจะติดตั้ง Ollama ไหม', 'Download, open, enter your key'],
+            ['เพิ่มบัญชี แล้วเริ่มโพสต์', 'เพิ่มบัญชี Facebook / Instagram ให้ AI เขียนโพสต์ แล้วตั้งเวลา', 'Add your accounts and schedule'],
+        ]" />
+
+    <x-xp.faq :items="[
+        ['เปิดขายเมื่อไร?', $comingSoon
+            ? ($openDate ? 'กำหนดเปิดขายวันที่ ' . $openDate . ' — ก่อนหน้านั้นยังซื้อและดาวน์โหลดไม่ได้' : 'ยังอยู่ระหว่างพัฒนา ยังไม่มีกำหนดวัน — กดแจ้งเตือนเมื่อเปิดขายไว้ได้ แล้วเราจะติดต่อกลับ')
+            : 'เปิดขายแล้ว ซื้อได้จากส่วนราคาของหน้านี้'],
+        ['ราคาเท่าไร?', $product->is_custom ? 'ติดต่อสอบถามราคาได้ที่หน้าใบเสนอราคา' : 'License ละ ฿' . $priceText . ' ใช้ได้ 1 เครื่อง — ค่าใช้งาน AI ออนไลน์ (ถ้าเลือกใช้) จ่ายกับผู้ให้บริการโดยตรง'],
+        ['ต้องจ่ายค่า AI เพิ่มไหม?', 'ไม่จำเป็น Ollama ทำงานบนเครื่องคุณเองฟรี ถ้าอยากใช้ Gemini, OpenAI หรือ Claude ให้ใส่ API key ของคุณเอง ค่าใช้งานคิดกับบัญชีนั้นโดยตรง'],
+        ['โพสต์ได้แพลตฟอร์มไหนบ้าง?', 'โปรแกรม Windows ตอนนี้โพสต์ขึ้น Facebook Page และ Instagram Business (ผ่าน Graph API) ตัวโพสต์ของ TikTok, X, LINE, YouTube, Threads, LinkedIn และ Pinterest มีในระบบเบื้องหลังแล้ว แต่ยังไม่ได้รวมเข้าโปรแกรม'],
+        ['Instagram โพสต์แต่ข้อความได้ไหม?', 'ไม่ได้ Instagram ต้องมีรูปทุกโพสต์ และต้องเป็นบัญชี Business ที่ผูกกับ Facebook Page'],
+        ['ใช้ได้กี่เครื่อง?', '1 License ใช้ได้ 1 เครื่อง License ผูกกับรหัสเครื่องที่คำนวณจากฮาร์ดแวร์ มีหลายเครื่องต้องใช้หลาย License'],
+        ['ข้อมูลเก็บที่ไหน?', 'โพสต์ บัญชี และการตั้งค่าเก็บในฐานข้อมูลบนเครื่องของคุณ โปรแกรมติดต่อเซิร์ฟเวอร์ License, ผู้ให้บริการ AI ที่คุณเลือก และ Meta ตอนโพสต์เท่านั้น'],
+    ]" />
+
+    {{-- ======================== RELATED PRODUCTS ======================== --}}
+    @if($relatedProducts && $relatedProducts->count() > 0)
+        <section class="relative py-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <x-xp.head class="mb-10" eyebrow="More from XMAN Studio" title="ผลิตภัณฑ์ที่เกี่ยวข้อง" size="md" />
+                <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    @foreach($relatedProducts as $related)
+                        <a href="{{ route('products.show', $related->slug) }}" class="xp-card overflow-hidden transition group">
+                            <div class="aspect-video bg-white/[.03] overflow-hidden">
+                                @if($related->artwork_url)
+                                    <img src="{{ $related->artwork_url }}" alt="{{ $related->name }}" loading="lazy" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                                @endif
+                            </div>
+                            <div class="p-4">
+                                <h3 class="font-bold text-white mb-1">{{ $related->name }}</h3>
+                                @if($related->short_description)
+                                    <p class="text-gray-400 text-sm mb-2 line-clamp-2">{{ $related->short_description }}</p>
+                                @endif
+                                @if(! $related->is_custom)
+                                    <p class="xp-link font-bold">฿{{ number_format($related->price, 0) }}</p>
+                                    <x-tpix-price :thb="$related->price" :tpix="$related->price_tpix" />
+                                @else
+                                    <p class="text-gray-400 text-sm">สอบถามราคา</p>
+                                @endif
+                            </div>
+                        </a>
+                    @endforeach
+                </div>
+            </div>
+        </section>
+    @endif
+
+    {{-- =========================== FINAL CTA =========================== --}}
+    <x-xp.cta :art="$shot('art-hero.webp')" title="ให้ AI ช่วย" glow="โปรโมตแบรนด์"
+              :sub="$comingSoon ? 'PostXAgent ยังเป็น Coming Soon — ยังไม่เปิดขายและดาวน์โหลด กดแจ้งเตือนไว้ แล้วเราจะบอกเมื่อพร้อม' : 'เขียน ตั้งเวลา แล้วปล่อยให้โปรแกรมโพสต์ให้ ในโปรแกรมเดียวบน Windows'"
+              en="Let AI write and post for your brand.">
+        @if($comingSoon)
+            <x-xp.download :href="route('customer.downloads')" :coming-soon="true" class="!px-8" />
+            <a href="{{ route('quote.index') }}" class="xp-btn-ghost inline-flex items-center px-8 py-4 rounded-xl font-bold text-lg transition">แจ้งเตือนเมื่อเปิดขาย</a>
+        @else
+            @unless($product->is_custom)
+                <a href="#pricing" class="xp-btn-pro inline-flex items-center px-8 py-4 rounded-xl font-extrabold text-lg transition">ซื้อ License — ฿{{ $priceText }}</a>
+            @endunless
+            <a href="{{ route('quote.index') }}" class="xp-btn-ghost inline-flex items-center px-8 py-4 rounded-xl font-bold text-lg transition">ติดต่อสอบถาม</a>
+        @endif
+        <x-slot:footnote>
+            <p class="text-gray-500 text-sm mt-7">Windows 10/11 (64-bit) · ไม่ต้องลง .NET · Ollama ฟรีในเครื่อง · 1 License = 1 เครื่อง</p>
+        </x-slot:footnote>
+    </x-xp.cta>
+
+</x-xp.page>
+
+<script type="application/ld+json">{!! json_encode($ld, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) !!}</script>
 @endsection

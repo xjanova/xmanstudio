@@ -1,0 +1,33 @@
+<!doctype html>
+<!-- ร้านของมายด์ (screens/shop_screen.dart): packs from /api/packs — owned, free, or bought on the web.
+     Labels from i18n/strings.dart (shopTitle, shopSubtitle, shopKind, shopOwned, shopFree, shopGet, shopBuy, shopBuyOnWeb).
+     The second and third packs are made up; no price is drawn because prices are set per pack by the shop. -->
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .grid { position: relative; z-index: 3; margin: 4px 12px 0; display: flex; flex-direction: column; gap: 10px; }
+    .pk { display: flex; gap: 12px; padding: 10px; border-radius: 22px; align-items: center; }
+    .th { flex: none; width: 92px; height: 112px; border-radius: 18px; background: #f5efff center top / cover no-repeat; border: 1px solid #fff; }
+    .th.ph { background: rgba(255, 255, 255, .6) center / 82% auto no-repeat; }
+    .pk .k { font-size: 10.5px; font-weight: 600; letter-spacing: .3px; color: #7c6cff; }
+    .pk .n { font-size: 15px; font-weight: 600; margin: 1px 0 2px; }
+    .pk .d { font-size: 11.5px; color: rgba(35, 32, 74, .6); line-height: 1.4; }
+    .pk .a { margin-top: 8px; display: flex; gap: 6px; align-items: center; }
+    .pk .btn { height: 30px; padding: 0 13px; font-size: 12px; border-radius: 12px; }
+    .own { font-size: 11.5px; font-weight: 600; color: #00a894; }
+    .tip { position: relative; z-index: 3; margin: 12px 16px 0; font-size: 11.5px; color: rgba(35, 32, 74, .55); text-align: center; }
+</style></head>
+<body><div class="phone set work">
+    <div class="orb lilac" style="top:-60px;right:-70px;width:260px;height:260px"></div>
+    <div class="orb pink" style="bottom:160px;left:-90px;width:280px;height:280px"></div>
+    <div class="sb">12:30<span class="r"><b></b><i></i></span></div>
+    <div class="hdr"><p class="over">ชุดตัวมายด์</p><h1 class="display">ร้านของมายด์</h1><p class="cap">ชุด ตัวละครใหม่ และของประดับเวที</p></div>
+    <div class="grid">
+        <div class="pk glass"><span class="th" style="background-image:url(assets/avatar-bust.webp)"></span><div><p class="k">ตัวละคร</p><p class="n">มายด์</p><p class="d">ตัวละครตั้งต้นของแอป พร้อมท่าทางขยับตามอารมณ์</p><div class="a"><span class="own">✓ มีแล้ว</span></div></div></div>
+        <div class="pk glass"><span class="th ph" style="background-image:url(assets/aura.webp)"></span><div><p class="k">ชุดแต่งตัว</p><p class="n">ชุดออฟฟิศ (ตัวอย่าง)</p><p class="d">ชุดใหม่ใช้ท่าทางชุดเดิม โหลดแค่โมเดล</p><div class="a"><span class="tag" style="background:rgba(0,168,148,.12);color:#00a894">ฟรี</span><span class="btn ghost">โหลดลงเครื่อง</span></div></div></div>
+        <div class="pk glass"><span class="th ph" style="background-image:url(assets/aura.webp)"></span><div><p class="k">ตัวละคร</p><p class="n">ตัวละครใหม่ (ตัวอย่าง)</p><p class="d">สลับตัวได้ในหน้าตั้งค่า มีได้หลายชุดพร้อมกัน</p><div class="a"><span class="btn">ซื้อ</span></div></div></div>
+    </div>
+    <p class="tip">จ่ายเงินบนเว็บ แล้วกลับมากดรีเฟรช</p>
+    <div class="nav"><a><img src="assets/nav-mail.png" alt="">เมล</a><a><img src="assets/nav-calendar.png" alt="">ปฏิทิน</a><a class="gap">.</a><a><img src="assets/nav-timeline.png" alt="">ไทม์ไลน์</a><a class="on"><img src="assets/nav-settings.png" alt="">ตั้งค่า</a></div>
+    <div class="face-btn"><span style="background-image:url(assets/avatar-face.webp)"></span></div>
+    <div class="face-lbl">มายด์</div>
+</div></body></html>

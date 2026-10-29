@@ -1,0 +1,84 @@
+<!doctype html>
+<!-- Threats Found (Views/ThreatsView.xaml): score + severity, malware name, category, path, what it was detected by,
+     a recommendation and Quarantine / Delete / Ignore. Categories are ThreatInfo.CategoryDisplay values.
+     Files, paths and names are made up. -->
+<html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .top { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 14px; }
+    .bar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; color: var(--t2); font-size: 12px; }
+    .sel { height: 28px; padding: 0 10px; border-radius: 6px; background: var(--bg3); border: 1px solid var(--border); display: inline-flex; align-items: center; color: var(--t1); }
+    .th { display: grid; grid-template-columns: 74px 1fr 300px 290px; gap: 18px; align-items: center; background: var(--card); border: 1px solid var(--border);
+        border-left: 4px solid var(--c); border-radius: 10px; padding: 16px 18px; margin-bottom: 12px; }
+    .score { text-align: center; }
+    .score b { display: block; font-size: 26px; line-height: 1.1; color: var(--c); }
+    .score span { font-size: 10px; font-weight: 700; color: var(--c); letter-spacing: .04em; }
+    .nm { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .cat { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: rgba(239, 83, 80, .18); color: #ff8a80; }
+    .cat.amb { background: rgba(255, 183, 77, .16); color: var(--warn); }
+    .ig { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(102, 187, 106, .18); color: var(--green); }
+    .path { font-family: Consolas, monospace; font-size: 11px; color: var(--t3); margin-top: 3px; }
+    .rec { background: rgba(255, 255, 255, .05); border-radius: 8px; padding: 10px 12px; }
+    .rec small { font-size: 10px; color: var(--t3); text-transform: uppercase; letter-spacing: .05em; }
+    .acts { display: flex; gap: 8px; justify-content: flex-end; }
+    .foot { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+</style></head>
+<body data-on="threats" data-threats="4" data-msg="Scan completed: 4 threats found">
+<div class="main">
+    <div class="top">
+        <div><h1>Threats Found</h1><div class="sub">Review detected threats and choose what to do with them. Pay attention to the category and recommendation.</div></div>
+        <div style="display:flex;align-items:center;gap:12px"><span class="bad" style="font-weight:600">4 threats found</span><span class="btn sec sm">Refresh</span></div>
+    </div>
+    <div class="bar">Sort: <span class="sel">Severity ▼</span><span style="margin-left:12px">Show:</span><span class="sel">20</span></div>
+
+    <div class="th" style="--c:#ef5350">
+        <div class="score"><b>96</b><span>CRITICAL</span></div>
+        <div>
+            <div class="nm">Steam API emulator (cracked loader) <span class="cat">Steam Emulator</span></div>
+            <div style="font-size:12px;margin-top:4px">steam_api64.dll</div>
+            <div class="path">C:\Users\demo\Downloads\GameX_Crack\steam_api64.dll</div>
+            <div class="t3" style="font-size:11px;margin-top:4px">Detected: content hash match · scene-group pattern</div>
+        </div>
+        <div class="rec"><small>Recommendation</small><div style="font-size:12px;margin-top:2px">Remove. Cracked game files are a common way to ship trojans.</div></div>
+        <div class="acts"><span class="btn warn sm">Quarantine</span><span class="btn bad sm">Delete</span><span class="btn sec sm">Ignore</span></div>
+    </div>
+
+    <div class="th" style="--c:#ef5350">
+        <div class="score"><b>88</b><span>HIGH</span></div>
+        <div>
+            <div class="nm">Unknown autostart program <span class="cat">Trojan</span></div>
+            <div style="font-size:12px;margin-top:4px">svc_host32.exe</div>
+            <div class="path">C:\Users\demo\AppData\Roaming\upd\svc_host32.exe</div>
+            <div class="t3" style="font-size:11px;margin-top:4px">Detected: Run key · packed · high entropy · unsigned</div>
+        </div>
+        <div class="rec"><small>Recommendation</small><div style="font-size:12px;margin-top:2px">Remove. Kills the process tree, deletes its Run key, then the file.</div></div>
+        <div class="acts"><span class="btn warn sm">Quarantine</span><span class="btn bad sm">Delete</span><span class="btn sec sm">Ignore</span></div>
+    </div>
+
+    <div class="th" style="--c:#ffb74d">
+        <div class="score"><b>74</b><span>HIGH</span></div>
+        <div>
+            <div class="nm">KMS activator <span class="cat amb">Activator Tool</span></div>
+            <div style="font-size:12px;margin-top:4px">KMS_tool.exe</div>
+            <div class="path">D:\Games\Downloads\Office_Activator\KMS_tool.exe</div>
+            <div class="t3" style="font-size:11px;margin-top:4px">Detected: activator name · suspicious command line</div>
+        </div>
+        <div class="rec"><small>Recommendation</small><div style="font-size:12px;margin-top:2px">Quarantine. It can be restored later if you need it.</div></div>
+        <div class="acts"><span class="btn warn sm">Quarantine</span><span class="btn bad sm">Delete</span><span class="btn sec sm">Ignore</span></div>
+    </div>
+
+    <div class="th" style="--c:#0288d1">
+        <div class="score"><b>46</b><span>MEDIUM</span></div>
+        <div>
+            <div class="nm">Game trainer <span class="cat amb">Game Trainer</span> <span class="ig">May Ignore</span></div>
+            <div style="font-size:12px;margin-top:4px">GameX_Trainer+12.exe</div>
+            <div class="path">D:\Games\Tools\GameX_Trainer+12.exe</div>
+            <div class="t3" style="font-size:11px;margin-top:4px">Detected: trainer name pattern</div>
+        </div>
+        <div class="rec"><small>Recommendation</small><div style="font-size:12px;margin-top:2px">May be safe to ignore if you trust the source</div></div>
+        <div class="acts"><span class="btn warn sm">Quarantine</span><span class="btn bad sm">Delete</span><span class="btn sec sm">Ignore</span></div>
+    </div>
+
+    <div class="foot"><span class="btn warn">Quarantine All</span><span class="btn bad">Delete All</span><span class="btn sec">Ignore All Safe</span></div>
+</div>
+<script src="chrome.js"></script>
+</body></html>

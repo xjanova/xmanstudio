@@ -1,0 +1,54 @@
+<!doctype html>
+<!-- Recording in another app: the overlay panel in "recording" mode (ExpandedOverlay: "● REC <app> [n]", Tag / หยุด,
+     ย้อน / หน้าหลัก) and the Tag dialog (TagDataDialog) binding the focused field to a data key.
+     The app underneath ("ตัวอย่างแอป") and everything typed in it are made up. -->
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .keys { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+    .keys span { padding: 6px 10px; border-radius: 16px; font-size: 11px; background: #333; color: #ccc; }
+    .keys span.on { background: rgba(59, 130, 246, .3); color: #3b82f6; }
+    .sug { display: flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 11px; color: #3b82f6; }
+    .tf { margin-top: 10px; height: 52px; border-radius: 6px; border: 1px solid #3b82f6; position: relative; display: flex; align-items: center; padding: 0 12px; color: #fff; font-size: 14px; }
+    .tf small { position: absolute; top: -8px; left: 9px; padding: 0 4px; font-size: 11px; color: #3b82f6; background: #222; }
+    .acts { display: flex; justify-content: flex-end; align-items: center; gap: 14px; margin-top: 14px; font-size: 13px; }
+    .acts .ok { background: #3b82f6; color: #fff; border-radius: 18px; height: 36px; padding: 0 18px; display: flex; align-items: center; font-weight: 600; }
+</style></head>
+<body><div class="phone">
+    <div class="host">
+        <div class="sb dark" style="background:#fff">09:41<span class="r"><b></b><i></i></span></div>
+        <div class="bar"><span class="logo"></span>สมัครสมาชิก</div>
+        <div class="form">
+            <div><label>ชื่อผู้ใช้</label><div class="in">somchai01</div></div>
+            <div><label>อีเมล</label><div class="in focus">somchai01@example.com</div></div>
+            <div><label>เบอร์โทร</label><div class="in ph">08x-xxx-xxxx</div></div>
+            <div><label>รหัสผ่าน</label><div class="in ph">อย่างน้อย 8 ตัว</div></div>
+            <div class="cta">สมัครสมาชิก</div>
+        </div>
+    </div>
+    <div class="dim" style="background:rgba(0,0,0,.28)"></div>
+
+    <div class="dlg" style="left:22px;right:22px;top:296px">
+        <h2><i data-i="label" style="color:#3b82f6"></i>ผูกข้อมูลกับช่องนี้</h2>
+        <p class="sub">เลือก Key จากชุดข้อมูล หรือพิมพ์เอง</p>
+        <div class="keys"><span>ชื่อผู้ใช้</span><span class="on">อีเมล</span><span>เบอร์โทร</span><span>รหัสผ่าน</span></div>
+        <p class="sug"><i data-i="auto" data-s="14" style="color:#3b82f6"></i>แนะนำ: อีเมล</p>
+        <div class="tf"><small>Data Key</small>อีเมล</div>
+        <div class="acts"><span style="color:#999">ยกเลิก</span><span class="ok">ผูกข้อมูล</span></div>
+    </div>
+
+    <div class="ov" style="left:134px;top:578px">
+        <div class="hd rec"><span>● REC ตัวอย่างแอป [4]</span><i data-i="close" data-s="18" style="color:#fff"></i></div>
+        <div class="desc">ผูกข้อมูล: ชื่อผู้ใช้</div>
+        <div class="btns">
+            <span class="ob" style="background:rgba(59,130,246,.15)"><i data-i="label" style="color:#3b82f6"></i>Tag</span>
+            <span class="ob" style="background:rgba(239,68,68,.15)"><i data-i="stop" style="color:#ef4444"></i>หยุด</span>
+        </div>
+        <div class="btns">
+            <span class="ob" style="background:rgba(120,144,156,.15)"><i data-i="back" style="color:#78909c"></i>ย้อน</span>
+            <span class="ob" style="background:rgba(120,144,156,.15)"><i data-i="home" style="color:#78909c"></i>หน้าหลัก</span>
+        </div>
+        <div class="foot">Xman Studio</div>
+    </div>
+    <div class="gb dark"></div>
+</div>
+<script src="icons.js"></script></body></html>

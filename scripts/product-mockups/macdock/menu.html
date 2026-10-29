@@ -1,0 +1,52 @@
+<!doctype html>
+<!-- Right-click on a pinned icon: DockWindow.BuildMenu — the item's own commands, its Category submenu,
+     then the dock's settings. Every label and check state is the code's (defaults from Settings.cs). -->
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css"></head>
+<body>
+<script src="dock.js"></script>
+<script>
+MacDock.dock({ edge: 'top', hover: 7, tip: false, items: [
+    { g: 'browser', name: 'Web Browser', run: true }, { g: 'chat', name: 'Team Chat', run: true }, { g: 'music', name: 'Music Player', run: true },
+    '|',
+    { g: 'folder', name: 'Documents' }, { g: 'download', name: 'Downloads' },
+    { hdr: 'งานเอกสาร' }, { g: 'notes', name: 'Notes' }, { g: 'sheet', name: 'Spreadsheet' }, { g: 'slides', name: 'Slides' }, { g: 'mail', name: 'Mail' },
+    { hdr: 'กราฟิก & ตัดต่อ' }, { g: 'photo', name: 'Photo Editor' }, { g: 'video', name: 'Video Editor' },
+    { hdr: 'เกม', col: true },
+    { hdr: 'เครื่องมือ' }, { g: 'calc', name: 'Calculator' }, { g: 'gear', name: 'Settings' },
+] });
+</script>
+<div class="menu" style="left: 560px; top: 112px;">
+    <div class="mi sub hi">Category</div>
+    <div class="mi">Open</div>
+    <div class="mi">Show in Explorer</div>
+    <div class="mi">Remove from Dock</div>
+    <hr>
+    <div class="mi sub">Position on screen</div>
+    <div class="mi">New category...</div>
+    <div class="mi">จัดหมวดไอคอนอัตโนมัติ (Auto-organize)</div>
+    <div class="mi sub">Icon size</div>
+    <div class="mi on">Auto-hide (show at screen edge)</div>
+    <div class="mi on">Magnification</div>
+    <div class="mi on">Smart order (most used first)</div>
+    <div class="mi sub">Clock widget</div>
+    <div class="mi on">Show running apps</div>
+    <hr>
+    <div class="mi on">Hide desktop icons</div>
+    <div class="mi on">Hide Windows taskbar</div>
+    <div class="mi">Re-import Desktop items</div>
+    <div class="mi">Start with Windows</div>
+    <hr>
+    <div class="mi">ไลเซ่น &amp; อัปเดต...</div>
+    <div class="mi">เกี่ยวกับ MacDock (About)...</div>
+    <div class="mi">Quit MacDock</div>
+</div>
+<div class="menu" style="left: 833px; top: 112px; min-width: 190px;">
+    <div class="mi">None</div>
+    <div class="mi on">งานเอกสาร</div>
+    <div class="mi">กราฟิก &amp; ตัดต่อ</div>
+    <div class="mi">เกม</div>
+    <div class="mi">เครื่องมือ</div>
+    <hr>
+    <div class="mi">New category...</div>
+</div>
+</body></html>

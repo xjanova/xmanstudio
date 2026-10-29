@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    /* Views/DashboardView.xaml: SHARING STATUS + LIVE GAUGES on top, POOL + RUNNING NOW under them */
+    .top { display: grid; grid-template-columns: 2fr 390px; gap: 14px; }
+    .top .dial { width: 170px; height: 170px; } .top .dial > div { width: 140px; height: 140px; }
+    .dial { width: 150px; height: 150px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center;
+        background: linear-gradient(#fcfdfe, #e3e8ed 46%, #c7ced6); border: 1px solid #969ea8; box-shadow: 0 2px 6px rgba(0, 0, 0, .3); }
+    .dial > div { width: 122px; height: 122px; border-radius: 50%; border: 1px solid #8d6f18; text-align: center; display: flex; flex-direction: column; justify-content: center;
+        background: linear-gradient(#fffbee, #f4e2ab 18%, #e0bd5c 52%, #bd9229 80%, #a37c18); }
+    .dial b { font-size: 19px; color: #3a2c07; }
+    .dial span { font-size: 12px; color: #5d4a14; }
+    .gauges { display: grid; grid-template-columns: 1fr 1fr; justify-items: center; margin: 4px 0 10px; }
+    .gauge { width: 132px; height: 132px; position: relative; background: url(assets/gauge-ring.png) center / contain no-repeat; }
+    .gauge::before { content: ""; position: absolute; inset: 11px; border-radius: 50%; background: conic-gradient(from 225deg, var(--c) calc(var(--v) * 2.7deg), #2a3138 0 270deg, transparent 0); }
+    .gauge::after { content: ""; position: absolute; inset: 21px; border-radius: 50%; background: linear-gradient(#11161b, #1e252c); }
+    .gauge span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 1; font-size: 24px; }
+    .kv { display: grid; grid-template-columns: 1fr auto; row-gap: 7px; font-size: 13px; }
+    .bottom { display: grid; grid-template-columns: 1fr 420px; gap: 14px; margin-top: 14px; flex: 1; }
+    .bottom > section { display: flex; flex-direction: column; }
+    .auto { margin-top: 12px; border-radius: 7px; padding: 9px 12px; border: 1px solid #8d6f18; background: linear-gradient(#fffdf4, #f6ead0); color: #3a2c07; font-size: 12.5px; }
+</style></head>
+<body data-on="dashboard">
+<main class="content">
+    <div class="top">
+        <section class="chrome">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                <span class="lbl">Sharing status</span>
+                <span class="lcd mono gold" style="padding:4px 12px;border-radius:12px;font-size:12.5px"><span class="led"></span>SHARING · ACTIVE</span>
+            </div>
+            <div style="display:flex;gap:18px">
+                <div class="dial"><div><b>STOP</b><span>sharing GPU</span></div></div>
+                <div style="flex:1">
+                    <div class="lcd" style="padding:14px 16px">
+                        <div class="l">Earned today</div>
+                        <div class="mono gold" style="font-size:46px;line-height:1.1;margin-top:2px">—</div>
+                        <div style="font-size:11.5px;color:#8c98a4">กำลังอ่านยอดจาก XMAN Studio…</div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+                        <div class="chrome" style="padding:10px 14px"><div class="lbl" style="font-size:10.5px">Jobs done today</div><div class="mono ink" style="font-size:26px">14<span style="font-size:14px;color:#6b737d"> jobs</span></div></div>
+                        <div class="chrome" style="padding:10px 14px"><div class="lbl" style="font-size:10.5px">Uptime</div><div class="mono ink" style="font-size:26px">06:42<span style="font-size:14px;color:#6b737d"> hrs</span></div></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section class="chrome">
+            <i class="screw" style="left:-6px;top:-6px"></i><i class="screw" style="right:-6px;top:-6px"></i><i class="screw" style="left:-6px;bottom:-6px"></i><i class="screw" style="right:-6px;bottom:-6px"></i>
+            <div class="lbl">Live gauges</div>
+            <div class="gauges">
+                <div><div class="gauge" style="--v:92;--c:#d8a62f"><span class="mono gold">92%</span></div><div class="lbl" style="text-align:center;margin-top:6px;font-size:10.5px">GPU load</div></div>
+                <div><div class="gauge" style="--v:61;--c:#d9772a"><span class="mono orange">61°</span></div><div class="lbl" style="text-align:center;margin-top:6px;font-size:10.5px">Core temp</div></div>
+            </div>
+            <div class="kv">
+                <span class="lbl" style="font-size:10.5px">Power draw</span><span class="mono goldtxt">142 W</span>
+                <span class="lbl" style="font-size:10.5px">Fan</span><span class="mono">54%</span>
+                <span class="lbl" style="font-size:10.5px">VRAM</span><span class="mono">7.0 / 12.0 GB</span>
+                <span class="lbl" style="font-size:10.5px">Power cost</span><span class="mono red">−฿14.31/day</span>
+            </div>
+        </section>
+    </div>
+
+    <div class="bottom">
+        <section class="chrome">
+            <div style="display:flex;justify-content:space-between"><span class="lbl">Pool · สถานะจาก XMAN Studio</span><span class="mono muted" style="font-size:11px">อ่านล่าสุด 14:02</span></div>
+            <div class="lcd" style="flex:1;padding:16px 18px;display:flex;flex-direction:column;justify-content:center">
+                <div class="mono gold" style="font-size:19px">อยู่ใน pool · พร้อมรับงาน</div>
+                <div style="font-size:12px;color:#8c98a4;margin-top:6px">ประเมินแล้ว · รับงานสร้างภาพ (SDXL) ได้เต็มความเร็ว</div>
+                <div style="font-size:11.5px;color:#6b7783;margin-top:8px">pool เห็นเครื่องนี้ล่าสุด 14:01</div>
+                <div style="font-size:11.5px;color:#6b7783;margin-top:2px">24 ชม. ล่าสุด · 14 งานเสร็จ · 0 ล้ม</div>
+            </div>
+            <div class="auto"><b style="font-size:11px;letter-spacing:.06em">AUTO MATCHING</b><br>pool เลือกงานที่คุ้มและพอดีกับการ์ดให้เอง</div>
+        </section>
+        <section class="chrome">
+            <div class="lbl">Running now</div>
+            <div class="lcd" style="padding:16px 18px">
+                <div class="blue" style="font-size:16px;font-weight:bold">Image generation</div>
+                <div class="mono" style="font-size:12px;color:#8c98a4;margin-top:4px">job #a41c7e02 · 11 nodes</div>
+                <div class="bar g" style="margin-top:14px;height:12px"><i style="width:64%"></i></div>
+                <div class="mono gold" style="font-size:14px;margin-top:6px">64%</div>
+            </div>
+            <div style="margin-top:12px;display:grid;gap:8px">
+                <div class="chrome" style="padding:9px 12px;display:flex;justify-content:space-between"><span>Yield when I use the PC</span><i class="tog"></i></div>
+                <div class="chrome" style="padding:9px 12px;display:flex;justify-content:space-between"><span>Temp ceiling</span><span class="mono goldtxt">78 °C</span></div>
+            </div>
+        </section>
+    </div>
+</main>
+<script src="chrome.js"></script>
+</body></html>

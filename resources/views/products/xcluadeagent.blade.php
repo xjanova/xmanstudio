@@ -1,578 +1,370 @@
 @extends($publicLayout ?? 'layouts.app')
-{{-- Coming Soon = ปุ่มดาวน์โหลดเป็นป้าย (กฎเจ้าของ 2026-10-12) --}}
+{{-- หน้าสินค้า CluadeX (/products/cluadex-ai-coding-assistant) — ชื่อไฟล์เก่า แต่เป็นหน้า CluadeX (ProductController::$customViews)
+     แอปส่งลูกค้ามาหน้านี้เพื่อซื้อคีย์ (XmanLicenseService.DefaultPurchaseUrl) · หน้า /cluadex เป็นหน้า landing แยกอีกหน้า --}}
+{{-- Coming Soon = ปุ่มดาวน์โหลดเป็นป้าย และซื้อไม่ได้ (กฎเจ้าของ 2026-10-12) --}}
 @php $csDownload = \App\Models\Product::slugIsComingSoon('cluadex-ai-coding-assistant'); @endphp
 
-@section('title', $product->name . ' | XMAN Studio')
+@section('title', 'CluadeX — ผู้ช่วยเขียนโค้ด AI บน Windows · มีรุ่นฟรี · Pro ' . collect(\App\Support\LicensePlans::for('cluadex-ai-coding-assistant'))->map(fn ($p, $t) => '฿' . number_format($p) . ($t === 'yearly' ? '/ปี' : ($t === 'monthly' ? '/เดือน' : ' ตลอดชีพ')))->implode(' หรือ ') . ' | XMAN Studio')
+@section('meta_description', 'CluadeX ผู้ช่วยเขียนโค้ด AI บน Windows ที่อ่าน แก้ไฟล์ รันคำสั่ง และใช้ Git ในโปรเจกต์ของคุณ ใช้โมเดล GGUF ในเครื่องหรือ Ollama ได้ฟรี · Pro ต่อ Claude, GPT, Gemini ด้วย API key ของคุณ พร้อม GitHub, Web fetch และ Dev Preview · ถามก่อนลงมือทุกครั้ง · An AI coding agent for Windows.')
+@section('og_image', asset('images/products/cluadex/v2/og.jpg'))
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-gray-900 via-violet-900 to-gray-900">
-    {{-- License Status Banner --}}
-    @if(isset($userLicense) && $userLicense)
-        @if($userLicense->isValid())
-            @php $daysLeft = $userLicense->daysRemaining(); @endphp
-            @if($daysLeft <= 7 && $userLicense->license_type !== 'lifetime')
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-                    <div class="bg-amber-500/20 border border-amber-500/50 text-amber-300 px-6 py-4 rounded-xl backdrop-blur-sm">
-                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                            <div class="flex items-center">
-                                <svg class="w-6 h-6 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                                </svg>
-                                <div>
-                                    <p class="font-semibold">License ใกล้หมดอายุ!</p>
-                                    <p class="text-sm text-amber-200">เหลืออีก {{ $daysLeft }} วัน ({{ $userLicense->expires_at->format('d/m/Y') }})</p>
-                                </div>
-                            </div>
-                            <a href="{{ route('customer.licenses.show', $userLicense) }}" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors">
-                                ต่ออายุ License
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            @else
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-                    <div class="bg-green-500/20 border border-green-500/50 text-green-300 px-6 py-4 rounded-xl backdrop-blur-sm">
-                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                            <div class="flex items-center">
-                                <svg class="w-6 h-6 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                                </svg>
-                                <div>
-                                    <p class="font-semibold">คุณมี License สำหรับผลิตภัณฑ์นี้แล้ว!</p>
-                                    <p class="text-sm text-green-200">
-                                        {{ $userLicense->license_type === 'lifetime' ? 'ใบอนุญาตตลอดชีพ' : 'หมดอายุ: ' . $userLicense->expires_at->format('d/m/Y') }}
-                                    </p>
-                                </div>
-                            </div>
-                            <a href="{{ route('customer.licenses.show', $userLicense) }}" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors">
-                                ดู License ของฉัน
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            @endif
-        @elseif($userLicense->isExpired())
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-                <div class="bg-red-500/20 border border-red-500/50 text-red-300 px-6 py-4 rounded-xl backdrop-blur-sm">
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div class="flex items-center">
-                            <svg class="w-6 h-6 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                            </svg>
-                            <div>
-                                <p class="font-semibold">License หมดอายุแล้ว</p>
-                                <p class="text-sm text-red-200">หมดอายุเมื่อ {{ $userLicense->expires_at->format('d/m/Y') }}</p>
-                            </div>
-                        </div>
-                        <a href="#pricing" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors">
-                            ซื้อ License ใหม่
-                        </a>
-                    </div>
-                </div>
-            </div>
-        @endif
-    @endif
+@php
+    // ราคาทุกแผนมาจาก config/licenses.php 'plans' ที่เดียว (ตะกร้าคิดตามนี้) — ห้ามเขียนตัวเลขราคาลงหน้านี้ตรง ๆ
+    // CluadeX ขายรายปีกับตลอดชีพ ไม่มีรายเดือน — ถ้า config เพิ่ม/ลดแผน การ์ดตามเอง
+    $prices = \App\Support\LicensePlans::for('cluadex-ai-coding-assistant');
+    $firstTerm = array_key_first($prices);
 
-    <!-- Hero Section -->
-    <section class="relative py-20 overflow-hidden">
-        <x-page-art art="card-xcluade" :opacity="38" />
-        <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%238B5CF6\" fill-opacity=\"0.05\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]"></div>
+    // ปุ่มซื้อต้องมีเสมอ — แอปส่งลูกค้ามาหน้านี้เพื่อซื้อ และ 1 คีย์ใช้ได้ 1 เครื่อง คนที่ซื้อแล้วก็ซื้อให้เครื่องอื่นได้
+    $ownsCluadex = auth()->check() && $hasPurchased;
 
-        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <!-- Breadcrumb -->
-            <nav class="mb-8">
-                <a href="{{ route('products.index') }}" class="text-violet-400 hover:text-violet-300 flex items-center">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                    </svg>
-                    กลับไปรายการผลิตภัณฑ์
+    // เวอร์ชันที่เว็บนี้ส่งให้ (อ่านจาก DB อย่างเดียว — เปิดหน้านี้ต้องไม่ถามแหล่งไฟล์ภายนอก)
+    $latest = $product->latestVersion();
+    // ไฟล์ที่ส่งให้ขึ้นกับ asset_pattern ในหน้า admin (ตัวติดตั้ง Setup.exe หรือ Portable .zip) — อ่านจากชื่อไฟล์จริง
+    $isZip = str_ends_with(strtolower((string) $latest?->download_filename), '.zip');
+
+    // ภาพหน้าจอ: ภาพจริงที่แอปเรนเดอร์เองด้วยข้อมูลตัวอย่าง (tests/themetest ของ CluadeX) — เบลอป้ายเวอร์ชันทดสอบและพาธแล้ว
+    // สร้างใหม่ได้ด้วย scripts/product-mockups/build.py cluadex
+    $shot = fn (string $file) => asset('images/products/cluadex/v2/' . $file);
+
+    $plans = [
+        'monthly' => ['name' => 'รายเดือน', 'en' => 'Monthly', 'unit' => '/ เดือน', 'note' => 'ซื้อทีละ 30 วัน ไม่ตัดเงินอัตโนมัติ', 'days' => '30 วัน'],
+        'yearly' => ['name' => 'รายปี', 'en' => 'Yearly', 'unit' => '/ ปี', 'note' => 'จ่ายครั้งเดียวใช้ทั้งปี ไม่ตัดเงินอัตโนมัติ', 'days' => '365 วัน'],
+        'lifetime' => ['name' => 'ตลอดชีพ', 'en' => 'Lifetime', 'unit' => 'ครั้งเดียว', 'note' => 'จ่ายครั้งเดียว ใช้ได้ตลอด', 'days' => 'ไม่หมดอายุ'],
+    ];
+    $fromLabel = $firstTerm ? '฿' . number_format($prices[$firstTerm]) . ($plans[$firstTerm]['unit'] === 'ครั้งเดียว' ? '' : str_replace(' ', '', $plans[$firstTerm]['unit'])) : null;
+
+    // License ที่ใกล้หมด/หมดแล้ว (เดิมเป็นแถบบนหน้า) — รายปีต้องต่ออายุ
+    $expiringLicense = null;
+    if (isset($userLicense) && $userLicense && $userLicense->license_type !== 'lifetime') {
+        if ($userLicense->isValid() && $userLicense->daysRemaining() <= 7) {
+            $expiringLicense = ['เหลืออีก ' . $userLicense->daysRemaining() . ' วัน (' . $userLicense->expires_at->format('d/m/Y') . ')', $userLicense];
+        } elseif ($userLicense->isExpired()) {
+            $expiringLicense = ['หมดอายุเมื่อ ' . $userLicense->expires_at->format('d/m/Y'), $userLicense];
+        }
+    }
+
+    // ใช้ได้ในรุ่นฟรี — ข้อเท็จจริงจากโค้ดแอป (ActivationService.IsFeatureUnlocked, FeaturesViewModel.GatedFeatures)
+    $freeRows = [
+        [
+            'img' => $shot('editor.webp'), 'name' => 'อีดิเตอร์โค้ด มี AI อยู่ข้าง ๆ', 'eyebrow' => 'Code editor + agent', 'tier' => 'free',
+            'th' => 'เปิดโฟลเดอร์โปรเจกต์ แล้วสั่งงานเป็นภาษาไทยหรืออังกฤษ เอเจนต์อ่านโค้ด แก้ไฟล์ รันคำสั่ง และใช้ Git ในโปรเจกต์นั้นให้ ติ๊ก "Follow edits" แล้วเห็นทุกบรรทัดที่ AI แก้ในอีดิเตอร์ทันที',
+            'en' => 'Open a project folder and ask in Thai or English: the agent reads, edits, runs commands and uses Git there. Follow its edits live in the editor.',
+            'points' => ['อีดิเตอร์ในตัว: ค้นหา/แทนที่ minimap เทอร์มินัล และไฟล์ใหญ่ก็เปิดได้', 'Git ในเครื่องครบ: commit, branch, merge, diff, stash — สั่งจากแชทได้'],
+            'alt' => 'หน้าอีดิเตอร์โค้ดของ CluadeX มีรายการไฟล์ทางซ้าย โค้ดตรงกลาง และแชทกับเอเจนต์ทางขวา',
+        ],
+        [
+            'img' => $shot('chat.webp'), 'name' => 'ถามก่อนลงมือ', 'eyebrow' => 'You stay in charge', 'tier' => 'free',
+            'th' => 'เอเจนต์ถามเมื่อไม่แน่ใจ และขออนุญาตก่อนรันคำสั่งหรือแก้อะไรในเครื่อง เลือกได้ 3 ระดับ: ถามก่อนทุกครั้ง · แก้ไฟล์ในโปรเจกต์ได้เลย · อนุญาตทั้งหมดในแชทนี้',
+            'en' => 'The agent asks when unsure and asks before it changes anything: ask first, accept edits in the project, or allow all for this chat.',
+            'points' => ['คำสั่งที่ลบไดรฟ์ โฟลเดอร์ home หรือโฟลเดอร์ระบบ ขึ้นกล่องแดงทุกครั้ง ไม่มีกฎหรือโหมดไหนกดผ่านแทนคุณได้', 'บล็อกคำสั่งอันตรายและระบบสิทธิ์ ใช้ได้ในรุ่นฟรีเสมอ'],
+            'alt' => 'หน้าแชทของ CluadeX: เอเจนต์ถามว่าจะแก้ไฟล์ไหน ขออนุญาตรันคำสั่ง และกล่องเตือนอันตรายสีแดงก่อนลบโฟลเดอร์',
+        ],
+        [
+            'img' => $shot('models.webp'), 'name' => 'โมเดลในเครื่อง ฟรีและเป็นส่วนตัว', 'eyebrow' => 'Local models', 'tier' => 'free',
+            'th' => 'Model Manager ดูการ์ดจอและ RAM ของเครื่อง แล้วแนะนำโมเดล GGUF ที่เหมาะ บอกว่าแต่ละตัวรันได้เร็วแค่ไหน แล้วดาวน์โหลดจาก Hugging Face ให้ หรือใช้โมเดลผ่าน Ollama ก็ได้ — รันในเครื่อง โค้ดไม่ออกนอกเครื่อง',
+            'en' => 'Picks GGUF models that fit your GPU and RAM, estimates their speed and downloads them from Hugging Face — or use Ollama. Nothing leaves your PC.',
+            'points' => ['ใช้การ์ดจอ NVIDIA (CUDA 12) ถ้ามี ไม่มีก็รันด้วย CPU ได้', 'โหลดไฟล์ GGUF ที่มีอยู่แล้วเข้ามาเองได้'],
+            'alt' => 'หน้า Model Manager ของ CluadeX แสดงสเปกเครื่อง และโมเดลที่แนะนำพร้อมความเร็วโดยประมาณ',
+        ],
+        [
+            'img' => $shot('skills.webp'), 'name' => 'Skill · Subagent · MCP', 'eyebrow' => 'Make it yours', 'tier' => 'free',
+            'th' => 'Skill คือคำสั่งลัดแบบ /ชื่อ ที่เรียกจากแชทได้ มีให้ในตัว 18 ตัว (commit, deep-research, e2e-testing ฯลฯ) และเขียนเพิ่มเองได้ในโฟลเดอร์ skills ต่อเซิร์ฟเวอร์ MCP ติดตั้งปลั๊กอิน และตั้งฮุกได้จากในแอป',
+            'en' => 'Reusable slash-command skills (18 built in, add your own), MCP servers, plugins and hooks.',
+            'points' => ['ส่งงานย่อยให้ subagent เฉพาะทาง เช่น รีวิวโค้ด', 'สแกนความปลอดภัยโค้ดแบบ OWASP ในตัว'],
+            'alt' => 'หน้า Skills ของ CluadeX รายการ skill ในตัวและรายละเอียดของ skill ที่เลือก',
+        ],
+    ];
+
+    // Pro — ทุกข้อเช็กกับด่าน IsFeatureUnlocked / IsActivated ในโค้ดแอป
+    $proTools = [
+        [
+            'key' => 'cloud', 'name' => 'Claude · GPT · Gemini', 'short' => 'ใช้ API key ของคุณเอง', 'tier' => 'pro',
+            'img' => $shot('features.webp'),
+            'th' => 'ต่อโมเดลบนคลาวด์ของ Anthropic, OpenAI และ Google Gemini ด้วย API key ของคุณเอง ค่าใช้งานโมเดลจ่ายกับผู้ให้บริการโดยตรง CluadeX ไม่ได้รวมค่า AI ไว้ในคีย์',
+            'en' => 'Anthropic, OpenAI and Google Gemini with your own API key. Model usage is billed by the provider, not included in the licence.',
+            'points' => ['เห็นค่าใช้จ่ายต่อขั้นก่อนส่ง ตั้งงบต่อรอบและต่อวันได้ เกินงบแล้วถามก่อนทำต่อ', 'API key เก็บเข้ารหัสด้วย Windows (DPAPI) เฉพาะผู้ใช้ Windows ของคุณ'],
+            'alt' => 'หน้า Features ของ CluadeX: ฟีเจอร์ฟรีเปิดอยู่ และ Multi-Provider AI ที่ต้องใช้คีย์',
+        ],
+        [
+            'key' => 'cli', 'name' => 'ต่อ CLI ที่ล็อกอินไว้', 'short' => 'Claude Code · Codex · Gemini CLI', 'tier' => 'pro',
+            'th' => 'มี Claude Code, Codex, Gemini CLI หรือ Antigravity ติดตั้งและล็อกอินไว้แล้ว? เลือกเป็นโมเดลของแชทได้เลย ไม่ต้องใส่ API key ใช้สิทธิ์จากบัญชีที่คุณล็อกอินอยู่',
+            'en' => 'Already signed in to Claude Code, Codex, Gemini CLI or Antigravity? Pick it as the chat model — no API key needed.',
+            'points' => [],
+        ],
+        [
+            'key' => 'github', 'name' => 'GitHub ให้เอเจนต์', 'short' => 'push · pull request · issues', 'tier' => 'pro',
+            'th' => 'เอเจนต์ push โค้ดขึ้น GitHub เปิด pull request สร้าง issue ค้นหาและ clone repo ผ่าน GitHub CLI ได้จากแชท ส่วน Git ในเครื่อง (commit, branch, merge) ใช้ได้ในรุ่นฟรี',
+            'en' => 'Push, open pull requests, create issues and search or clone repositories through the GitHub CLI. Local Git stays free.',
+            'points' => [],
+        ],
+        [
+            'key' => 'web', 'name' => 'Web fetch', 'short' => 'อ่านหน้าเว็บและ API', 'tier' => 'pro',
+            'th' => 'เอเจนต์ดึงหน้าเว็บหรือ API มาอ่านเป็นข้อความ เช่น เอกสารของไลบรารี หรือผลตอบกลับจาก API ที่กำลังเขียน',
+            'en' => 'Fetches web pages and APIs as text — library docs, or the API you are building.',
+            'points' => [],
+        ],
+        [
+            'key' => 'preview', 'name' => 'Dev Preview', 'short' => 'รันเว็บ แล้วเปิดดูเอง', 'tier' => 'pro',
+            'th' => 'เอเจนต์รันเซิร์ฟเวอร์ dev เบื้องหลัง แล้วเปิดหน้าเว็บในเบราว์เซอร์ในตัวของ CluadeX อ่าน console ถ่ายภาพหน้าจอ คลิก และกดแป้นเพื่อทดสอบงานที่เพิ่งแก้',
+            'en' => 'Runs your dev server in the background, opens the page in a built-in browser, reads the console, takes screenshots, clicks and types.',
+            'points' => [],
+        ],
+    ];
+
+    // ตารางเทียบ — ตรงกับ ActivationService.IsFeatureUnlocked และด่านเลือกผู้ให้บริการใน ChatViewModel
+    $compare = [
+        ['โมเดล AI · Models', [
+            ['โมเดล GGUF ในเครื่อง (GPU / CPU) + ดาวน์โหลดจาก Hugging Face', false],
+            ['Ollama', false],
+            ['Anthropic Claude · OpenAI · Google Gemini (API key ของคุณ)', true],
+            ['Claude Code · Codex · Gemini CLI · Antigravity ที่ล็อกอินไว้', true],
+        ]],
+        ['เอเจนต์และเครื่องมือ · Agent & tools', [
+            ['อ่าน/แก้ไฟล์ · รันคำสั่ง · อีดิเตอร์โค้ด', false],
+            ['Git ในเครื่อง (commit, branch, merge, diff, stash)', false],
+            ['Skill · Subagent · MCP · ปลั๊กอิน · ฮุก', false],
+            ['บันทึกแชท · ย้อนเวลาโปรเจกต์ (Time Machine)', false],
+            ['ระบบสิทธิ์ · บล็อกคำสั่งอันตราย', false],
+            ['GitHub: push · pull request · issues', true],
+            ['Web fetch', true],
+            ['Dev Preview (รันเว็บ + เบราว์เซอร์ในตัว)', true],
+        ]],
+    ];
+
+    $ld = [
+        '@context' => 'https://schema.org',
+        '@type' => 'SoftwareApplication',
+        'name' => 'CluadeX',
+        'operatingSystem' => 'Windows 10/11 (64-bit)',
+        'applicationCategory' => 'DeveloperApplication',
+        'inLanguage' => ['th', 'en'],
+        'description' => 'ผู้ช่วยเขียนโค้ด AI บน Windows ที่อ่าน แก้ไฟล์ รันคำสั่ง และใช้ Git ในโปรเจกต์ของคุณ ใช้โมเดลในเครื่องได้ฟรี หรือต่อ Claude, GPT, Gemini ด้วยรุ่น Pro',
+        'image' => asset('images/products/cluadex/v2/og.jpg'),
+        'url' => route('products.show', 'cluadex-ai-coding-assistant'),
+        'publisher' => ['@type' => 'Organization', 'name' => 'XMAN Studio', 'url' => url('/')],
+        'offers' => array_values(array_merge(
+            [['@type' => 'Offer', 'name' => 'Free', 'price' => '0', 'priceCurrency' => 'THB']],
+            collect($prices)->map(fn ($price, $term) => ['@type' => 'Offer', 'name' => 'Pro (' . ($plans[$term]['en'] ?? $term) . ')', 'price' => (string) $price, 'priceCurrency' => 'THB'])->values()->all(),
+        )),
+    ];
+    if ($latest) {
+        $ld['softwareVersion'] = $latest->version;
+    }
+@endphp
+<x-xp.page a="#c4b5fd" b="#818cf8" c="#67e8f9" glow="129 140 248" g1="#f472b6" g2="#a78bfa" g3="#67e8f9">
+
+    {{-- ============================ HERO ============================ --}}
+    <x-xp.hero :art="$shot('art-hero.webp')"
+               tagline="ผู้ช่วยเขียนโค้ด AI ที่ลงมือทำในโปรเจกต์ของคุณ"
+               tagline-en="An AI coding agent for Windows that works inside your project."
+               lead="สั่งงานเป็นภาษาไทยหรืออังกฤษ เอเจนต์อ่านโค้ด แก้ไฟล์ รันคำสั่ง และใช้ Git ให้ — ใช้โมเดลในเครื่องได้ฟรี หรืออัป Pro เพื่อต่อ Claude, GPT และ Gemini ด้วย API key ของคุณเอง"
+               lead-en="Ask in Thai or English: it reads your code, edits files, runs commands and uses Git. Free with local models; Pro adds Claude, GPT and Gemini.">
+        <x-slot:chips>
+            <span class="xp-chip"><i></i>{{ $latest ? 'CluadeX ' . $latest->version : 'CluadeX' }}</span>
+            <span class="xp-chip">Windows 10/11 · 64-bit</span>
+        </x-slot:chips>
+        <x-slot:title>Cluade<span class="xp-text-glow">X</span></x-slot:title>
+        <x-slot:actions>
+            <x-xp.download :href="route('cluadex.download')" :coming-soon="$csDownload" />
+            @if($fromLabel)
+                <a href="#pricing" class="xp-btn-pro inline-flex items-center px-6 py-4 rounded-xl font-extrabold transition">
+                    {{ $ownsCluadex ? 'ซื้อ License เพิ่ม' : 'ซื้อ Pro' }} — เริ่ม {{ $fromLabel }}
                 </a>
-            </nav>
+            @endif
+        </x-slot:actions>
+        <x-slot:notes>
+            @if($latest && ! $csDownload)
+                <p class="mt-4 text-sm text-gray-400">เวอร์ชันล่าสุด {{ $latest->version }}@if($latest->file_size) · {{ $latest->file_size_formatted }}@endif · {{ $isZip ? 'ไฟล์ .zip' : 'ตัวติดตั้ง' }} จาก xman4289.com โดยตรง</p>
+            @endif
+            @if($expiringLicense)
+                <p class="mt-3 text-sm text-amber-200">
+                    License ของคุณ{{ $expiringLicense[0] }} ·
+                    <a href="{{ route('customer.licenses.show', $expiringLicense[1]) }}" class="font-semibold underline hover:text-white">ต่ออายุ License</a>
+                </p>
+            @elseif($ownsCluadex)
+                <p class="mt-3 text-sm text-emerald-200/90">
+                    คุณมี License แล้ว · 1 คีย์ใช้ได้ 1 เครื่อง — ซื้อเพิ่มได้สำหรับเครื่องอื่น ·
+                    <a href="{{ route('customer.licenses') }}" class="font-semibold underline decoration-emerald-300/50 hover:text-white">ดูคีย์ License ของฉัน</a>
+                </p>
+            @endif
+        </x-slot:notes>
+        <x-slot:badges>
+            <li class="flex items-center gap-2 text-gray-300"><x-xp.badge tier="free" /> โมเดลในเครื่อง ใช้ได้ตลอด</li>
+            <li class="flex items-center gap-2 text-gray-300"><x-xp.badge tier="pro" /> ทดลองฟรี 24 ชม.</li>
+            <li class="flex items-center gap-2 text-gray-300"><span class="xp-dot"></span> ไม่ต้องลง .NET</li>
+        </x-slot:badges>
+        <x-slot:visual>
+            <div class="xp-tilt">
+                <x-xp.screen :src="$shot('editor.webp')" :eager="true"
+                             alt="หน้าอีดิเตอร์โค้ดของ CluadeX: รายการไฟล์ โค้ดที่กำลังแก้ และแชทกับเอเจนต์ที่วางแผนงานให้" />
+            </div>
+            <div class="xp-float absolute -left-3 sm:-left-8 bottom-6 sm:bottom-10 xp-card backdrop-blur-md px-4 py-3 shadow-2xl">
+                <p class="text-[11px] tracking-widest uppercase text-gray-400">ค่าเริ่มต้น · Ask first</p>
+                <p class="text-white font-extrabold text-lg leading-tight">ถาม<span class="text-violet-300">ก่อนทุกครั้ง</span></p>
+            </div>
+            <div class="xp-float-2 absolute -right-2 sm:-right-6 -top-5 xp-card backdrop-blur-md px-4 py-3 shadow-2xl hidden sm:block">
+                <p class="text-[11px] tracking-widest uppercase text-gray-400">Follow edits</p>
+                <p class="text-white font-bold leading-tight">เห็นทุกบรรทัดที่ AI แก้<br><span class="text-gray-400 text-sm font-normal">ในอีดิเตอร์ทันที</span></p>
+            </div>
+        </x-slot:visual>
+    </x-xp.hero>
 
-            <div class="grid lg:grid-cols-2 gap-12 items-center">
-                <!-- Left: Product Info -->
-                <div>
-                    <div class="inline-flex items-center px-4 py-2 bg-violet-500/20 rounded-full text-violet-300 text-sm mb-6 backdrop-blur-sm border border-violet-500/30">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
-                        </svg>
-                        AI Coding Assistant
+    {{-- ========================== FREE ========================== --}}
+    <section class="relative py-20" id="features">
+        <div class="xp-glow w-[34rem] h-[34rem] -right-40 top-10" style="background: rgb(var(--xp-glow) / .12)"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-xp.head class="mb-16" eyebrow="Free · works forever" title="เอเจนต์เขียนโค้ด" title2="ที่รันบนเครื่องคุณ"
+                       sub="รุ่นฟรีใช้โมเดลในเครื่องหรือ Ollama ได้ไม่จำกัดเวลา พร้อมอีดิเตอร์ Git ในเครื่อง Skill MCP ปลั๊กอิน และระบบสิทธิ์ครบ"
+                       en="The free edition runs on local models or Ollama, with the editor, local Git, skills, MCP, plugins and permissions — no time limit." />
+            <x-xp.rows :items="$freeRows" />
+        </div>
+    </section>
+
+    {{-- =========================== PRO =========================== --}}
+    <section class="relative py-20 isolate">
+        <x-xp.art :src="$shot('art-2.webp')" class="top-0 w-[130%] opacity-35 left-[-30%] lg:left-[-14%] lg:w-[68%] lg:opacity-80" />
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-xp.head align="right" class="mb-10" eyebrow="Pro · cloud models & more" title="ต่อโมเดลระดับท็อป" title2="แล้วปล่อยให้ทำงานจริง"
+                       sub="Pro ปลดผู้ให้บริการ AI บนคลาวด์และ CLI รวมถึง GitHub, Web fetch และ Dev Preview"
+                       en="Pro unlocks the cloud and CLI providers, GitHub, web fetch and Dev Preview." />
+            <x-xp.explorer id="pro" label="ฟีเจอร์ Pro ของ CluadeX" :tools="$proTools" />
+        </div>
+    </section>
+
+    {{-- ============================ SAFETY ============================ --}}
+    <section class="relative py-20">
+        <div class="xp-glow w-[36rem] h-[24rem] left-1/2 -translate-x-1/2 top-24" style="background: rgb(var(--xp-glow) / .1)"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-xp.head class="mb-12" eyebrow="Your code, your machine" title="ให้ AI แก้โค้ด" title2="โดยไม่เสียการควบคุม"
+                       sub="เอเจนต์ที่แก้ไฟล์และรันคำสั่งได้ ต้องหยุดได้ ย้อนได้ และไม่ทำอะไรเกินที่คุณอนุญาต"
+                       en="An agent that edits files and runs commands must be stoppable, reversible and never go past what you allowed." />
+            <x-xp.cards :items="[
+                ['icon' => 'user', 'title' => 'ถามก่อนทุกครั้ง', 'body' => 'ค่าเริ่มต้นคือทุกอย่างที่เปลี่ยนแปลงเครื่องต้องถามก่อน ผ่อนเป็น “แก้ไฟล์ในโปรเจกต์ได้เลย” ได้ โดยคำสั่งและไฟล์นอกโปรเจกต์ยังถาม', 'en' => 'Everything that changes your PC asks first'],
+                ['icon' => 'bug', 'title' => 'กล่องแดงก่อนลบของสำคัญ', 'body' => 'คำสั่งที่ลบไดรฟ์ โฟลเดอร์ home หรือโฟลเดอร์ระบบ ต้องให้คุณกดเองทุกครั้ง แม้เปิดอนุญาตทั้งหมดไว้ก็ตาม และคำสั่งอันตรายที่รู้จักถูกบล็อกให้', 'en' => 'Deleting a drive or system folder always needs your click'],
+                ['icon' => 'undo', 'title' => 'ย้อนเวลาได้', 'body' => 'Time Machine พาโปรเจกต์กลับไปที่ commit ไหนก็ได้ และเก็บงานที่ยังไม่ commit ไว้ให้ก่อนย้อน (auto-stash)', 'en' => 'Rewind to any commit, with auto-stash'],
+                ['icon' => 'lock', 'title' => 'คีย์เข้ารหัสในเครื่อง', 'body' => 'API key ที่บันทึกไว้เข้ารหัสด้วย Windows (DPAPI) เปิดได้เฉพาะบัญชี Windows ของคุณบนเครื่องนี้', 'en' => 'Saved API keys are encrypted by Windows'],
+                ['icon' => 'chip', 'title' => 'โมเดลในเครื่อง = โค้ดอยู่ในเครื่อง', 'body' => 'ใช้โมเดล GGUF หรือ Ollama โค้ดไม่ถูกส่งออกไปไหน ถ้าเลือกโมเดลบนคลาวด์ ข้อความจะส่งไปที่ผู้ให้บริการที่คุณเลือกเท่านั้น', 'en' => 'Local models keep your code on your PC'],
+                ['icon' => 'chart', 'title' => 'คุมงบโมเดลบนคลาวด์', 'body' => 'เห็นค่าใช้จ่ายโดยประมาณต่อขั้นก่อนส่ง ตั้งงบต่อรอบและต่อวัน ถึงงบแล้วถามก่อนทำต่อ', 'en' => 'Per-run and daily spend limits'],
+            ]" />
+        </div>
+    </section>
+
+    {{-- =========================== PRICING =========================== --}}
+    <section class="relative py-20 scroll-mt-20" id="pricing">
+        <div class="xp-glow w-[40rem] h-[26rem] left-1/2 -translate-x-1/2 top-32 bg-amber-500/10"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-xp.head class="mb-12" eyebrow="Pricing" title="เริ่มฟรี" title2="อยากต่อโมเดลบนคลาวด์ค่อยอัป Pro"
+                       sub="ไฟล์เดียวกันทั้งรุ่นฟรีและ Pro · 1 คีย์ใช้ได้ 1 เครื่อง · เปิดครั้งแรกบนเครื่องใหม่ได้ทดลอง Pro ฟรี 24 ชั่วโมง"
+                       en="One download. One key per PC. A new PC gets a free 24-hour Pro trial on first launch." />
+
+            @if(session('success'))
+                <p class="max-w-3xl mx-auto mb-8 xp-card px-5 py-3 text-center text-emerald-200">{{ session('success') }}</p>
+            @endif
+
+            <div class="grid md:grid-cols-3 gap-5 max-w-5xl mx-auto">
+                <div class="xp-card p-7 flex flex-col">
+                    <div class="flex items-center justify-between mb-1">
+                        <h3 class="text-2xl font-black text-white">Free</h3>
+                        <x-xp.badge tier="free" />
                     </div>
-
-                    <h1 class="text-5xl md:text-6xl font-black text-white mb-6">
-                        Cluade<span class="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-purple-400">X</span>
-                    </h1>
-
-                    <p class="text-xl text-gray-300 mb-8">
-                        {{ $product->short_description ?: 'ผู้ช่วยเขียนโค้ด AI ระดับมืออาชีพ ทำงานบนเครื่องคุณ ข้อมูลเป็นส่วนตัว 100% รองรับ 5 AI Providers, 28 Agent Tools, 22+ Local Models' }}
-                    </p>
-
-                    <!-- Key Features Tags -->
-                    <div class="flex flex-wrap gap-3 mb-8">
-                        <span class="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm border border-violet-500/30">5 AI Providers</span>
-                        <span class="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full text-sm border border-purple-500/30">28 Agent Tools</span>
-                        <span class="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-sm border border-blue-500/30">22+ Local Models</span>
-                        <span class="px-3 py-1 bg-indigo-500/20 text-indigo-300 rounded-full text-sm border border-indigo-500/30">Windows Desktop</span>
-                    </div>
-
-                    <!-- CTA Buttons -->
-                    <div class="flex flex-wrap gap-4">
-                        @if($csDownload)
-                            <span class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-violet-500/25" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
-                        @else
-                        <a href="{{ route('download.page', $product->slug) }}"
-                           class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-violet-500/25">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                            ดาวน์โหลดฟรี
-                        </a>
-                        @endif
-                        <a href="#pricing"
-                           class="inline-flex items-center px-8 py-4 bg-gray-700/50 hover:bg-gray-600/50 text-white font-semibold rounded-xl border border-gray-600 transition-all backdrop-blur-sm">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
-                            ดูราคา
-                        </a>
-                    </div>
+                    <p class="text-gray-400 text-sm mb-6"><x-bi th="โมเดลในเครื่อง ไม่จำกัดเวลา" en="Local models, no time limit" /></p>
+                    <div class="mb-6"><span class="text-5xl font-black text-white">฿0</span></div>
+                    <x-xp.ticks class="!space-y-2.5 text-sm mb-8 flex-1" :items="['โมเดล GGUF ในเครื่อง + Ollama', 'เอเจนต์แก้ไฟล์ รันคำสั่ง อีดิเตอร์', 'Git ในเครื่อง · Skill · MCP · ปลั๊กอิน', 'ระบบสิทธิ์ + บล็อกคำสั่งอันตราย', 'อัปเดตอัตโนมัติ']" />
+                    {{-- ไฟล์เดียวกับ Pro — Pro ปลดล็อกในแอปด้วย license key --}}
+                    <x-xp.download block :href="route('cluadex.download')" :coming-soon="$csDownload" />
                 </div>
 
-                <!-- Right: Preview Image -->
-                <div class="relative">
-                    <div class="bg-gradient-to-br from-violet-500/20 to-purple-500/20 rounded-2xl p-8 backdrop-blur-sm border border-violet-500/30">
-                        <div class="aspect-video bg-gray-800 rounded-xl flex items-center justify-center overflow-hidden">
-                            @if($product->artwork_url)
-                                <img src="{{ $product->artwork_url }}" alt="XcluadeAgent" class="w-full h-full object-cover">
+                @foreach($plans as $term => $plan)
+                    @continue(! isset($prices[$term]))
+                    @php($featured = $term === 'yearly')
+                    <div class="{{ $featured ? 'xp-featured' : 'xp-card' }}">
+                        <div class="p-7 flex flex-col h-full">
+                            @if($featured)
+                                <div class="absolute -top-3 left-1/2 -translate-x-1/2"><x-xp.badge tier="pro" label="แนะนำ" class="shadow-lg" /></div>
+                            @endif
+                            <div class="flex items-center justify-between mb-1">
+                                <h3 class="text-2xl font-black text-white">Pro {{ $plan['name'] }}</h3>
+                                <x-xp.badge tier="pro" />
+                            </div>
+                            <p class="text-amber-100/80 text-sm mb-6">{{ $plan['note'] }}</p>
+                            <div class="mb-6 flex items-baseline gap-2">
+                                <span class="text-5xl font-black text-white">฿{{ number_format($prices[$term]) }}</span>
+                                <span class="text-gray-300">{{ $plan['unit'] }}</span>
+                            </div>
+                            <x-tpix-price variant="detail" :thb="$prices[$term]" class="-mt-4 mb-6" />
+                            <x-xp.ticks pro class="!space-y-2.5 text-sm mb-8 flex-1" :items="['ทุกอย่างในรุ่นฟรี', 'Claude · GPT · Gemini (API key ของคุณ)', 'Claude Code · Codex · Gemini CLI', 'GitHub · Web fetch · Dev Preview', 'อายุ License: ' . $plan['days']]" />
+                            @if($csDownload)
+                                {{-- Coming Soon: ซื้อไม่ได้ (ComingSoonPurchase) — ไม่มีฟอร์มให้กด --}}
+                                <span class="xp-btn-ghost xp-btn-off block w-full py-3.5 text-center rounded-xl font-extrabold" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดขาย</span>
                             @else
-                                <div class="text-center">
-                                    <svg class="w-24 h-24 mx-auto text-violet-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
-                                    </svg>
-                                    <p class="text-gray-400">XcluadeAgent Dashboard</p>
-                                </div>
+                                {{-- ราคามาจาก config/licenses.php ไม่ใช่จากฟอร์ม — ตะกร้าคิดตามแผนที่ส่งไป --}}
+                                <form action="{{ route('cart.add', $product) }}" method="POST">
+                                    @csrf
+                                    <input type="hidden" name="quantity" value="1">
+                                    <input type="hidden" name="license_type" value="{{ $term }}">
+                                    <input type="hidden" name="buy_now" value="1">
+                                    <button type="submit" class="{{ $featured ? 'xp-btn-pro' : 'xp-btn-ghost' }} block w-full py-3.5 text-center rounded-xl font-extrabold transition cursor-pointer">
+                                        {{ $ownsCluadex ? 'ซื้อ License เพิ่ม' : 'ซื้อ Pro' }} {{ $plan['name'] }} — ฿{{ number_format($prices[$term]) }}
+                                    </button>
+                                </form>
                             @endif
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Architecture Section -->
-    <section class="py-16 bg-gray-900/50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-3xl font-bold text-white text-center mb-4">สถาปัตยกรรมระบบ</h2>
-            <p class="text-gray-400 text-center mb-12 max-w-2xl mx-auto">พัฒนาด้วย Clean Architecture รองรับ AI Providers หลายตัว ทำงานบนเครื่องคุณ 100%</p>
-
-            <div class="grid md:grid-cols-4 gap-6">
-                <!-- Presentation Layer -->
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:border-violet-500/50 transition-all">
-                    <div class="w-12 h-12 bg-violet-500/20 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Presentation</h3>
-                    <p class="text-gray-400 text-sm">WPF MVVM UI พร้อม System Tray Integration</p>
-                </div>
-
-                <!-- Application Layer -->
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:border-violet-500/50 transition-all">
-                    <div class="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Application</h3>
-                    <p class="text-gray-400 text-sm">Business Logic, Commands/Queries CQRS Pattern</p>
-                </div>
-
-                <!-- Domain Layer -->
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:border-violet-500/50 transition-all">
-                    <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Domain</h3>
-                    <p class="text-gray-400 text-sm">Core Entities, Interfaces, Domain Events</p>
-                </div>
-
-                <!-- Infrastructure Layer -->
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:border-violet-500/50 transition-all">
-                    <div class="w-12 h-12 bg-indigo-500/20 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Infrastructure</h3>
-                    <p class="text-gray-400 text-sm">GitHub API, Claude API, File System</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Features Section -->
-    <section id="features" class="py-16">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-3xl font-bold text-white text-center mb-12">ฟีเจอร์หลัก</h2>
-
-            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Feature 1 -->
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:border-violet-500/50 transition-all">
-                    <div class="w-12 h-12 bg-violet-500/20 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Auto-Sync GitHub</h3>
-                    <p class="text-gray-400">ซิงค์โฟลเดอร์กับ GitHub Repository อัตโนมัติ รองรับ Multiple Repositories</p>
-                </div>
-
-                <!-- Feature 2 -->
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:border-violet-500/50 transition-all">
-                    <div class="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Claude AI Assistant</h3>
-                    <p class="text-gray-400">AI ช่วยสร้าง Commit Messages, Code Review และแนะนำการปรับปรุงโค้ด</p>
-                </div>
-
-                <!-- Feature 3 -->
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:border-violet-500/50 transition-all">
-                    <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Change Detection</h3>
-                    <p class="text-gray-400">ตรวจจับการเปลี่ยนแปลงไฟล์แบบ Real-time ด้วย FileSystemWatcher</p>
-                </div>
-
-                <!-- Feature 4 -->
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:border-violet-500/50 transition-all">
-                    <div class="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Smart Commit</h3>
-                    <p class="text-gray-400">AI สร้าง Commit Message ที่มีความหมาย ตาม Conventional Commits</p>
-                </div>
-
-                <!-- Feature 5 -->
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:border-violet-500/50 transition-all">
-                    <div class="w-12 h-12 bg-yellow-500/20 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Scheduled Sync</h3>
-                    <p class="text-gray-400">ตั้งเวลา Sync อัตโนมัติตาม Schedule หรือทำทันทีเมื่อมีการเปลี่ยนแปลง</p>
-                </div>
-
-                <!-- Feature 6 -->
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:border-violet-500/50 transition-all">
-                    <div class="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">System Tray</h3>
-                    <p class="text-gray-400">ทำงานเบื้องหลังใน System Tray พร้อม Quick Actions และการแจ้งเตือน</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- AI Features -->
-    <section class="py-16 bg-gray-900/50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-3xl font-bold text-white text-center mb-4">AI Integration</h2>
-            <p class="text-gray-400 text-center mb-12 max-w-2xl mx-auto">รองรับหลาย AI Providers ช่วยเขียนโค้ดอย่างชาญฉลาด</p>
-
-            <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                <div class="bg-gradient-to-br from-violet-500/10 to-purple-500/10 rounded-xl p-6 border border-violet-500/30">
-                    <h3 class="text-xl font-bold text-white mb-4 flex items-center">
-                        <svg class="w-6 h-6 text-violet-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                        Intelligent Commit Messages
-                    </h3>
-                    <ul class="space-y-3 text-gray-300">
-                        <li class="flex items-start">
-                            <span class="w-2 h-2 bg-violet-400 rounded-full mr-3 mt-2"></span>
-                            <span>วิเคราะห์ Diff เพื่อสร้าง Commit Message ที่มีความหมาย</span>
-                        </li>
-                        <li class="flex items-start">
-                            <span class="w-2 h-2 bg-violet-400 rounded-full mr-3 mt-2"></span>
-                            <span>รองรับ Conventional Commits Format</span>
-                        </li>
-                        <li class="flex items-start">
-                            <span class="w-2 h-2 bg-violet-400 rounded-full mr-3 mt-2"></span>
-                            <span>ปรับแต่ง Style และ Format ได้ตามต้องการ</span>
-                        </li>
-                    </ul>
-                </div>
-
-                <div class="bg-gradient-to-br from-purple-500/10 to-blue-500/10 rounded-xl p-6 border border-purple-500/30">
-                    <h3 class="text-xl font-bold text-white mb-4 flex items-center">
-                        <svg class="w-6 h-6 text-purple-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
-                        </svg>
-                        Code Analysis
-                    </h3>
-                    <ul class="space-y-3 text-gray-300">
-                        <li class="flex items-start">
-                            <span class="w-2 h-2 bg-purple-400 rounded-full mr-3 mt-2"></span>
-                            <span>ตรวจสอบ Code Quality และแนะนำปรับปรุง</span>
-                        </li>
-                        <li class="flex items-start">
-                            <span class="w-2 h-2 bg-purple-400 rounded-full mr-3 mt-2"></span>
-                            <span>ตรวจจับ Potential Bugs และ Security Issues</span>
-                        </li>
-                        <li class="flex items-start">
-                            <span class="w-2 h-2 bg-purple-400 rounded-full mr-3 mt-2"></span>
-                            <span>สร้าง Code Summary สำหรับ Pull Requests</span>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Configuration -->
-    <section class="py-16">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-3xl font-bold text-white text-center mb-12">การตั้งค่า</h2>
-
-            <div class="max-w-3xl mx-auto">
-                <div class="bg-gray-800/50 rounded-xl p-8 border border-gray-700">
-                    <h3 class="text-xl font-bold text-white mb-6">ไฟล์ Configuration</h3>
-
-                    <div class="bg-gray-900 rounded-lg p-4 font-mono text-sm overflow-x-auto">
-                        <pre class="text-gray-300"><code>{
-  <span class="text-green-400">"GitHubToken"</span>: <span class="text-yellow-400">"ghp_xxxxxxxxxxxx"</span>,
-  <span class="text-green-400">"ClaudeApiKey"</span>: <span class="text-yellow-400">"sk-ant-xxxxxxxxxxxx"</span>,
-  <span class="text-green-400">"Repositories"</span>: [
-    {
-      <span class="text-green-400">"LocalPath"</span>: <span class="text-yellow-400">"C:\\Projects\\MyApp"</span>,
-      <span class="text-green-400">"RemoteUrl"</span>: <span class="text-yellow-400">"github.com/user/myapp"</span>,
-      <span class="text-green-400">"Branch"</span>: <span class="text-yellow-400">"main"</span>,
-      <span class="text-green-400">"AutoSync"</span>: <span class="text-blue-400">true</span>
-    }
-  ],
-  <span class="text-green-400">"SyncInterval"</span>: <span class="text-blue-400">300</span>,
-  <span class="text-green-400">"AIAssist"</span>: <span class="text-blue-400">true</span>
-}</code></pre>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- System Requirements -->
-    <section class="py-16 bg-gray-900/50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-3xl font-bold text-white text-center mb-12">ความต้องการระบบ</h2>
-
-            <div class="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
-                    <h3 class="text-lg font-bold text-white mb-4 flex items-center">
-                        <svg class="w-6 h-6 text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                        </svg>
-                        ขั้นต่ำ
-                    </h3>
-                    <ul class="space-y-2 text-gray-400">
-                        <li>Windows 10 version 1903+</li>
-                        <li>.NET 8.0 Runtime</li>
-                        <li>RAM 4GB</li>
-                        <li>พื้นที่ว่าง 200MB</li>
-                        <li>Internet Connection</li>
-                    </ul>
-                </div>
-
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-violet-500/50">
-                    <h3 class="text-lg font-bold text-white mb-4 flex items-center">
-                        <svg class="w-6 h-6 text-violet-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                        </svg>
-                        ต้องการเพิ่มเติม
-                    </h3>
-                    <ul class="space-y-2 text-gray-300">
-                        <li>GitHub Account + Personal Access Token</li>
-                        <li>Claude API Key (Anthropic)</li>
-                        <li>Git installed on system</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Use Cases -->
-    <section class="py-16">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-3xl font-bold text-white text-center mb-12">กรณีการใช้งาน</h2>
-
-            <div class="grid md:grid-cols-3 gap-8">
-                <div class="text-center">
-                    <div class="w-16 h-16 bg-violet-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Solo Developers</h3>
-                    <p class="text-gray-400">นักพัฒนาคนเดียวที่ต้องการ Backup โค้ดไปยัง GitHub อัตโนมัติ</p>
-                </div>
-
-                <div class="text-center">
-                    <div class="w-16 h-16 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Team Projects</h3>
-                    <p class="text-gray-400">ทีมที่ต้องการให้สมาชิกทุกคน Sync โค้ดแบบ Consistent</p>
-                </div>
-
-                <div class="text-center">
-                    <div class="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Learning Projects</h3>
-                    <p class="text-gray-400">นักเรียนที่เรียน Git และต้องการ AI ช่วยเขียน Commits</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Pricing & Purchase Section -->
-    <section id="pricing" class="py-16 bg-gray-900/50">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl font-bold text-white mb-4">เลือกแพ็กเกจที่เหมาะกับคุณ</h2>
-                <p class="text-gray-400">ดาวน์โหลดฟรี หรือซื้อ License เพื่อปลดล็อคฟีเจอร์เต็มรูปแบบ</p>
+                @endforeach
             </div>
 
-            @if(session('success'))
-                <div class="mb-6 bg-green-500/20 border border-green-500/50 text-green-300 px-4 py-3 rounded-xl backdrop-blur-sm text-center">
-                    {{ session('success') }}
-                </div>
+            @if($ownsCluadex)
+                <p class="text-center mt-6">
+                    <a href="{{ route('customer.licenses') }}" class="xp-link text-sm font-semibold">มี License แล้ว? ดูคีย์ของคุณ →</a>
+                </p>
             @endif
+            <p class="text-center text-xs text-gray-500 mt-6">ซื้อแล้วได้ License key ทางอีเมลและในหน้า บัญชีของฉัน · ใส่คีย์ในโปรแกรมได้เลย ไม่ต้องลงใหม่ · ย้ายคีย์ไปเครื่องใหม่ได้ (เครื่องเดิมเลิกใช้คีย์นั้น) · คีย์ที่ยืนยันแล้วใช้ต่อได้ 30 วันแม้ติดต่อเซิร์ฟเวอร์ไม่ได้ · รองรับ PromptPay โอนธนาคาร Stripe และ Wallet</p>
 
-            @php
-                $checkIcon = '<svg class="w-4 h-4 mr-2 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>';
-                $crossIcon = '<svg class="w-4 h-4 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>';
-            @endphp
-            <div class="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-                <!-- Free Plan -->
-                <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-700 hover:border-gray-600 transition-all">
-                    <div class="text-center mb-6">
-                        <h3 class="text-xl font-bold text-white mb-2">ฟรี</h3>
-                        <div class="text-4xl font-black text-white">฿0</div>
-                        <p class="text-gray-500 text-sm mt-1">ดาวน์โหลดได้เลย</p>
-                    </div>
-                    <ul class="space-y-3 mb-8 text-sm">
-                        <li class="flex items-center text-gray-300">{!! $checkIcon !!} ฟีเจอร์พื้นฐานครบ</li>
-                        <li class="flex items-center text-gray-300">{!! $checkIcon !!} 22+ Local Models</li>
-                        <li class="flex items-center text-gray-300">{!! $checkIcon !!} ภาษาไทย/อังกฤษ</li>
-                        <li class="flex items-center text-gray-500">{!! $crossIcon !!} Agent Tools เต็ม</li>
-                        <li class="flex items-center text-gray-500">{!! $crossIcon !!} ซัพพอร์ตพรีเมียม</li>
-                    </ul>
-                    @if($csDownload)
-                        <span class="block w-full text-center py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-xl transition-all" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
-                    @else
-                    <a href="{{ route('download.page', $product->slug) }}"
-                       class="block w-full text-center py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-xl transition-all">
-                        ดาวน์โหลดฟรี
-                    </a>
-                    @endif
-                </div>
-
-                <!-- Yearly Plan -->
-                <div class="relative bg-gradient-to-br from-violet-500/10 to-purple-500/10 backdrop-blur-sm rounded-2xl p-8 border-2 border-violet-500/50 hover:border-violet-400 transition-all">
-                    <div class="absolute -top-3 left-1/2 -translate-x-1/2">
-                        <span class="px-4 py-1 bg-gradient-to-r from-violet-600 to-purple-600 text-white text-xs font-bold rounded-full shadow-lg">แนะนำ</span>
-                    </div>
-                    <div class="text-center mb-6">
-                        <h3 class="text-xl font-bold text-white mb-2">รายปี</h3>
-                        <div class="text-4xl font-black text-white">฿{{ number_format(\App\Support\LicensePlans::price($product->slug, 'yearly')) }}</div>
-                        <div class="flex justify-center"><x-tpix-price variant="detail" :thb="\App\Support\LicensePlans::price($product->slug, 'yearly')" /></div>
-                        <p class="text-gray-500 text-sm mt-1">365 วัน</p>
-                    </div>
-                    <ul class="space-y-3 mb-8 text-sm">
-                        <li class="flex items-center text-gray-300">{!! $checkIcon !!} ฟีเจอร์ทั้งหมด</li>
-                        <li class="flex items-center text-gray-300">{!! $checkIcon !!} 5 AI Providers</li>
-                        <li class="flex items-center text-gray-300">{!! $checkIcon !!} 28 Agent Tools</li>
-                        <li class="flex items-center text-gray-300">{!! $checkIcon !!} ซัพพอร์ตพรีเมียม</li>
-                        <li class="flex items-center text-gray-300">{!! $checkIcon !!} อัปเดตฟรี 1 ปี</li>
-                    </ul>
-                    @if(auth()->check() && $hasPurchased)
-                        @if($csDownload)
-                            <span class="block w-full text-center py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-green-500/25" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
-                        @else
-                        <a href="{{ route('customer.downloads') }}"
-                           class="block w-full text-center py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-green-500/25">
-                            ดาวน์โหลดเลย
-                        </a>
-                        @endif
-                    @else
-                        <form action="{{ route('cart.add', $product) }}" method="POST">
-                            @csrf
-                            <input type="hidden" name="quantity" value="1">
-                            <input type="hidden" name="license_type" value="yearly">
-                            <button type="submit"
-                                    class="w-full py-3 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-violet-500/25">
-                                ซื้อ License รายปี - ฿{{ number_format(\App\Support\LicensePlans::price($product->slug, 'yearly')) }}
-                            </button>
-                        </form>
-                    @endif
-                </div>
-
-                <!-- Lifetime Plan -->
-                <div class="bg-gradient-to-br from-amber-500/10 to-orange-500/10 backdrop-blur-sm rounded-2xl p-8 border border-amber-500/30 hover:border-amber-400 transition-all">
-                    <div class="text-center mb-6">
-                        <h3 class="text-xl font-bold text-white mb-2">ตลอดชีพ</h3>
-                        <div class="text-4xl font-black text-white">฿{{ number_format(\App\Support\LicensePlans::price($product->slug, 'lifetime')) }}</div>
-                        <div class="flex justify-center"><x-tpix-price variant="detail" :thb="\App\Support\LicensePlans::price($product->slug, 'lifetime')" /></div>
-                        <p class="text-amber-400 text-sm mt-1">ไม่มีวันหมดอายุ</p>
-                    </div>
-                    <ul class="space-y-3 mb-8 text-sm">
-                        <li class="flex items-center text-gray-300">{!! $checkIcon !!} ฟีเจอร์ทั้งหมด</li>
-                        <li class="flex items-center text-gray-300">{!! $checkIcon !!} 5 AI Providers</li>
-                        <li class="flex items-center text-gray-300">{!! $checkIcon !!} 28 Agent Tools</li>
-                        <li class="flex items-center text-gray-300">{!! $checkIcon !!} ซัพพอร์ตพรีเมียม</li>
-                        <li class="flex items-center text-amber-300">{!! $checkIcon !!} อัปเดตฟรีตลอดชีพ</li>
-                    </ul>
-                    @if(auth()->check() && $hasPurchased)
-                        @if($csDownload)
-                            <span class="block w-full text-center py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-green-500/25" style="cursor: not-allowed; opacity: .8;" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดให้ดาวน์โหลด</span>
-                        @else
-                        <a href="{{ route('customer.downloads') }}"
-                           class="block w-full text-center py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-green-500/25">
-                            ดาวน์โหลดเลย
-                        </a>
-                        @endif
-                    @else
-                        <form action="{{ route('cart.add', $product) }}" method="POST">
-                            @csrf
-                            <input type="hidden" name="quantity" value="1">
-                            <input type="hidden" name="license_type" value="lifetime">
-                            <button type="submit"
-                                    class="w-full py-3 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-amber-500/25">
-                                ซื้อ License ตลอดชีพ - ฿{{ number_format(\App\Support\LicensePlans::price($product->slug, 'lifetime')) }}
-                            </button>
-                        </form>
-                    @endif
-                </div>
-            </div>
-
-            <p class="text-gray-500 text-sm text-center mt-8">
-                รองรับการชำระเงินผ่าน PromptPay, โอนธนาคาร, Stripe และ Wallet
-            </p>
+            <x-xp.compare class="mt-14" :groups="$compare" note="ค่าใช้งานโมเดลบนคลาวด์จ่ายกับผู้ให้บริการโดยตรงด้วย API key ของคุณ ไม่รวมในคีย์ CluadeX · หมดอายุหรือหมดทดลองแล้ว ทุกอย่างในรุ่นฟรียังใช้ได้ตามปกติ" />
         </div>
     </section>
-</div>
+
+    <x-xp.setup
+        :specs="[
+            ['ระบบปฏิบัติการ', 'Windows 10 หรือ 11 แบบ 64-bit', 'Windows 10/11, x64'],
+            ['ไม่ต้องติดตั้ง .NET', 'ทุกอย่างที่โปรแกรมต้องใช้มากับไฟล์ที่ดาวน์โหลด', 'Self-contained'],
+            ['การ์ดจอ (ไม่บังคับ)', 'NVIDIA ที่รองรับ CUDA 12 ช่วยให้โมเดลในเครื่องเร็วขึ้น ไม่มีก็รันด้วย CPU ได้', 'NVIDIA CUDA 12 optional'],
+            ['อินเทอร์เน็ต', 'ใช้ตอนดาวน์โหลดโมเดล ใช้โมเดลบนคลาวด์ ทดลองและใส่คีย์ — โมเดลในเครื่องที่โหลดแล้วไม่ต้องใช้เน็ต', 'Online for downloads, cloud models and keys'],
+        ]"
+        specs-note="ขนาดโมเดลที่รันได้ขึ้นกับ VRAM และ RAM ของเครื่อง — Model Manager ในโปรแกรมคำนวณให้ว่าโมเดลไหนพอดีกับเครื่องคุณ"
+        :steps="[
+            ['ดาวน์โหลดจาก xman4289.com', 'ไฟล์เดียวกันทั้งรุ่นฟรีและ Pro', 'Download from xman4289.com'],
+            [$isZip ? 'แตกไฟล์แล้วเปิด CluadeX.exe' : 'เปิดตัวติดตั้ง', 'ครั้งแรกที่เปิดบนเครื่องใหม่ (ต่อเน็ตอยู่) ได้ทดลอง Pro ฟรี 24 ชั่วโมงอัตโนมัติ', $isZip ? 'Extract and run CluadeX.exe' : 'Run the installer'],
+            ['เลือกโมเดล แล้วเปิดโฟลเดอร์โปรเจกต์', 'โหลดโมเดลที่แนะนำในหน้า โมเดล หรือใส่ API key ของผู้ให้บริการ แล้วเริ่มสั่งงานในแชท', 'Pick a model, open your project'],
+        ]" />
+
+    <x-xp.faq :items="[
+        ['ฟรีจริงไหม?', 'ฟรีจริง ใช้โมเดล GGUF ในเครื่องหรือ Ollama กับเอเจนต์ อีดิเตอร์ Git ในเครื่อง Skill MCP และปลั๊กอินได้ไม่จำกัดเวลา ดาวน์โหลดได้เลยโดยไม่ต้องล็อกอิน'],
+        ['Pro ได้อะไรเพิ่ม?', 'ต่อโมเดลบนคลาวด์ (Anthropic Claude, OpenAI, Google Gemini) ด้วย API key ของคุณ หรือใช้ Claude Code, Codex, Gemini CLI, Antigravity ที่ล็อกอินไว้ บวก GitHub (push, pull request, issues), Web fetch และ Dev Preview'],
+        ['ราคาเท่าไร ใช้ได้กี่เครื่อง?', collect($prices)->map(fn ($p, $t) => ($plans[$t]['name'] ?? $t) . ' ฿' . number_format($p))->implode(' · ') . ' — 1 คีย์ใช้ได้ 1 เครื่อง มีหลายเครื่องซื้อคีย์เพิ่มได้ และย้ายคีย์ไปเครื่องใหม่ได้'],
+        ['ค่า Claude / GPT รวมในคีย์ไหม?', 'ไม่รวม คีย์ CluadeX ปลดให้ต่อผู้ให้บริการได้ ส่วนค่าใช้งานโมเดลจ่ายกับผู้ให้บริการโดยตรงด้วย API key ของคุณ (หรือสิทธิ์ของบัญชีที่ล็อกอิน CLI ไว้) ตั้งงบต่อรอบและต่อวันในโปรแกรมได้'],
+        ['ทดลอง Pro ทำอย่างไร?', 'เปิดโปรแกรมครั้งแรกบนเครื่องใหม่ตอนต่อเน็ต จะได้คีย์ทดลอง Pro 24 ชั่วโมงอัตโนมัติ หมดแล้วทุกอย่างในรุ่นฟรียังใช้ต่อได้ตามปกติ'],
+        ['AI จะแก้หรือลบไฟล์โดยไม่ถามไหม?', 'ค่าเริ่มต้นคือถามก่อนทุกครั้ง คุณเลือกผ่อนเป็นแก้ไฟล์ในโปรเจกต์ได้เลยหรืออนุญาตทั้งหมดในแชทนั้นได้ แต่คำสั่งที่ลบไดรฟ์ โฟลเดอร์ home หรือโฟลเดอร์ระบบ ต้องให้คุณกดยืนยันเองทุกครั้ง และย้อนโปรเจกต์ด้วย Time Machine ได้'],
+        ['โค้ดของฉันถูกส่งไปไหนบ้าง?', 'ใช้โมเดลในเครื่อง โค้ดอยู่ในเครื่องคุณ ถ้าเลือกโมเดลบนคลาวด์ ข้อความจะส่งไปที่ผู้ให้บริการนั้นเท่านั้น โปรแกรมติดต่อ xman4289.com เพื่อตรวจคีย์และเช็กอัปเดต'],
+        ['ไม่มีการ์ดจอใช้ได้ไหม?', 'ได้ โมเดลในเครื่องรันด้วย CPU ได้ (ช้ากว่า) หรือใช้โมเดลบนคลาวด์ด้วยรุ่น Pro — Model Manager บอกให้ว่าโมเดลไหนเหมาะกับเครื่องคุณและเร็วประมาณเท่าไร'],
+    ]" />
+
+    {{-- =========================== FINAL CTA =========================== --}}
+    <x-xp.cta :art="$shot('art-hero.webp')" title="ให้ AI ช่วยเขียน" glow="โดยคุณคุมเอง"
+              :sub="'ดาวน์โหลดรุ่นฟรีได้ทันที' . ($fromLabel ? ' หรือต่อ Claude, GPT และ Gemini ด้วย Pro เริ่ม ' . $fromLabel : '')"
+              en="An AI that writes the code, while you stay in charge.">
+        <x-xp.download :href="route('cluadex.download')" :coming-soon="$csDownload" class="!px-8" />
+        <a href="#pricing" class="xp-btn-pro inline-flex items-center px-8 py-4 rounded-xl font-extrabold text-lg transition">ดูแผน Pro</a>
+        @if($ownsCluadex)
+            <a href="{{ route('customer.licenses') }}" class="xp-btn-ghost inline-flex items-center px-6 py-4 rounded-xl font-semibold transition">ดูคีย์ License ของฉัน</a>
+        @endif
+        <x-slot:footnote>
+            <p class="text-gray-500 text-sm mt-7">Windows 10/11 (64-bit) · ไม่ต้องลง .NET · ทดลอง Pro ฟรี 24 ชม. · 1 คีย์ = 1 เครื่อง</p>
+        </x-slot:footnote>
+    </x-xp.cta>
+
+</x-xp.page>
+
+<script type="application/ld+json">{!! json_encode($ld, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) !!}</script>
 @endsection
