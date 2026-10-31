@@ -1,0 +1,45 @@
+{
+  "out_dir": "images/products/autotradex/v2",
+  "screens": [
+    {
+      "name": "dashboard",
+      "html": "dashboard.html"
+    },
+    {
+      "name": "scanner",
+      "html": "scanner.html"
+    },
+    {
+      "name": "ai-trading",
+      "html": "ai-trading.html"
+    },
+    {
+      "name": "trading",
+      "html": "trading.html"
+    },
+    {
+      "name": "analytics",
+      "html": "analytics.html"
+    },
+    {
+      "name": "art-hero",
+      "src": "D:/Code/xmanstudio-campaign-media/product-pages/autotradex/art-hero.png",
+      "width": 1536,
+      "quality": 82
+    },
+    {
+      "name": "art-2",
+      "src": "D:/Code/xmanstudio-campaign-media/product-pages/autotradex/art-2.png",
+      "width": 1536,
+      "quality": 82
+    },
+    {
+      "name": "og",
+      "ext": "jpg",
+      "w": 1200,
+      "h": 630,
+      "width": 1200,
+      "html": "../_shared/og.html?art=file%3A%2F%2F%2FD%3A%2FCode%2Fxmanstudio-campaign-media%2Fproduct-pages%2Fautotradex%2Fart-hero.png&name=AutoTradeX&glow=TradeX&line=%E0%B8%9A%E0%B8%AD%E0%B8%97%E0%B9%80%E0%B8%97%E0%B8%A3%E0%B8%94+Arbitrage%7C%E0%B8%82%E0%B9%89%E0%B8%B2%E0%B8%A1+6+Exchange&sub=%E0%B8%97%E0%B8%94%E0%B8%A5%E0%B8%AD%E0%B8%87%E0%B8%9F%E0%B8%A3%E0%B8%B5+7+%E0%B8%A7%E0%B8%B1%E0%B8%99+%C2%B7+%E0%B8%A5%E0%B8%AD%E0%B8%87%E0%B8%94%E0%B9%89%E0%B8%A7%E0%B8%A2%E0%B9%80%E0%B8%87%E0%B8%B4%E0%B8%99%E0%B9%80%E0%B8%AA%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%99%E0%B8%81%E0%B9%88%E0%B8%AD%E0%B8%99%E0%B9%80%E0%B8%97%E0%B8%A3%E0%B8%94%E0%B8%88%E0%B8%A3%E0%B8%B4%E0%B8%87&c1=ffcf3a&c2=34d399&c3=22d3ee"
+    }
+  ]
+}

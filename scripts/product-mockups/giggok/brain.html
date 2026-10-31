@@ -1,0 +1,44 @@
+<!doctype html>
+<!-- Settings › สมองของเธอ (screens/settings_screen.dart): the four brains, each with its own trade-off, and the on-device
+     Gemma card. Labels from i18n/strings_ai.dart (brain*, brain*Tradeoff, gemmaReady, gemmaE2bCpuHint, ramComfortable,
+     proxyBilling); the RAM figure is made up. -->
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .back { position: relative; z-index: 3; padding: 4px 16px 0; font-size: 12px; color: var(--acc); font-weight: 600; }
+    .opts { position: relative; z-index: 3; margin: 0 12px; display: flex; flex-direction: column; gap: 8px; }
+    .opt { display: flex; gap: 11px; padding: 12px 13px; border-radius: 20px; }
+    .opt .dot { flex: none; width: 20px; height: 20px; margin-top: 2px; border-radius: 50%; border: 2px solid rgba(35, 32, 74, .25); background: #fff; }
+    .opt.on { border: 1.5px solid var(--acc); background: rgba(255, 255, 255, .82); }
+    .opt.on .dot { border: 6px solid var(--acc); }
+    .opt .n { font-size: 14px; font-weight: 600; }
+    .opt .s { font-size: 12px; color: rgba(35, 32, 74, .7); line-height: 1.45; }
+    .opt .t { font-size: 11px; color: rgba(35, 32, 74, .5); line-height: 1.45; margin-top: 3px; }
+    .gem { position: relative; z-index: 3; margin: 10px 12px 0; padding: 13px; border-radius: 22px; }
+    .gem .row { display: flex; align-items: center; gap: 8px; }
+    .gem .ok { color: #00a894; font-weight: 600; font-size: 12.5px; }
+    .gem .chip { margin-left: auto; font-size: 10.5px; font-weight: 600; padding: 3px 9px; border-radius: 99px; color: #00a894; background: rgba(0, 168, 148, .12); }
+    .gem .v { margin-top: 9px; display: flex; gap: 6px; }
+    .gem .v span { flex: 1; padding: 8px 10px; border-radius: 14px; font-size: 11.5px; line-height: 1.4; background: rgba(255, 255, 255, .7); border: 1px solid #fff; }
+    .gem .v span.on { border: 1.5px solid var(--acc); }
+    .gem .v b { display: block; font-size: 12.5px; }
+</style></head>
+<body><div class="phone set work">
+    <div class="orb pink" style="top:-60px;left:-70px;width:260px;height:260px"></div>
+    <div class="orb mint" style="bottom:140px;right:-90px;width:280px;height:280px"></div>
+    <div class="sb">20:14<span class="r"><b></b><i></i></span></div>
+    <p class="back">‹ ตั้งค่า</p>
+    <div class="hdr"><p class="over">ตั้งค่า</p><h1 class="display">สมองของเธอ</h1><p class="cap">เลือกได้ว่าใครเป็นคนคิดให้เธอ</p></div>
+    <div class="opts">
+        <div class="opt on"><span class="dot"></span><div><p class="n">ในเครื่อง</p><p class="s">Gemma 4 รันบนมือถือเลย</p><p class="t">ออฟไลน์จริง ไม่ต้องมีเน็ตเลย · ฟรี · แต่ต้องโหลดโมเดล 2–3 GB และตอบช้ากว่า</p></div></div>
+        <div class="opt glass"><span class="dot"></span><div><p class="n">ผ่านบริการของเรา</p><p class="s">ใช้ได้เลย ไม่ต้องมีคีย์ของตัวเอง</p><p class="t">ทุกข้อความหักจากกระเป๋าเงิน (ไม่มีโควต้าฟรี) · ตอบไม่สำเร็จไม่หักเงิน</p></div></div>
+        <div class="opt glass"><span class="dot"></span><div><p class="n">คีย์ของคุณเอง</p><p class="s">ต่อ OpenAI ตรงด้วยคีย์ที่คุณกรอกเอง</p><p class="t">ฉลาดที่สุด · ไม่มีโควตาจำกัด · แต่ค่าใช้จ่ายเข้าบัญชีของคุณเอง</p></div></div>
+        <div class="opt glass"><span class="dot"></span><div><p class="n">เซิร์ฟเวอร์ในบ้าน</p><p class="s">Ollama / LM Studio / llama.cpp บนคอมที่บ้าน</p><p class="t">ข้อมูลไม่ออกนอกบ้าน · ฟรี · แต่ต้องอยู่วงไวไฟเดียวกับคอม และคอมต้องเปิด</p></div></div>
+    </div>
+    <div class="gem glass">
+        <div class="row"><span class="ok">✓ โหลดลงเครื่องแล้ว พร้อมใช้แบบออฟไลน์</span><span class="chip">ไหวสบาย</span></div>
+        <div class="v"><span class="on"><b>E2B</b>เร็วกว่า ใช้ได้ทุกเครื่อง · แนะนำ</span><span><b>E4B</b>ฉลาดกว่า แต่ช้ากว่าและกินพื้นที่มากกว่า</span></div>
+    </div>
+    <div class="nav"><a><img src="assets/nav-mail.png" alt="">เมล</a><a><img src="assets/nav-calendar.png" alt="">ปฏิทิน</a><a class="gap">.</a><a><img src="assets/nav-timeline.png" alt="">ไทม์ไลน์</a><a class="on"><img src="assets/nav-settings.png" alt="">ตั้งค่า</a></div>
+    <div class="face-btn"><span style="background-image:url(assets/avatar-face.webp)"></span></div>
+    <div class="face-lbl">มายด์</div>
+</div></body></html>

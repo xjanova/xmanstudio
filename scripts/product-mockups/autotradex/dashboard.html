@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .r0 { display: grid; grid-template-columns: 270px 1fr 330px; gap: 14px; }
+    .modes { display: flex; justify-content: center; gap: 8px; margin-top: 12px; }
+    .modes span { padding: 12px 20px; border-radius: 12px; font-size: 12px; font-weight: 700; color: rgba(255, 255, 255, .55); background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .1); }
+    .modes span.on { color: #fff; background: linear-gradient(135deg, rgba(124, 58, 237, .55), rgba(37, 99, 235, .45)); border-color: rgba(167, 139, 250, .6); box-shadow: 0 0 18px rgba(124, 58, 237, .45); }
+    .health li { list-style: none; display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 12px; }
+    .health li .sp { font-size: 11px; }
+    .r1 { display: grid; grid-template-columns: 1fr 330px; gap: 14px; margin-top: 14px; }
+    .arb { display: grid; grid-template-columns: 1fr 230px 1fr; gap: 14px; align-items: center; margin-top: 12px; }
+    .side { border-radius: 14px; padding: 14px 16px; background: rgba(0, 0, 0, .2); border: 1px solid rgba(255, 255, 255, .1); }
+    .side.buy { border-color: rgba(16, 185, 129, .45); } .side.sell { border-color: rgba(239, 68, 68, .45); }
+    .spread { text-align: center; border-radius: 14px; padding: 14px; background: linear-gradient(135deg, rgba(124, 58, 237, .25), rgba(37, 99, 235, .18)); border: 1px solid rgba(167, 139, 250, .45); }
+    .r3 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-top: 14px; }
+    .r4 { display: grid; grid-template-columns: 1fr 440px; gap: 14px; margin-top: 14px; }
+    .tf { display: flex; gap: 6px; } .tf span { padding: 4px 10px; border-radius: 7px; font-size: 11px; color: rgba(255, 255, 255, .5); } .tf span.on { background: rgba(124, 58, 237, .45); color: #fff; }
+    .log p { display: flex; gap: 10px; font-size: 11.5px; padding: 5px 0; border-bottom: 1px solid rgba(255, 255, 255, .05); }
+    .log p .mono { color: rgba(255, 255, 255, .4); font-size: 11px; }
+</style></head>
+<body data-on="Dashboard">
+<div class="page">
+    <div class="r0">
+        <div class="card">
+            <p class="lbl">TOTAL BALANCE</p>
+            <p class="big" style="margin-top:4px">$10,184.62</p>
+            <span class="badge b-grn" style="margin-top:8px">+1.85% <span style="font-size:10px;font-weight:500">(+$184.62)</span></span>
+            <p style="margin-top:8px;font-size:10px" class="mut">Today: <b class="grn" style="font-size:11px">+$42.18</b> &nbsp; Trades: <b style="color:#fff;font-size:11px">11</b></p>
+        </div>
+        <div class="card" style="text-align:center;display:flex;flex-direction:column;justify-content:center">
+            <p class="lbl">TRADING MODE</p>
+            <div class="modes"><span class="on">🔄 ARBITRAGE</span><span>📈 SINGLE EXCHANGE</span><span>🤖 AI TRADING</span></div>
+        </div>
+        <div class="card">
+            <div class="row"><p class="lbl">SYSTEM HEALTH</p><span class="badge b-grn sp">● ONLINE</span></div>
+            <ul class="health" style="margin-top:6px">
+                <li><span class="ex" style="background:#F3BA2F">BN</span>Binance<span class="sp grn">Connected · 84 ms</span></li>
+                <li><span class="ex" style="background:#23AF91">KC</span>KuCoin<span class="sp grn">Connected · 121 ms</span></li>
+                <li><span class="ex" style="background:#4CBA64">BK</span>Bitkub<span class="sp grn">Connected · 46 ms</span></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="r1">
+        <div class="card">
+            <div class="row"><b style="font-size:14px">🔄 ARBITRAGE MODE</b><span class="badge b-pur">DUAL BALANCE</span><span class="btn gh sp" style="height:28px">⚙ Change Mode</span></div>
+            <div class="arb">
+                <div class="side buy">
+                    <div class="row"><span class="ex" style="background:#F3BA2F">BN</span><b>BINANCE</b><span class="badge b-grn sp">BUY</span></div>
+                    <p class="mid" style="margin-top:10px">$67,412.30</p>
+                    <p class="mut" style="font-size:11px;margin-top:2px">ASK · BTC/USDT</p>
+                </div>
+                <div class="spread">
+                    <p class="lbl" style="color:#C4B5FD">SPREAD</p>
+                    <p class="big" style="color:#fff">0.42%</p>
+                    <p class="grn" style="font-weight:700">+$2.84 <span class="mut" style="font-weight:500">/ 0.01 BTC</span></p>
+                    <p class="mut" style="font-size:18px;line-height:1">→</p>
+                </div>
+                <div class="side sell">
+                    <div class="row"><span class="ex" style="background:#23AF91">KC</span><b>KUCOIN</b><span class="badge b-red sp">SELL</span></div>
+                    <p class="mid" style="margin-top:10px">$67,695.40</p>
+                    <p class="mut" style="font-size:11px;margin-top:2px">BID · BTC/USDT</p>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <p class="lbl">BOT CONTROL</p>
+            <div class="row" style="margin-top:12px">
+                <span style="width:42px;height:42px;border-radius:50%;background:radial-gradient(circle,#10B981 0 30%,rgba(16,185,129,.2) 31%);box-shadow:0 0 16px rgba(16,185,129,.6)"></span>
+                <div><p style="font-size:15px;font-weight:700">Bot Running</p><p class="mut" style="font-size:11px">Scanning 6 pairs · every 1s</p></div>
+            </div>
+            <div class="row" style="margin-top:16px;gap:8px">
+                <span class="btn gh" style="flex:1;opacity:.5">▶ START BOT</span><span class="btn gh">⏸ Pause</span><span class="btn red">⏹ Stop</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="r3">
+        <div class="stat"><p class="lbl">WIN RATE</p><p class="mid grn">68%</p><p class="mut" style="font-size:10px">32W / 15L</p></div>
+        <div class="stat"><p class="lbl">PROFIT FACTOR</p><p class="mid">2.14</p><p class="mut" style="font-size:10px">Gross Profit / Loss</p></div>
+        <div class="stat"><p class="lbl">AVG WIN</p><p class="mid grn">$8.42</p><p class="mut" style="font-size:10px">Best: $21.06</p></div>
+        <div class="stat"><p class="lbl">AVG LOSS</p><p class="mid red">-$3.91</p><p class="mut" style="font-size:10px">Worst: -$9.70</p></div>
+        <div class="stat"><p class="lbl">MAX DRAWDOWN</p><p class="mid amb">-1.80%</p><p class="mut" style="font-size:10px">Current: -0.32%</p></div>
+        <div class="stat"><p class="lbl">AVG SPEED</p><p class="mid cy">312<span style="font-size:12px"> ms</span></p><p class="mut" style="font-size:10px">Target: &lt;500ms</p></div>
+    </div>
+
+    <div class="r4">
+        <div class="card" style="height:330px">
+            <div class="row"><p class="lbl">OVERALL PERFORMANCE</p><span class="badge b-grn">LIVE</span><span class="tf sp"><span>1D</span><span class="on">7D</span><span>30D</span><span>ALL</span></span></div>
+            <svg id="chart" width="900" height="260" style="margin-top:10px;display:block"></svg>
+        </div>
+        <div class="card log" style="height:330px">
+            <div class="row"><p class="lbl">LIVE MONITOR</p><span class="badge b-grn">RUNNING</span><span class="mono mut sp" style="font-size:11px">Scans: 18,402</span></div>
+            <div style="margin-top:8px">
+                <p><span class="mono">14:32:07</span><span>✅ BTC/USDT · Binance → KuCoin · spread 0.42% · <b class="grn">+$2.84</b></span></p>
+                <p><span class="mono">14:31:52</span><span>🔍 ETH/USDT · spread 0.08% · ต่ำกว่าขั้นต่ำ 0.15%</span></p>
+                <p><span class="mono">14:31:40</span><span>✅ SOL/USDT · KuCoin → Binance · <b class="grn">+$1.12</b></span></p>
+                <p><span class="mono">14:31:18</span><span>⚠️ XRP/USDT · order book บาง · ข้ามรอบนี้</span></p>
+                <p><span class="mono">14:30:55</span><span>✅ BTC/THB · Bitkub → Binance · <b class="grn">+$3.40</b></span></p>
+                <p><span class="mono">14:30:31</span><span>🔍 DOGE/USDT · spread 0.11%</span></p>
+                <p><span class="mono">14:30:12</span><span>❌ ETH/USDT · ราคาเปลี่ยนก่อนส่งคำสั่ง · ยกเลิก</span></p>
+                <p><span class="mono">14:29:48</span><span>✅ SOL/USDT · Binance → KuCoin · <b class="grn">+$0.96</b></span></p>
+                <p><span class="mono">14:29:20</span><span>🔄 Balance sync · 3 exchanges</span></p>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="chrome.js"></script>
+<script>
+    // the cumulative P&L line (made-up numbers, a seeded walk)
+    (function () {
+        var s = 7, pts = [], v = 0, w = 900, h = 250, n = 70;
+        function rnd() { s = (s * 9301 + 49297) % 233280; return s / 233280; }
+        for (var i = 0; i < n; i++) { v += (rnd() - .3) * 6; pts.push(v); }
+        var max = Math.max.apply(null, pts), min = Math.min.apply(null, pts);
+        var xy = pts.map(function (p, i) { return [i * w / (n - 1), 14 + (h - 28) * (1 - (p - min) / (max - min))]; });
+        var line = xy.map(function (p, i) { return (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join(' ');
+        var g = '<defs><linearGradient id="f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#10B981" stop-opacity=".45"/><stop offset="1" stop-color="#10B981" stop-opacity="0"/></linearGradient></defs>';
+        for (var k = 1; k < 5; k++) g += '<line x1="0" x2="' + w + '" y1="' + (k * h / 5) + '" y2="' + (k * h / 5) + '" stroke="rgba(255,255,255,.06)"/>';
+        g += '<path d="' + line + ' L' + w + ' ' + h + ' L0 ' + h + 'Z" fill="url(#f)"/><path d="' + line + '" fill="none" stroke="#10B981" stroke-width="2.4"/>';
+        var last = xy[n - 1];
+        g += '<circle cx="' + (last[0] - 4) + '" cy="' + last[1] + '" r="5" fill="#10B981" stroke="#fff" stroke-width="2"/>';
+        document.getElementById('chart').innerHTML = g;
+    })();
+</script>
+</body></html>

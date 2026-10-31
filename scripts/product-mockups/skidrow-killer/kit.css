@@ -1,0 +1,66 @@
+/* Skidrow Killer mock-ups — drawn from the app's own WPF theme (D:/Code/skidrowkill: Themes/Colors.xaml,
+   Themes/Controls.xaml, MainWindow.xaml). No real capture exists yet; the logo is the app's Assets/logo.png.
+   Every name, path and number on these screens is made up. */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1440px; height: 900px; overflow: hidden; }
+body { font-family: "Segoe UI Variable Text", "Segoe UI", Arial, sans-serif; font-size: 13px; color: #f5f9ff; background: #0a1929; position: relative; }
+:root {
+    --bg1: #0a1929; --bg2: #0d2137; --bg3: #132f4c; --card: #0f2744; --border: #1e4976; --border2: #2d5f8f;
+    --accent: #29b6f6; --accent2: #0288d1; --accentL: #81d4fa; --green: #66bb6a; --cyan: #4dd0e1;
+    --ok: #4cef50; --warn: #ffb74d; --danger: #ef5350; --t1: #f5f9ff; --t2: #a3c2db; --t3: #6b8fad;
+}
+
+/* window frame: title bar 40, sidebar 220, status bar 30 */
+.titlebar { position: absolute; left: 0; top: 0; width: 1440px; height: 40px; background: #0d2137; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 16px; gap: 10px; }
+.titlebar img { width: 20px; height: 20px; }
+.titlebar b { font-size: 13px; font-weight: 600; color: var(--t1); }
+.titlebar .wc { margin-left: auto; display: flex; gap: 26px; color: var(--t2); font-size: 13px; padding-right: 8px; }
+.side { position: absolute; left: 0; top: 40px; width: 220px; height: 830px; border-right: 1px solid var(--border);
+    background: linear-gradient(180deg, #0d2137 0%, #0a1929 30%, #071320 70%, #0a1929 100%); }
+.side .logo { height: 150px; display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(ellipse 80% 70% at 50% 40%, rgba(41, 182, 246, .13), rgba(102, 187, 106, .06) 50%, transparent 100%); }
+.side .logo img { width: 138px; height: 138px; }
+.nav { list-style: none; padding: 0 4px 0 8px; }
+.nav li { position: relative; display: flex; align-items: center; gap: 12px; height: 36px; padding: 0 16px; margin: 1px 0; border-radius: 8px; color: var(--t2); font-size: 13px; }
+.nav li .ic { width: 18px; text-align: center; font-size: 14px; color: currentColor; }
+.nav li.on { background: rgba(255, 255, 255, .125); color: var(--cyan); }
+.nav li.on::before { content: ""; position: absolute; left: 0; top: 9px; bottom: 9px; width: 3px; border-radius: 2px; background: var(--cyan); }
+.nav li .badge { margin-left: auto; min-width: 20px; height: 18px; padding: 0 6px; border-radius: 9px; background: var(--danger); color: #fff; font-size: 10px; display: inline-flex; align-items: center; justify-content: center; }
+.nav li .lic { margin-left: auto; padding: 1px 7px; border-radius: 4px; font-size: 9px; font-weight: 700; background: var(--green); color: #fff; }
+.nav hr { border: 0; height: 1px; margin: 8px 16px; background: linear-gradient(90deg, transparent, var(--border) 30%, var(--border) 70%, transparent); }
+.side .credit { position: absolute; left: 0; right: 0; bottom: 12px; text-align: center; font-size: 10px; color: var(--t3); opacity: .7; }
+.status { position: absolute; left: 0; bottom: 0; width: 1440px; height: 30px; background: #0d2137; border-top: 1px solid var(--border);
+    display: flex; align-items: center; gap: 18px; padding: 0 14px; font-size: 11px; color: var(--t2); }
+.status .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+.status .grp { display: flex; align-items: center; gap: 8px; }
+.status .ly { font-size: 9px; font-weight: 600; display: inline-flex; align-items: center; }
+.status .msg { margin-left: auto; color: var(--t3); }
+
+/* content area with the app's soft "lava lamp" glows */
+.main { position: absolute; left: 221px; top: 40px; width: 1219px; height: 830px; padding: 24px; overflow: hidden;
+    background: radial-gradient(circle 260px at 0% 0%, rgba(41, 182, 246, .09), transparent 70%),
+                radial-gradient(circle 240px at 100% 100%, rgba(102, 187, 106, .08), transparent 70%), var(--bg1); }
+h1 { font-size: 26px; font-weight: 700; color: var(--t1); }
+.sub { font-size: 13px; color: var(--t2); margin-top: 6px; }
+.card { background: var(--card); border-radius: 8px; padding: 16px; }
+.glass { background: linear-gradient(160deg, #13304f, #0f2744 60%, #0d2340); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: 0 6px 20px rgba(0, 0, 0, .35); }
+.h2 { font-size: 16px; font-weight: 600; color: var(--t1); }
+.lbl { font-size: 12px; color: var(--t2); }
+.num { font-size: 26px; font-weight: 700; line-height: 1.15; }
+.btn { height: 40px; padding: 0 20px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; font-weight: 600; color: #fff; }
+.btn.pri { background: linear-gradient(135deg, #80deea, #4dd0e1 30%, #26c6da 70%, #00acc1); box-shadow: 0 0 14px rgba(77, 208, 225, .45); }
+.btn.sec { background: rgba(255, 255, 255, .06); border: 1px solid var(--border2); color: var(--t1); }
+.btn.ok { background: linear-gradient(135deg, #a5d6a7, #66bb6a 40%, #43a047 70%, #2e7d32); }
+.btn.bad { background: linear-gradient(135deg, #ef9a9a, #ef5350 40%, #e53935 70%, #c62828); }
+.btn.warn { background: linear-gradient(135deg, #ffe082, #ffb74d 40%, #ffa726 70%, #f57c00); color: #2b1600; }
+.btn.sm { height: 30px; padding: 0 14px; font-size: 12px; border-radius: 6px; }
+.chip { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 4px; font-size: 11px; font-weight: 700; color: #fff; }
+.c-crit { background: #c62828; } .c-high { background: #ef5350; } .c-med { background: #f57c00; } .c-low { background: #0288d1; } .c-ok { background: #2e7d32; }
+.ok { color: var(--ok); } .warn { color: var(--warn); } .bad { color: var(--danger); } .acc { color: var(--accent); } .cy { color: var(--cyan); } .t2 { color: var(--t2); } .t3 { color: var(--t3); }
+.mono { font-family: Consolas, "Cascadia Mono", monospace; }
+.toggle { width: 44px; height: 22px; border-radius: 11px; background: #30607080; position: relative; flex: none; }
+.toggle::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; }
+.toggle.on { background: var(--accent); }
+.toggle.on::after { left: 24px; }
+.btn.ok, .btn.bad { color: #fff; }

@@ -689,11 +689,13 @@ class HubEngine {
       g.font = '500 14px "JetBrains Mono", ui-monospace, Consolas, monospace';
       const meta = (p.version ? 'v' + p.version + '  ·  ' : '') + p.platforms.join(' / ');
       g.fillText(meta, 100 + nameW + 18, bar / 2 + 1);
-      const real = p.shots && p.shots.length && url !== p.art;
-      if (real) {
+      const shot = p.shots && p.shots.length && url !== p.art;
+      if (shot) {
+        // a mock-up drawn to show the layout is never passed off as a capture
+        const mocked = cat.isMock(url);
         g.textAlign = 'right';
-        g.fillStyle = '#5eead4';
-        g.fillText('● LIVE CAPTURE', TEX_W - 22, bar / 2 + 1);
+        g.fillStyle = mocked ? '#f5c56b' : '#5eead4';
+        g.fillText(mocked ? '◇ MOCKUP' : '● LIVE CAPTURE', TEX_W - 22, bar / 2 + 1);
         g.textAlign = 'left';
       }
       const t = new THREE.CanvasTexture(c);

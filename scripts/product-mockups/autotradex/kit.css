@@ -1,0 +1,70 @@
+/* AutoTradeX mock-ups — drawn after the WPF app (MainWindow.xaml + each page's XAML, v0.3.0):
+   the #0A0A1A → #0D1B2A stage with purple / cyan / amber orbs, glass cards (#20FFFFFF → #10FFFFFF, 16px),
+   the horizontal tab bar in a 60px title bar, the 40px status bar. All figures are made up. */
+@font-face { font-family: NotoThai; src: url(../_fonts/NotoSansThai-500.ttf); font-weight: 500; }
+@font-face { font-family: NotoThai; src: url(../_fonts/NotoSansThai-600.ttf); font-weight: 600; }
+@font-face { font-family: NotoThai; src: url(../_fonts/NotoSansThai-700.ttf); font-weight: 700; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1440px; height: 900px; overflow: hidden; }
+body { font-family: "Segoe UI", NotoThai, sans-serif; color: #fff; font-size: 12px; position: relative;
+    background:
+        radial-gradient(circle 150px at 250px 250px, rgba(124, 58, 237, .14), transparent 100%),
+        radial-gradient(circle 200px at 1100px 700px, rgba(0, 212, 255, .13), transparent 100%),
+        radial-gradient(circle 125px at 625px 425px, rgba(245, 158, 11, .09), transparent 100%),
+        linear-gradient(135deg, #0A0A1A 0%, #0D1B2A 100%); }
+.mut { color: rgba(255, 255, 255, .45); }
+.dim { color: rgba(255, 255, 255, .6); }
+.grn { color: #10B981; } .red { color: #EF4444; } .amb { color: #F59E0B; } .pur { color: #A78BFA; } .cy { color: #22D3EE; } .blu { color: #60A5FA; }
+.mono { font-family: Consolas, "Cascadia Mono", monospace; }
+b, strong { font-weight: 700; }
+
+/* title bar (Grid.Row 0, 60px) */
+.titlebar { position: absolute; left: 0; top: 0; width: 1440px; height: 60px; background: rgba(255, 255, 255, .082); display: flex; align-items: center; padding: 0 20px; }
+.titlebar .brand { display: flex; align-items: center; gap: 10px; width: 236px; white-space: nowrap; }
+.titlebar .brand img { width: 62px; height: 42px; object-fit: contain; filter: drop-shadow(0 0 7px rgba(124, 58, 237, .7)); }
+.titlebar .brand strong { display: block; font-size: 20px; background: linear-gradient(90deg, #fff, #C4B5FD 50%, #93C5FD); -webkit-background-clip: text; background-clip: text; color: transparent; line-height: 1.1; }
+.titlebar .brand small { display: block; font-size: 9px; color: #808080; }
+.tabs { flex: 1; display: flex; justify-content: center; gap: 4px; white-space: nowrap; }
+.tabs span { padding: 8px 13px; border-radius: 10px; font-size: 13px; color: rgba(255, 255, 255, .5); font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
+.tabs span.on { background: rgba(255, 255, 255, .125); color: #fff; font-weight: 600; }
+.tabs span i { font-style: normal; font-size: 8px; font-weight: 700; background: #7C3AED; color: #fff; padding: 1px 4px; border-radius: 4px; }
+.right { display: flex; align-items: center; gap: 10px; margin-right: 12px; white-space: nowrap; }
+.activate { padding: 9px 18px; border-radius: 10px; font-size: 13px; font-weight: 700; background: linear-gradient(135deg, #7C3AED, #2563EB 50%, #10B981); box-shadow: 0 0 12px rgba(124, 58, 237, .6); }
+.mode { padding: 6px 15px; border-radius: 20px; font-size: 11px; font-weight: 700; background: linear-gradient(90deg, #F59E0B, #D97706); }
+.winbtns { display: flex; color: rgba(255, 255, 255, .5); font-size: 13px; }
+.winbtns span { width: 40px; text-align: center; }
+
+/* status bar (Grid.Row 2, 40px) */
+.statusbar { position: absolute; left: 0; bottom: 0; width: 1440px; height: 40px; background: rgba(0, 0, 0, .25); border-top: 1px solid rgba(255, 255, 255, .06);
+    display: flex; align-items: center; gap: 22px; padding: 0 20px; font-size: 11px; color: rgba(255, 255, 255, .5); }
+.statusbar b { color: #fff; font-weight: 600; margin-left: 6px; }
+.statusbar .dot { width: 8px; height: 8px; border-radius: 50%; background: #10B981; box-shadow: 0 0 8px #10B981; display: inline-block; margin-right: 6px; }
+.statusbar .end { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.statusbar .xs { font-size: 9px; color: #7C3AED; background: rgba(124, 58, 237, .07); border-radius: 4px; padding: 2px 6px; }
+
+/* page area */
+.page { position: absolute; left: 20px; top: 74px; width: 1400px; height: 772px; }
+.card { background: linear-gradient(135deg, rgba(255, 255, 255, .125), rgba(255, 255, 255, .063)); border: 1px solid rgba(255, 255, 255, .19); border-radius: 16px; padding: 16px 18px; box-shadow: 0 0 20px rgba(0, 0, 0, .3); }
+.stat { background: linear-gradient(135deg, rgba(255, 255, 255, .094), rgba(255, 255, 255, .04)); border: 1px solid rgba(255, 255, 255, .125); border-radius: 12px; padding: 12px 14px; }
+.lbl { font-size: 10px; font-weight: 700; letter-spacing: .04em; color: rgba(255, 255, 255, .38); }
+.big { font-size: 26px; font-weight: 700; line-height: 1.15; }
+.mid { font-size: 18px; font-weight: 700; }
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 8px; font-size: 11px; font-weight: 600; }
+.b-grn { background: rgba(16, 185, 129, .13); color: #10B981; }
+.b-red { background: rgba(239, 68, 68, .13); color: #EF4444; }
+.b-pur { background: rgba(124, 58, 237, .2); color: #C4B5FD; }
+.b-amb { background: rgba(245, 158, 11, .15); color: #FBBF24; }
+.b-cy { background: rgba(34, 211, 238, .12); color: #67E8F9; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 34px; padding: 0 16px; border-radius: 10px; font-size: 12px; font-weight: 700; color: #fff; }
+.btn.pur { background: linear-gradient(135deg, #7C3AED, #2563EB); color: #fff; }
+.btn.grn { background: linear-gradient(135deg, #10B981, #059669); color: #fff; }
+.btn.red { background: linear-gradient(135deg, #EF4444, #B91C1C); color: #fff; }
+.btn.gh { background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .15); color: #fff; }
+.field { height: 32px; border-radius: 8px; background: rgba(0, 0, 0, .25); border: 1px solid rgba(255, 255, 255, .12); padding: 0 10px; display: flex; align-items: center; font-size: 12px; color: #fff; }
+.ex { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 6px; font-size: 10px; font-weight: 800; color: #0b0b16; flex: none; }
+.coin { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; font-size: 9px; font-weight: 800; color: #fff; flex: none; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font-size: 10px; font-weight: 700; letter-spacing: .04em; color: rgba(255, 255, 255, .38); padding: 8px 10px; border-bottom: 1px solid rgba(255, 255, 255, .1); }
+td { padding: 8px 10px; font-size: 12px; border-bottom: 1px solid rgba(255, 255, 255, .05); white-space: nowrap; }
+.row { display: flex; align-items: center; gap: 8px; }
+.sp { margin-left: auto; }

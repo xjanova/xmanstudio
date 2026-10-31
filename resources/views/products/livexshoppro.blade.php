@@ -1,400 +1,387 @@
 @extends($publicLayout ?? 'layouts.app')
+{{-- Coming Soon = ไม่มีปุ่มดาวน์โหลดและไม่มีทางซื้อ (กฎเจ้าของ 2026-10-12) --}}
+@php $csLive = $product->isComingSoon(); @endphp
 
-@section('title', 'Live x Shop Pro - Live Shopping Platform | XMAN Studio')
+@section('title', 'Live x Shop Pro — ระบบหลังบ้านสำหรับไลฟ์ขายของ' . ($csLive ? ' · Coming Soon' : '') . ' | XMAN Studio')
+@section('meta_description', 'Live x Shop Pro โปรแกรมหลังบ้านบน Windows สำหรับแม่ค้าไลฟ์สด (กำลังพัฒนา): ดึงแชท Facebook Live, TikTok Live และ LINE OA มาที่เดียว เปลี่ยน CF เป็นออเดอร์ ตรวจสลิป เชื่อมขนส่ง และแอปมือถือ · A Windows back office for live-stream sellers, in development.')
+@section('og_image', asset('images/products/livexshop-pro/v2/og.jpg'))
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-gray-900 via-pink-900 to-gray-900">
-    <!-- Hero Section -->
-    <section class="relative py-20 overflow-hidden">
-        <x-page-art art="card-livexshop" :opacity="38" />
-        <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%23EC4899\" fill-opacity=\"0.05\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]"></div>
+@php
+    // ราคาอ่านจากแถวสินค้าในร้าน (products.price) ที่เดียว — ห้ามเขียนตัวเลขราคาลงหน้านี้ตรง ๆ
+    $price = (float) $product->price;
+    $original = $product->original_price && $product->original_price > $product->price ? (float) $product->original_price : null;
 
-        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <!-- Breadcrumb -->
-            <nav class="mb-8">
-                <a href="{{ route('products.index') }}" class="text-pink-400 hover:text-pink-300 flex items-center">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                    </svg>
-                    กลับไปรายการผลิตภัณฑ์
+    // เวอร์ชันที่เว็บนี้ส่งให้ (อ่านจาก DB อย่างเดียว) — ยังไม่มีจนกว่าจะเปิดดาวน์โหลด
+    $latest = $product->latestVersion();
+
+    // ไม่มีลิงก์ดาวน์โหลดสาธารณะ: คนที่ซื้อแล้วโหลดที่ศูนย์ดาวน์โหลดของบัญชี (กลไกเดิมของหน้า products/show)
+    $downloadHref = route('customer.downloads');
+    $ownsLive = auth()->check() && $hasPurchased;
+
+    // แถบสถานะ License ของคนที่มีคีย์อยู่แล้ว (ยกมาจาก products/show)
+    $licenseNote = null;
+    if (isset($userLicense) && $userLicense) {
+        if ($userLicense->isValid()) {
+            $daysLeft = $userLicense->daysRemaining();
+            $licenseNote = ($daysLeft <= 7 && $userLicense->license_type !== 'lifetime')
+                ? ['text-amber-200', 'License ใกล้หมดอายุ — เหลืออีก ' . $daysLeft . ' วัน' . ($userLicense->expires_at ? ' (' . $userLicense->expires_at->format('d/m/Y') . ')' : ''), 'ต่ออายุตอนนี้']
+                : ['text-emerald-200', 'คุณมี License แล้ว · ' . ($userLicense->license_type === 'lifetime' ? 'ใบอนุญาตตลอดชีพ' : 'หมดอายุ ' . $userLicense->expires_at?->format('d/m/Y')), 'ดู License ของฉัน'];
+        } else {
+            $licenseNote = ['text-red-300', 'License ของคุณหมดอายุแล้ว' . ($userLicense->expires_at ? ' เมื่อ ' . $userLicense->expires_at->format('d/m/Y') : ''), 'ต่ออายุตอนนี้'];
+        }
+    }
+
+    // ภาพหน้าจอ: แอปยังไม่มีข้อมูลจริงให้จับภาพ ทุกภาพเป็น mockup ที่วาดจาก XAML ของแอป (ข้อมูลในภาพแต่งขึ้นทั้งหมด)
+    // สร้างใหม่ได้ด้วย scripts/product-mockups/build.py livexshop-pro
+    $shot = fn (string $file) => asset('images/products/livexshop-pro/v2/' . $file);
+
+    // หน้าจอที่ออกแบบไว้ในโค้ดแล้ว (D:\Code\LiveShop pro\src\Desktop\Views) — งานเบื้องหลังยังไม่ทำ จึงติดป้าย "เร็ว ๆ นี้" ทุกแถว
+    $screenRows = [
+        [
+            'img' => $shot('live.webp'), 'mock' => true, 'name' => 'ดึงแชทจากไลฟ์มาไว้ที่เดียว', 'eyebrow' => 'Live chat capture', 'tier' => 'soon',
+            'th' => 'เลือก Facebook, TikTok หรือ LINE ตั้งชื่อรอบไลฟ์ วาง URL ของไลฟ์ แล้วกด เริ่มดึงแชท — คอมเมนต์ไหลเข้ามาในหน้าเดียว ข้อความ CF ถูกไฮไลต์ และสลับดูเฉพาะ CF ได้',
+            'en' => 'Pick the platform, paste the live URL and start: comments land in one list, CF lines highlighted.',
+            'points' => ['สถิติระหว่างไลฟ์: แชททั้งหมด CF ยอดขาย ออเดอร์ CF ต่อนาที และ CF ซ้ำ', 'Facebook และ TikTok ดึงผ่านบอตเบราว์เซอร์ · LINE OA ผ่าน LINE Messaging API'],
+            'alt' => 'ภาพตัวอย่างหน้าไลฟ์สดของ Live x Shop Pro แผงควบคุมการดึงแชท สถิติไลฟ์ และรายการแชทที่ไฮไลต์ CF',
+        ],
+        [
+            'img' => $shot('cf.webp'), 'mock' => true, 'name' => 'จาก CF เป็นออเดอร์', 'eyebrow' => 'CF to order', 'tier' => 'soon',
+            'th' => 'ทุก CF เข้าคิวรอดำเนินการ เลือกแล้วโปรแกรมจับรหัส CF กับสินค้าให้ ปรับจำนวน เพิ่มสินค้า ใส่หมายเหตุ แล้วกด สร้างออเดอร์ — ข้างกันเห็นข้อมูลลูกค้า ยอดซื้อรวม และออเดอร์ล่าสุดของเขา',
+            'en' => 'Every CF waits in a queue; pick one, check the matched product and create the order, with the buyer’s history beside it.',
+            'points' => ['รูปแบบ CF ที่วางแผนรองรับ: cf1 · CF 2 · ซีเอฟ1 · สั่ง1 · เอา1 · 2ชิ้น · #1', 'หลายตัวในข้อความเดียวได้ เช่น "cf1 2ชิ้น cf3"', 'CF ซ้ำถูกแยกไว้ในแท็บ Duplicate'],
+            'alt' => 'ภาพตัวอย่างหน้าแชท CF ของ Live x Shop Pro คิว CF ฟอร์มสร้างออเดอร์ และข้อมูลลูกค้า',
+        ],
+        [
+            'img' => $shot('orders.webp'), 'mock' => true, 'name' => 'ออเดอร์ทั้งร้านในตารางเดียว', 'eyebrow' => 'Orders', 'tier' => 'soon',
+            'th' => 'นับออเดอร์ตามสถานะ รอยืนยัน ยืนยันแล้ว รอแพ็ค จัดส่งแล้ว สำเร็จ และยกเลิก ค้นด้วยเลขออเดอร์ ชื่อ หรือเบอร์โทร กรองและส่งออกได้ เปิดดูหรือพิมพ์จากแถวนั้นได้เลย',
+            'en' => 'Orders counted by status, searchable by number, name or phone, exportable, viewable and printable from the row.',
+            'points' => ['ออเดอร์มาได้ทั้งจากไลฟ์ ขายหน้าร้าน (POS) และสร้างเอง'],
+            'alt' => 'ภาพตัวอย่างหน้าออเดอร์ของ Live x Shop Pro ตัวนับตามสถานะและตารางออเดอร์',
+        ],
+    ];
+
+    // ส่วนที่อยู่ในแผนพัฒนา (docs/ROADMAP.md, docs/FEATURES.md ของโปรเจกต์) — ยังไม่มีโค้ดที่ทำงานจริงสักข้อ
+    $roadmap = [
+        [
+            'key' => 'slip', 'name' => 'อ่านสลิปและจับสลิปปลอม', 'short' => 'OCR · สลิปซ้ำ · SMS ธนาคาร', 'tier' => 'soon',
+            'th' => 'วางแผนให้อ่านสลิปโอนเงินด้วย OCR ดึงธนาคาร ยอด วันเวลา และเลขอ้างอิง แล้วตรวจว่าสลิปน่าสงสัย ปลอม ซ้ำ หรือหมดอายุ จับคู่กับ SMS แจ้งเงินเข้าของธนาคาร และเลือกได้ว่าจะให้ตรวจอัตโนมัติ ตรวจเอง หรือผสม',
+            'en' => 'Planned: slip OCR, fake / duplicate / expired slip checks, bank SMS matching, with auto, manual or hybrid review.',
+            'points' => ['ธนาคารที่วางแผนไว้: กสิกรไทย ไทยพาณิชย์ กรุงเทพ กรุงไทย กรุงศรี ออมสิน ทีทีบี และพร้อมเพย์'],
+        ],
+        [
+            'key' => 'shipping', 'name' => 'เชื่อมขนส่ง', 'short' => 'Kerry · Flash · J&T', 'tier' => 'soon',
+            'th' => 'วางแผนให้ส่งออเดอร์ไปยัง Kerry Express, Flash Express และ J&T Express พิมพ์ใบปะหน้าจากโปรแกรม รองรับเก็บเงินปลายทาง และดึงสถานะพัสดุกลับมาอัตโนมัติ',
+            'en' => 'Planned: Kerry, Flash and J&T bookings, label printing, COD and tracking sync.',
+            'points' => [],
+        ],
+        [
+            'key' => 'pos', 'name' => 'POS และสต็อก', 'short' => 'ขายหน้าร้าน · บาร์โค้ด', 'tier' => 'soon',
+            'th' => 'วางแผนให้ขายหน้าร้านจากสต็อกเดียวกับไลฟ์ สแกนและพิมพ์บาร์โค้ด รับเงินสด พิมพ์ใบเสร็จ และเตือนเมื่อสินค้าใกล้หมด',
+            'en' => 'Planned: point of sale on the same stock as the live, barcodes, cash and receipts, low-stock alerts.',
+            'points' => [],
+        ],
+        [
+            'key' => 'packing', 'name' => 'สถานีแพ็คของ', 'short' => 'จอแยก · LAN / VPN', 'tier' => 'soon',
+            'th' => 'วางแผนให้เปิดอีกจอหนึ่งเป็นคิวแพ็คของ เห็นออเดอร์ใหม่แบบเรียลไทม์ ยืนยันสินค้าด้วยบาร์โค้ด และพิมพ์ใบปะหน้า ต่อกับเครื่องหลักผ่านวงแลน หรือผ่าน VPN เมื่ออยู่คนละที่',
+            'en' => 'Planned: a separate packing screen fed in real time over LAN or VPN.',
+            'points' => [],
+        ],
+        [
+            'key' => 'obs', 'name' => 'OBS Overlay', 'short' => 'ยอดขาย · ออเดอร์ล่าสุดบนไลฟ์', 'tier' => 'soon',
+            'th' => 'วางแผนหน้า overlay ให้ใส่ใน OBS ระหว่างไลฟ์ แสดงยอดขาย ออเดอร์ล่าสุด และสินค้าที่กำลังขาย อัปเดตเองตามออเดอร์จริง',
+            'en' => 'Planned: OBS overlays for the sales counter, latest orders and the product on show.',
+            'points' => [],
+        ],
+        [
+            'key' => 'portal', 'name' => 'หน้าเช็คสถานะของลูกค้า', 'short' => 'เว็บในตัวโปรแกรม', 'tier' => 'soon',
+            'th' => 'วางแผนเว็บเล็ก ๆ ในตัวโปรแกรมให้ลูกค้าเปิดเช็คสถานะออเดอร์และเลขพัสดุของตัวเอง',
+            'en' => 'Planned: a small built-in web page where buyers check their order and tracking number.',
+            'points' => [],
+        ],
+    ];
+
+    $ld = [
+        '@context' => 'https://schema.org',
+        '@type' => 'SoftwareApplication',
+        'name' => 'Live x Shop Pro',
+        'operatingSystem' => 'Windows 10, Windows 11',
+        'applicationCategory' => 'BusinessApplication',
+        'inLanguage' => ['th', 'en'],
+        'description' => 'โปรแกรมหลังบ้านบน Windows สำหรับไลฟ์ขายของ (กำลังพัฒนา): ดึงแชท Facebook Live, TikTok Live และ LINE OA เปลี่ยน CF เป็นออเดอร์ ตรวจสลิป และเชื่อมขนส่ง',
+        'image' => asset('images/products/livexshop-pro/v2/og.jpg'),
+        'url' => route('products.show', 'livexshop-pro'),
+        'publisher' => ['@type' => 'Organization', 'name' => 'XMAN Studio', 'url' => url('/')],
+    ];
+    // ระหว่าง Coming Soon ยังขายไม่ได้ — ไม่ประกาศ Offer ให้เครื่องมือค้นหาเอาไปแสดงเป็นของที่ซื้อได้
+    if (! $csLive && ! $product->is_custom && $price > 0) {
+        $ld['offers'] = ['@type' => 'Offer', 'price' => (string) $price, 'priceCurrency' => 'THB'];
+    }
+@endphp
+<x-xp.page a="#ff6b9d" b="#ff9ec0" c="#8b83ff" glow="108 99 255" g1="#6c63ff" g2="#ff6b9d" g3="#fbbf24">
+
+    {{-- ============================ HERO ============================ --}}
+    <x-xp.hero :art="$shot('art-hero.webp')"
+               tagline="ระบบหลังบ้านสำหรับไลฟ์ขายของ"
+               tagline-en="The back office for selling on live streams."
+               lead="Live x Shop Pro กำลังพัฒนาเป็นโปรแกรมบน Windows ที่ดึงคอมเมนต์จาก Facebook Live, TikTok Live และ LINE OA มารวมที่เดียว เปลี่ยน CF เป็นออเดอร์ แล้วต่อไปถึงการเก็บเงิน แพ็คของ และส่งของ — ฐานข้อมูลร้านเก็บในเครื่องของคุณ"
+               lead-en="A Windows program, in development, that gathers live comments from Facebook, TikTok and LINE, turns CFs into orders and carries them through payment, packing and shipping.">
+        <x-slot:chips>
+            <span class="xp-chip"><i></i>{{ $latest ? 'Live x Shop Pro ' . $latest->version : 'Live x Shop Pro' }}</span>
+            <span class="xp-chip">Windows 10 / 11</span>
+            @if($csLive)<x-xp.badge tier="soon" label="Coming Soon" />@endif
+        </x-slot:chips>
+        <x-slot:title>Live x Shop <span class="xp-text-glow">Pro</span></x-slot:title>
+        <x-slot:actions>
+            @if($csLive || $ownsLive)
+                <x-xp.download :href="$downloadHref" :coming-soon="$csLive" th="ดาวน์โหลด" en="Download" />
+            @endif
+            @if($product->is_custom)
+                <a href="{{ route('quote.index') }}" class="xp-btn-pro inline-flex items-center px-6 py-4 rounded-xl font-extrabold transition">ติดต่อสอบถาม</a>
+            @elseif(! $csLive)
+                <a href="#pricing" class="xp-btn-pro inline-flex items-center px-6 py-4 rounded-xl font-extrabold transition">
+                    {{ $ownsLive ? 'ซื้อ License เพิ่ม' : 'ซื้อ License' }}@if($price > 0) — ฿{{ number_format($price) }}@endif
                 </a>
-            </nav>
+            @else
+                <a href="#pricing" class="xp-btn-ghost inline-flex items-center px-6 py-4 rounded-xl font-bold transition"><x-bi th="ราคา" en="Pricing" /></a>
+            @endif
+        </x-slot:actions>
+        <x-slot:notes>
+            @if($csLive)
+                <p class="mt-4 text-sm text-gray-400">
+                    กำลังพัฒนา · ยังไม่เปิดขายและยังไม่มีไฟล์ให้ดาวน์โหลด@if($product->coming_soon_until) · กำหนดเปิด {{ $product->coming_soon_until->format('d/m/Y') }}@endif
+                    · <a href="{{ route('quote.index') }}" class="xp-link font-semibold">แจ้งเตือนเมื่อเปิดขาย</a>
+                </p>
+            @elseif($latest)
+                <p class="mt-4 text-sm text-gray-400">เวอร์ชันล่าสุด {{ $latest->version }}@if($latest->file_size) · {{ $latest->file_size_formatted }}@endif · ดาวน์โหลดได้ในหน้า บัญชีของฉัน หลังซื้อ</p>
+            @endif
+            @if($licenseNote)
+                <p class="mt-3 text-sm {{ $licenseNote[0] }}" data-license-status>
+                    {{ $licenseNote[1] }} ·
+                    <a href="{{ route('customer.licenses.show', $userLicense) }}" class="font-semibold underline hover:text-white">{{ $licenseNote[2] }}</a>
+                </p>
+            @endif
+        </x-slot:notes>
+        <x-slot:badges>
+            <li class="flex items-center gap-2 text-gray-300"><span class="xp-dot"></span> Facebook · TikTok · LINE</li>
+            <li class="flex items-center gap-2 text-gray-300"><span class="xp-dot"></span> หน้าจอภาษาไทยทั้งโปรแกรม</li>
+            <li class="flex items-center gap-2 text-gray-300"><span class="xp-dot"></span> ข้อมูลร้านอยู่ในเครื่องคุณ</li>
+        </x-slot:badges>
+        <x-slot:visual>
+            <div class="xp-tilt">
+                <x-xp.screen :src="$shot('dashboard.webp')" :eager="true" :mock="true"
+                             alt="ภาพตัวอย่างหน้าแดชบอร์ดของ Live x Shop Pro: ยอดขายวันนี้ ออเดอร์ งานที่รอ CF สลิป แพ็ค ส่ง ออเดอร์ล่าสุด และสินค้าขายดี" />
+            </div>
+            <div class="xp-float absolute -left-3 sm:-left-8 bottom-6 sm:bottom-10 xp-card backdrop-blur-md px-4 py-3 shadow-2xl">
+                <p class="text-[11px] tracking-widest uppercase text-gray-400">แชท → ออเดอร์ · CF to order</p>
+                <p class="text-white font-extrabold text-lg leading-tight">"cf1 2ชิ้น" <span class="text-pink-300">→ ออเดอร์</span></p>
+            </div>
+        </x-slot:visual>
+    </x-xp.hero>
 
-            <div class="grid lg:grid-cols-2 gap-12 items-center">
-                <!-- Left: Product Info -->
-                <div>
-                    <div class="inline-flex items-center px-4 py-2 bg-pink-500/20 rounded-full text-pink-300 text-sm mb-6 backdrop-blur-sm border border-pink-500/30">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                        </svg>
-                        Live Shopping Platform
-                    </div>
+    {{-- ======================== SCREENS (IN DEVELOPMENT) ======================== --}}
+    <section class="relative py-20" id="features">
+        <div class="xp-glow w-[34rem] h-[34rem] -right-40 top-10" style="background: rgb(var(--xp-glow) / .12)"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-xp.head class="mb-16" eyebrow="In development" title="จากคอมเมนต์" title2="ถึงออเดอร์"
+                       sub="Live x Shop Pro ยังอยู่ระหว่างพัฒนา ภาพด้านล่างคือหน้าจอที่ออกแบบไว้ในโค้ดของโปรแกรม (ข้อมูลในภาพแต่งขึ้น) ส่วนการทำงานเบื้องหลังกำลังสร้าง"
+                       en="Still in development: these are the screens laid out in the program’s code, with made-up data. The work behind them is being built." />
+            <x-xp.rows :items="$screenRows" />
+        </div>
+    </section>
 
-                    <h1 class="text-5xl md:text-6xl font-black text-white mb-6">
-                        Live x Shop <span class="text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-rose-400">Pro</span>
-                    </h1>
+    {{-- =========================== ROADMAP =========================== --}}
+    <section class="relative py-20 isolate" id="roadmap">
+        <x-xp.art :src="$shot('art-2.webp')" class="top-0 w-[130%] opacity-35 right-[-30%] lg:right-[-16%] lg:w-[68%] lg:opacity-80" />
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-xp.head align="left" class="mb-10" eyebrow="On the roadmap" title="หลังไลฟ์จบ" title2="งานยังไม่จบ"
+                       sub="เก็บเงิน แพ็ค ส่ง และขายหน้าร้าน — ส่วนเหล่านี้อยู่ในแผนพัฒนา ยังไม่นับเป็นฟีเจอร์ที่ใช้ได้"
+                       en="Payment, packing, shipping and the shop counter are on the roadmap and are not counted as working features yet." />
+            <x-xp.explorer id="roadmap" label="ส่วนที่อยู่ในแผนพัฒนาของ Live x Shop Pro" :tools="$roadmap" />
+        </div>
+    </section>
 
-                    <p class="text-xl text-gray-300 mb-8">
-                        แพลตฟอร์ม Live Shopping ครบวงจร รองรับการขายสินค้าผ่านการ Live Stream พร้อมระบบ Multi-Platform Streaming และ Shoutout อัตโนมัติ
-                    </p>
+    {{-- ============================ STATUS ============================ --}}
+    <section class="relative py-20" id="status">
+        <div class="xp-glow w-[36rem] h-[24rem] left-1/2 -translate-x-1/2 top-24" style="background: rgb(var(--xp-glow) / .1)"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-xp.head class="mb-12" eyebrow="Where it stands" title="บอกตรง ๆ" title2="ว่าถึงไหนแล้ว"
+                       sub="แผนพัฒนามี 5 ขั้น ตอนนี้อยู่ขั้นแรก"
+                       en="Five phases. The first is under way." />
+            <x-xp.cards :items="[
+                ['icon' => 'chip', 'title' => '1 · โครงสร้างโปรแกรม', 'body' => 'กำลังทำ: ฐานข้อมูลในเครื่อง ข้อมูลสินค้า ลูกค้า ออเดอร์ การชำระเงิน การจัดส่ง และหน้าจอหลักวางแล้ว กำลังต่อหน้าจอเข้ากับข้อมูลจริง', 'en' => 'Foundation — in progress'],
+                ['icon' => 'sparkles', 'title' => '2 · แชท CF และออเดอร์', 'tier' => 'soon', 'body' => 'ดึงแชท Facebook / TikTok / LINE จับ CF สร้างออเดอร์ จัดการสินค้าและลูกค้า', 'en' => 'Chat capture, CF detection, orders'],
+                ['icon' => 'doc', 'title' => '3 · การเงินและขนส่ง', 'tier' => 'soon', 'body' => 'อ่านสลิป จับสลิปปลอม SMS ธนาคาร เชื่อมขนส่ง พิมพ์ใบปะหน้า และ POS', 'en' => 'Slips, shipping, point of sale'],
+                ['icon' => 'phone', 'title' => '4 · มือถือ สถานีแพ็ค OBS', 'tier' => 'soon', 'body' => 'แอปมือถือ จอแพ็คของ OBS overlay หน้าเช็คสถานะของลูกค้า และระบบ License', 'en' => 'Phone app, packing station, overlays, licensing'],
+                ['icon' => 'shield', 'title' => '5 · ทดสอบและเปิดขาย', 'tier' => 'soon', 'body' => 'ทดสอบกับผู้ขายจริง ตัวติดตั้ง อัปเดตอัตโนมัติ และคู่มือ ก่อนเปิดขายในหน้านี้', 'en' => 'Testing, installer, updates, release'],
+                ['icon' => 'server', 'title' => 'ข้อมูลร้านอยู่ในเครื่องคุณ', 'body' => 'ฐานข้อมูลร้าน (SQLite) เก็บในเครื่อง Windows ของคุณ ไม่ได้ฝากไว้บนเซิร์ฟเวอร์ของ XMAN', 'en' => 'Your shop’s database stays on your PC'],
+            ]" />
+        </div>
+    </section>
 
-                    <!-- Key Features Tags -->
-                    <div class="flex flex-wrap gap-3 mb-8">
-                        <span class="px-3 py-1 bg-pink-500/20 text-pink-300 rounded-full text-sm border border-pink-500/30">Live Streaming</span>
-                        <span class="px-3 py-1 bg-rose-500/20 text-rose-300 rounded-full text-sm border border-rose-500/30">Multi-Platform</span>
-                        <span class="px-3 py-1 bg-red-500/20 text-red-300 rounded-full text-sm border border-red-500/30">Auto Shoutout</span>
-                        <span class="px-3 py-1 bg-orange-500/20 text-orange-300 rounded-full text-sm border border-orange-500/30">OBS Integration</span>
-                    </div>
+    {{-- =========================== PRICING =========================== --}}
+    <section class="relative py-20 scroll-mt-20" id="pricing">
+        <div class="xp-glow w-[40rem] h-[26rem] left-1/2 -translate-x-1/2 top-32 bg-amber-500/10"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-xp.head class="mb-12" eyebrow="Pricing" title="ราคา" :title2="$csLive ? 'เมื่อเปิดขาย' : null"
+                       :sub="$csLive ? 'Live x Shop Pro ยังไม่เปิดขาย ราคาด้านล่างคือราคาที่ตั้งไว้ในร้านตอนนี้' : 'ราคาจากร้านโดยตรง'"
+                       :en="$csLive ? 'Not on sale yet: this is the price currently set in the shop.' : 'The price straight from the shop.'" />
 
-                    <!-- CTA Buttons -->
-                    <div class="flex flex-wrap gap-4">
-                        @auth
-                            @if($hasPurchased)
-                                <a href="{{ route('customer.downloads') }}"
-                                   class="px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-green-500/25">
-                                    ดาวน์โหลด
-                                </a>
-                            @else
-                                <a href="{{ route('products.index') }}"
-                                   class="px-8 py-4 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25">
-                                    ดูแพคเกจ
-                                </a>
-                            @endif
-                        @else
-                            <a href="{{ route('products.index') }}"
-                               class="px-8 py-4 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25">
-                                ดูแพคเกจ
-                            </a>
-                        @endauth
-                    </div>
-                </div>
-
-                <!-- Right: Preview Image -->
-                <div class="relative">
-                    <div class="bg-gradient-to-br from-pink-500/20 to-rose-500/20 rounded-2xl p-8 backdrop-blur-sm border border-pink-500/30">
-                        <div class="aspect-video bg-gray-800 rounded-xl flex items-center justify-center overflow-hidden">
-                            @if($product->artwork_url)
-                                <img src="{{ $product->artwork_url }}" alt="Live x Shop Pro" class="w-full h-full object-cover">
-                            @else
-                                <div class="text-center">
-                                    <svg class="w-24 h-24 mx-auto text-pink-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                                    </svg>
-                                    <p class="text-gray-400">Live x Shop Pro Interface</p>
-                                </div>
-                            @endif
+            <div class="max-w-md mx-auto">
+                <div class="xp-featured">
+                    <div class="p-7 flex flex-col h-full">
+                        <div class="flex items-center justify-between mb-1">
+                            <h3 class="text-2xl font-black text-white">Live x Shop Pro</h3>
+                            @if($csLive)<x-xp.badge tier="soon" label="Coming Soon" />@endif
                         </div>
+                        <p class="text-gray-400 text-sm mb-6">Live commerce · Windows</p>
+                        @if($product->is_custom)
+                            <p class="mb-6 text-3xl font-black text-white">สอบถามราคา</p>
+                        @elseif($price > 0)
+                            <div class="mb-6 flex flex-wrap items-baseline gap-3">
+                                <span class="text-5xl font-black text-white">฿{{ number_format($price) }}</span>
+                                @if($original)
+                                    <span class="text-xl text-gray-500 line-through">฿{{ number_format($original) }}</span>
+                                    <x-xp.badge tier="pro" :label="'-' . round((1 - $price / $original) * 100) . '%'" />
+                                @endif
+                            </div>
+                            <x-tpix-price variant="detail" :thb="$price" :tpix="$product->price_tpix" class="-mt-4 mb-6" />
+                        @else
+                            <p class="mb-6 text-lg font-bold text-white">ยังไม่ประกาศราคา</p>
+                        @endif
+                        <p class="text-xs text-gray-500 mb-3">ขอบเขตที่วางแผนไว้ · Planned scope</p>
+                        <x-xp.ticks class="!space-y-2.5 text-sm mb-8 flex-1" :items="['โปรแกรมหลักบน Windows', 'ดึงแชท Facebook · TikTok · LINE และเปลี่ยน CF เป็นออเดอร์', 'สินค้า สต็อก ลูกค้า ตรวจสลิป และขนส่ง', 'แอปมือถือและสถานีแพ็คของ']" />
+                        @if($csLive)
+                            {{-- ComingSoonPurchase ปฏิเสธทุกทางซื้ออยู่แล้ว — หน้านี้ก็ไม่มีปุ่มซื้อหรือลิงก์ไฟล์ --}}
+                            <span class="xp-btn-ghost xp-btn-off block w-full py-3.5 text-center rounded-xl font-extrabold" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดขาย</span>
+                            <a href="{{ route('quote.index') }}" class="xp-link block text-center text-sm font-semibold mt-4">แจ้งเตือนเมื่อเปิดขาย →</a>
+                        @elseif($product->is_custom)
+                            <a href="{{ route('quote.index') }}" class="xp-btn-pro block w-full py-3.5 text-center rounded-xl font-extrabold transition">ติดต่อสอบถามราคา</a>
+                        @else
+                            {{-- ราคามาจากแถวสินค้า ไม่ใช่จากฟอร์ม — ตะกร้าคิดราคาเอง --}}
+                            <form action="{{ route('cart.add', $product) }}" method="POST">
+                                @csrf
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit" class="xp-btn-pro block w-full py-3.5 text-center rounded-xl font-extrabold transition cursor-pointer">
+                                    {{ $ownsLive ? 'ซื้อ License เพิ่ม' : 'ซื้อ License' }}@if($price > 0) — ฿{{ number_format($price) }}@endif
+                                </button>
+                            </form>
+                            @if($ownsLive)
+                                <a href="{{ $downloadHref }}" class="xp-btn-main block w-full py-3.5 mt-3 text-center rounded-xl font-extrabold transition">ดาวน์โหลด — บัญชีของฉัน</a>
+                            @endif
+                        @endif
                     </div>
                 </div>
             </div>
+            <p class="text-center text-xs text-gray-500 mt-6">เงื่อนไข License (อายุการใช้งาน จำนวนเครื่องต่อคีย์ และการทดลองใช้) ยังไม่ประกาศ จะแจ้งในหน้านี้ก่อนเปิดขาย</p>
         </div>
     </section>
 
-    <!-- Supported Platforms -->
-    <section class="py-16 bg-gray-900/50">
+    {{-- ===================== MOBILE APP (กำลังพัฒนา) ===================== --}}
+    <section class="relative py-20 scroll-mt-20" id="mobile">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-3xl font-bold text-white text-center mb-4">รองรับหลายแพลตฟอร์ม</h2>
-            <p class="text-gray-400 text-center mb-12 max-w-2xl mx-auto">Stream ไปยังหลายแพลตฟอร์มพร้อมกันด้วยการตั้งค่าเพียงครั้งเดียว</p>
-
-            <div class="flex flex-wrap justify-center gap-6">
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 text-center w-32">
-                    <div class="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <svg class="w-8 h-8 text-green-400" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 5.17 3.98 9.48 9.15 9.97l.02.02h.05c.47.04.95.06 1.43.06 5.46 0 9.91-4.45 9.91-9.91 0-5.46-4.45-9.91-9.91-9.91-.23 0-.47.01-.7.02h-.04zm4.98 6.37c.22 0 .45.03.68.1.83.24 1.45.86 1.69 1.69.24.83.04 1.73-.54 2.41l-.04.04c-.17.17-.36.33-.57.47-.14.09-.29.17-.44.24-.15.07-.31.12-.47.17l-.5.12c-.17.03-.35.05-.53.06H15.8c-.04 0-.09-.01-.13-.02l-.52-.13c-.35-.11-.68-.27-.98-.47-.3-.2-.57-.44-.81-.71-.24-.27-.44-.57-.6-.89-.16-.32-.28-.66-.35-1.01-.07-.35-.1-.71-.08-1.07.02-.36.08-.71.19-1.05.11-.34.26-.66.44-.96.19-.3.41-.57.66-.82.25-.25.52-.47.82-.66.3-.19.62-.34.96-.45.34-.11.69-.18 1.05-.2z"/>
-                        </svg>
-                    </div>
-                    <span class="text-white font-semibold">LINE</span>
+            <div class="grid lg:grid-cols-12 gap-10 items-center">
+                <div class="lg:col-span-7">
+                    <p class="xp-eyebrow mb-3">Mobile chat capture</p>
+                    <h2 class="text-3xl md:text-4xl font-black text-white mb-4 flex flex-wrap items-center gap-3">แอปมือถือคู่หู <x-xp.badge tier="soon" /></h2>
+                    <p class="text-lg text-gray-300 leading-relaxed mb-2">
+                        สำหรับวันที่ไลฟ์จากโทรศัพท์: แอปมือถือออกแบบให้ดึงแชทจากไลฟ์บนมือถือส่งเข้าโปรแกรมบนคอมแบบเรียลไทม์
+                        จับคู่ด้วยการสแกน QR จากโปรแกรมบนคอม (ตั้งค่า › Mobile App) หรือใส่ IP ของคอมเอง
+                    </p>
+                    <p class="text-sm text-gray-500 leading-relaxed mb-6">For lives run from a phone: the app is designed to pass the chat to the desktop program, paired by QR code over the same network.</p>
+                    <x-xp.ticks class="mb-6" :items="['หน้าเชื่อมต่อมีในโค้ดแล้ว ส่วนการจับคู่และดึงแชทยังพัฒนาอยู่', 'มือถือกับคอมต้องอยู่ในเครือข่ายเดียวกัน', 'โปรเจกต์ตั้งเป้า Android 7.0 ขึ้นไป และ iOS 14.2 ขึ้นไป']" />
+                    <p class="text-sm text-gray-400">ยังไม่มีไฟล์ให้ดาวน์โหลด</p>
                 </div>
-
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 text-center w-32">
-                    <div class="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <svg class="w-8 h-8 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                        </svg>
-                    </div>
-                    <span class="text-white font-semibold">Facebook</span>
-                </div>
-
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 text-center w-32">
-                    <div class="w-16 h-16 bg-pink-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <svg class="w-8 h-8 text-pink-400" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                        </svg>
-                    </div>
-                    <span class="text-white font-semibold">Instagram</span>
-                </div>
-
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 text-center w-32">
-                    <div class="w-16 h-16 bg-black/50 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
-                        </svg>
-                    </div>
-                    <span class="text-white font-semibold">TikTok</span>
-                </div>
-
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 text-center w-32">
-                    <div class="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <svg class="w-8 h-8 text-red-400" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                        </svg>
-                    </div>
-                    <span class="text-white font-semibold">YouTube</span>
-                </div>
-
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 text-center w-32">
-                    <div class="w-16 h-16 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <svg class="w-8 h-8 text-purple-400" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/>
-                        </svg>
-                    </div>
-                    <span class="text-white font-semibold">Twitch</span>
+                <div class="lg:col-span-5">
+                    <figure class="max-w-xs mx-auto text-center">
+                        <x-xp.screen phone :mock="true" :src="$shot('connect.webp')" alt="ภาพตัวอย่างหน้าเชื่อมต่อของแอปมือถือ Live x Shop Pro: สแกน QR Code หรือใส่ IP ของโปรแกรมบนคอม" :width="390" :height="845" />
+                        <figcaption class="mt-3 text-xs text-gray-500">หน้าเชื่อมต่อ วาดจากโค้ดของแอป</figcaption>
+                    </figure>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Features Section -->
-    <section class="py-16">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-3xl font-bold text-white text-center mb-12">ฟีเจอร์หลัก</h2>
+    <x-xp.setup
+        :specs="[
+            ['ระบบปฏิบัติการ', 'Windows 10 (1903 ขึ้นไป) หรือ Windows 11 — โปรแกรมหลักเป็นแอป Windows', 'Windows 10 (1903+) or 11'],
+            ['สเปกเครื่อง', 'RAM 4 GB (แนะนำ 8 GB) · พื้นที่ 500 MB (แนะนำ 2 GB) · จอ 1366×768 ขึ้นไป (แนะนำ 1920×1080)', 'RAM 4 GB, 500 MB disk, 1366×768'],
+            ['อินเทอร์เน็ต', 'ต้องต่อเน็ตระหว่างไลฟ์เพื่อดึงแชทจากแพลตฟอร์ม', 'Online while you are live'],
+            ['ระบบอื่น', 'ยังไม่มีโปรแกรมหลักสำหรับ macOS หรือ Linux', 'Windows only'],
+        ]"
+        specs-note="สเปกเหล่านี้เป็นเป้าหมายในเอกสารของโปรเจกต์ อาจปรับก่อนเปิดขาย"
+        steps-title="เมื่อเปิดขาย: 3 ขั้น"
+        :steps="[
+            ['ซื้อ License ในหน้านี้', 'ได้ License key ทางอีเมลและในหน้า บัญชีของฉัน', 'Buy a licence here'],
+            ['ดาวน์โหลดและติดตั้งบน Windows', 'ไฟล์อยู่ที่ บัญชีของฉัน › ดาวน์โหลด แล้วใส่ License key ในโปรแกรม', 'Download from your account and activate'],
+            ['เริ่มดึงแชท', 'เลือกแพลตฟอร์ม ตั้งชื่อรอบไลฟ์ วาง URL ของไลฟ์ แล้วกด เริ่มดึงแชท', 'Pick the platform, paste the live URL, start'],
+        ]" />
 
-            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Feature 1 -->
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:border-pink-500/50 transition-all">
-                    <div class="w-12 h-12 bg-pink-500/20 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Multi-Platform Streaming</h3>
-                    <p class="text-gray-400">Stream ไปยัง LINE, Facebook, Instagram, TikTok, YouTube พร้อมกัน</p>
-                </div>
+    <x-xp.faq :items="[
+        ['ตอนนี้ซื้อหรือดาวน์โหลดได้ไหม?', $csLive ? 'ยังไม่ได้ Live x Shop Pro อยู่ในสถานะ Coming Soon ยังไม่เปิดขายและยังไม่มีไฟล์ให้ดาวน์โหลด กด แจ้งเตือนเมื่อเปิดขาย แล้วเราจะติดต่อกลับเมื่อพร้อม' : 'ได้ ซื้อ License ได้ในหน้านี้ คนที่ซื้อแล้วดาวน์โหลดได้ที่หน้า บัญชีของฉัน › ดาวน์โหลด'],
+        ['ราคาเท่าไร?', $product->is_custom ? 'ติดต่อสอบถามราคาได้ที่หน้าขอใบเสนอราคา' : ($price > 0 ? 'ราคาในร้านตอนนี้ ฿' . number_format($price) . ' ตัวเลขในหน้านี้อ่านจากร้านโดยตรง ส่วนเงื่อนไข License (อายุการใช้งาน จำนวนเครื่อง การทดลองใช้) ยังไม่ประกาศ' : 'ยังไม่ประกาศราคา')],
+        ['เป็นโปรแกรมถ่ายทอดสดไหม?', 'ไม่ใช่ Live x Shop Pro ไม่ได้สตรีมไลฟ์แทนคุณ คุณยังไลฟ์ด้วยแอปของแพลตฟอร์มหรือ OBS ตามเดิม ส่วนโปรแกรมทำงานหลังบ้าน: ดึงแชท จับ CF ทำออเดอร์ เก็บเงิน และส่งของ'],
+        ['ดึงแชทจากแพลตฟอร์มไหนได้บ้าง?', 'แผนแรกคือ Facebook Live และ TikTok Live (ผ่านบอตเบราว์เซอร์) และ LINE OA (ผ่าน LINE Messaging API) ทั้งหมดยังอยู่ระหว่างพัฒนา'],
+        ['ตรวจสลิปได้จริงไหม?', 'ยังไม่ได้ การอ่านสลิปด้วย OCR การจับสลิปปลอมหรือสลิปซ้ำ และการจับคู่กับ SMS ธนาคาร อยู่ในขั้นที่ 3 ของแผนพัฒนา ยังไม่มีในโปรแกรม'],
+        ['ข้อมูลร้านเก็บที่ไหน?', 'ฐานข้อมูลร้าน (สินค้า ลูกค้า ออเดอร์) เป็น SQLite เก็บในเครื่อง Windows ของคุณ ไม่ได้ฝากไว้บนเซิร์ฟเวอร์ของ XMAN'],
+        ['ใช้บน Mac ได้ไหม?', 'ไม่ได้ โปรแกรมหลักสร้างสำหรับ Windows 10 (1903 ขึ้นไป) และ Windows 11 เท่านั้น ส่วนแอปมือถือ (Android / iOS) เป็นตัวช่วยดึงแชทที่ต้องใช้คู่กับโปรแกรมบนคอม'],
+        ['จะเปิดขายเมื่อไร?', $product->coming_soon_until ? 'กำหนดเปิด ' . $product->coming_soon_until->format('d/m/Y') . ' หน้านี้จะเปิดปุ่มซื้อและดาวน์โหลดเองเมื่อถึงวัน' : 'ยังไม่ประกาศวัน ระหว่างนี้ฝากข้อมูลไว้ที่ แจ้งเตือนเมื่อเปิดขาย ได้'],
+    ]" />
 
-                <!-- Feature 2 -->
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:border-pink-500/50 transition-all">
-                    <div class="w-12 h-12 bg-rose-500/20 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Auto Shoutout</h3>
-                    <p class="text-gray-400">ระบบเรียกชื่อลูกค้าและประกาศขอบคุณอัตโนมัติเมื่อมีการสั่งซื้อ</p>
-                </div>
-
-                <!-- Feature 3 -->
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:border-pink-500/50 transition-all">
-                    <div class="w-12 h-12 bg-red-500/20 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Chat Integration</h3>
-                    <p class="text-gray-400">รวม Chat จากทุกแพลตฟอร์มไว้ในที่เดียว ตอบลูกค้าได้ง่าย</p>
-                </div>
-
-                <!-- Feature 4 -->
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:border-pink-500/50 transition-all">
-                    <div class="w-12 h-12 bg-orange-500/20 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">OBS Integration</h3>
-                    <p class="text-gray-400">ควบคุม OBS Studio ได้โดยตรง เปลี่ยน Scene และ Source อัตโนมัติ</p>
-                </div>
-
-                <!-- Feature 5 -->
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:border-pink-500/50 transition-all">
-                    <div class="w-12 h-12 bg-yellow-500/20 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Product Showcase</h3>
-                    <p class="text-gray-400">แสดงสินค้าบนหน้าจอ Live พร้อมราคาและปุ่มสั่งซื้อ</p>
-                </div>
-
-                <!-- Feature 6 -->
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:border-pink-500/50 transition-all">
-                    <div class="w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Sales Analytics</h3>
-                    <p class="text-gray-400">แดชบอร์ดสรุปยอดขาย วิเคราะห์ช่วงเวลาขายดี และพฤติกรรมลูกค้า</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- How It Works -->
-    <section class="py-16 bg-gray-900/50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-3xl font-bold text-white text-center mb-4">วิธีการทำงาน</h2>
-            <p class="text-gray-400 text-center mb-12 max-w-2xl mx-auto">เริ่มต้น Live ขายของได้ง่ายๆ ใน 4 ขั้นตอน</p>
-
-            <div class="grid md:grid-cols-4 gap-6">
-                <div class="text-center">
-                    <div class="w-16 h-16 bg-pink-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-pink-500">
-                        <span class="text-2xl font-bold text-pink-400">1</span>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">เชื่อมต่อแพลตฟอร์ม</h3>
-                    <p class="text-gray-400 text-sm">เชื่อมต่อบัญชี Social Media ที่ต้องการ</p>
-                </div>
-
-                <div class="text-center">
-                    <div class="w-16 h-16 bg-pink-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-pink-500">
-                        <span class="text-2xl font-bold text-pink-400">2</span>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">เพิ่มสินค้า</h3>
-                    <p class="text-gray-400 text-sm">อัพโหลดรูปและข้อมูลสินค้าที่จะขาย</p>
-                </div>
-
-                <div class="text-center">
-                    <div class="w-16 h-16 bg-pink-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-pink-500">
-                        <span class="text-2xl font-bold text-pink-400">3</span>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">เริ่ม Live</h3>
-                    <p class="text-gray-400 text-sm">กดปุ่มเดียว Stream ไปทุกแพลตฟอร์ม</p>
-                </div>
-
-                <div class="text-center">
-                    <div class="w-16 h-16 bg-pink-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-pink-500">
-                        <span class="text-2xl font-bold text-pink-400">4</span>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">รับออเดอร์</h3>
-                    <p class="text-gray-400 text-sm">ระบบจัดการออเดอร์และ Shoutout อัตโนมัติ</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Advanced Features -->
-    <section class="py-16">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-3xl font-bold text-white text-center mb-12">ฟีเจอร์ขั้นสูง</h2>
-
-            <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                <div class="bg-gradient-to-br from-pink-500/10 to-rose-500/10 rounded-xl p-6 border border-pink-500/30">
-                    <h3 class="text-xl font-bold text-white mb-4 flex items-center">
-                        <svg class="w-6 h-6 text-pink-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
-                        </svg>
-                        Overlay Customization
-                    </h3>
-                    <ul class="space-y-2 text-gray-300">
-                        <li class="flex items-center">
-                            <span class="w-2 h-2 bg-pink-400 rounded-full mr-3"></span>
-                            ออกแบบ Overlay ได้เอง ด้วย Drag & Drop
-                        </li>
-                        <li class="flex items-center">
-                            <span class="w-2 h-2 bg-pink-400 rounded-full mr-3"></span>
-                            Animation Effects สำหรับการแจ้งเตือน
-                        </li>
-                        <li class="flex items-center">
-                            <span class="w-2 h-2 bg-pink-400 rounded-full mr-3"></span>
-                            Template สำเร็จรูปหลายแบบ
-                        </li>
-                    </ul>
-                </div>
-
-                <div class="bg-gradient-to-br from-rose-500/10 to-red-500/10 rounded-xl p-6 border border-rose-500/30">
-                    <h3 class="text-xl font-bold text-white mb-4 flex items-center">
-                        <svg class="w-6 h-6 text-rose-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
-                        </svg>
-                        Order Management
-                    </h3>
-                    <ul class="space-y-2 text-gray-300">
-                        <li class="flex items-center">
-                            <span class="w-2 h-2 bg-rose-400 rounded-full mr-3"></span>
-                            ระบบจัดการออเดอร์แบบ Real-time
-                        </li>
-                        <li class="flex items-center">
-                            <span class="w-2 h-2 bg-rose-400 rounded-full mr-3"></span>
-                            สรุปยอดขายอัตโนมัติ
-                        </li>
-                        <li class="flex items-center">
-                            <span class="w-2 h-2 bg-rose-400 rounded-full mr-3"></span>
-                            Export รายการส่งสินค้า
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- System Requirements -->
-    <section class="py-16 bg-gray-900/50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-3xl font-bold text-white text-center mb-12">ความต้องการระบบ</h2>
-
-            <div class="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
-                    <h3 class="text-lg font-bold text-white mb-4 flex items-center">
-                        <svg class="w-6 h-6 text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                        </svg>
-                        ขั้นต่ำ
-                    </h3>
-                    <ul class="space-y-2 text-gray-400">
-                        <li>Windows 10 (64-bit)</li>
-                        <li>.NET 8.0 Runtime</li>
-                        <li>RAM 8GB</li>
-                        <li>CPU: Intel i5 / AMD Ryzen 5</li>
-                        <li>Internet: 10 Mbps Upload</li>
-                    </ul>
-                </div>
-
-                <div class="bg-gray-800/50 rounded-xl p-6 border border-pink-500/50">
-                    <h3 class="text-lg font-bold text-white mb-4 flex items-center">
-                        <svg class="w-6 h-6 text-pink-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                        </svg>
-                        แนะนำ
-                    </h3>
-                    <ul class="space-y-2 text-gray-300">
-                        <li>Windows 11 (64-bit)</li>
-                        <li>.NET 8.0 Runtime</li>
-                        <li>RAM 16GB+</li>
-                        <li>CPU: Intel i7 / AMD Ryzen 7</li>
-                        <li>GPU: NVIDIA for Hardware Encoding</li>
-                        <li>Internet: 50 Mbps Upload</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="py-16">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 class="text-3xl font-bold text-white mb-4">เริ่มต้น Live ขายของวันนี้</h2>
-            <p class="text-gray-400 mb-8">ดาวน์โหลดฟรี และเพิ่มยอดขายด้วย Live Shopping</p>
-
-            <div class="flex flex-wrap justify-center gap-4">
-                @auth
-                    @if($hasPurchased)
-                        <a href="{{ route('customer.downloads') }}"
-                           class="px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-green-500/25">
-                            ดาวน์โหลด
+    {{-- ====================== RELATED (จาก products/show) ====================== --}}
+    @if($relatedProducts && $relatedProducts->count() > 0)
+        <section class="relative py-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <x-xp.head class="mb-10" size="md" eyebrow="More from XMAN Studio" title="ผลิตภัณฑ์ที่เกี่ยวข้อง" />
+                <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    @foreach($relatedProducts as $related)
+                        <a href="{{ route('products.show', $related->slug) }}" class="xp-card overflow-hidden block transition group">
+                            <div class="aspect-video bg-white/[.03] overflow-hidden">
+                                @if($related->artwork_url)
+                                    <img src="{{ $related->artwork_url }}" alt="{{ $related->name }}" loading="lazy" class="w-full h-full object-cover">
+                                @endif
+                            </div>
+                            <div class="p-4">
+                                <h3 class="font-bold text-white mb-1">{{ $related->name }}</h3>
+                                @if($related->short_description)
+                                    <p class="text-gray-400 text-sm mb-2 line-clamp-2">{{ $related->short_description }}</p>
+                                @endif
+                                @if(! $related->is_custom)
+                                    <p class="font-bold text-lg" style="color: var(--xp-a)">฿{{ number_format($related->price, 0) }}</p>
+                                    <x-tpix-price :thb="$related->price" :tpix="$related->price_tpix" />
+                                @else
+                                    <p class="text-gray-400">สอบถามราคา</p>
+                                @endif
+                            </div>
                         </a>
-                    @else
-                        <a href="{{ route('products.index') }}"
-                           class="px-8 py-4 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25">
-                            ดูแพคเกจ
-                        </a>
-                    @endif
-                @else
-                    <a href="{{ route('products.index') }}"
-                       class="px-8 py-4 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-primary-500/25">
-                        ดูแพคเกจ
-                    </a>
-                @endauth
+                    @endforeach
+                </div>
             </div>
-        </div>
-    </section>
-</div>
+        </section>
+    @endif
+
+    {{-- =========================== FINAL CTA =========================== --}}
+    <x-xp.cta :art="$shot('art-hero.webp')" title="ไลฟ์ต่อไป" glow="หลังบ้านไม่ต้องวุ่น"
+              :sub="$csLive ? 'Live x Shop Pro กำลังพัฒนา ฝากชื่อไว้แล้วเราจะแจ้งเมื่อเปิดขาย' : 'ดึงแชท เปลี่ยน CF เป็นออเดอร์ และส่งของจากโปรแกรมเดียว'"
+              en="A calmer back office for your next live.">
+        @if($csLive)
+            <x-xp.download :href="$downloadHref" :coming-soon="true" th="ดาวน์โหลด" en="Download" class="!px-8" />
+            <a href="{{ route('quote.index') }}" class="xp-btn-ghost inline-flex items-center px-6 py-4 rounded-xl font-semibold transition">แจ้งเตือนเมื่อเปิดขาย</a>
+        @elseif($product->is_custom)
+            <a href="{{ route('quote.index') }}" class="xp-btn-pro inline-flex items-center px-8 py-4 rounded-xl font-extrabold text-lg transition">ติดต่อสอบถาม</a>
+        @else
+            @if($ownsLive)
+                <x-xp.download :href="$downloadHref" th="ดาวน์โหลด" en="Download" class="!px-8" />
+            @endif
+            <a href="#pricing" class="xp-btn-pro inline-flex items-center px-8 py-4 rounded-xl font-extrabold text-lg transition">{{ $ownsLive ? 'ซื้อ License เพิ่ม' : 'ซื้อ License' }}</a>
+            <a href="{{ route('quote.index') }}" class="xp-btn-ghost inline-flex items-center px-6 py-4 rounded-xl font-semibold transition">ติดต่อสอบถาม</a>
+        @endif
+        <x-slot:footnote>
+            <p class="text-gray-500 text-sm mt-7">Windows 10 (1903+) / 11 · Facebook · TikTok · LINE · ข้อมูลร้านอยู่ในเครื่องคุณ</p>
+        </x-slot:footnote>
+    </x-xp.cta>
+
+</x-xp.page>
+
+<script type="application/ld+json">{!! json_encode($ld, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) !!}</script>
 @endsection

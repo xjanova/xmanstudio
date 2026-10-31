@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    /* Views/Pages/ContentGeneratorPage.xaml: provider, content details, platforms and options on the left,
+       the preview with recommended hashtags on the right. Choices and labels are the page's own. */
+    .cols { display: grid; grid-template-columns: 540px 1fr; gap: 16px; }
+    .stack { display: flex; flex-direction: column; gap: 10px; }
+    .stack .card { padding: 13px 18px; }
+    .stack .field { height: 34px; }
+    .stack .lbl { margin-bottom: 5px; font-size: 12px; }
+    .stack .two { margin-top: 8px; }
+    .prov { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
+    .prov span { height: 40px; border-radius: 10px; background: var(--bg3); border: 1px solid rgba(255, 255, 255, .06); display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 12.5px; color: var(--t2); }
+    .prov span.on { color: #fff; border-color: #F97316; background: rgba(249, 115, 22, .14); }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    .area { height: 54px; border-radius: 10px; background: var(--bg3); border: 1px solid rgba(255, 255, 255, .06); padding: 10px 12px; font-size: 13px; color: #e4e4e7; line-height: 1.55; }
+    .chk { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; margin-right: 14px; color: var(--t2); }
+    .chk b { width: 18px; height: 18px; border-radius: 5px; border: 2px solid #52525b; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; }
+    .chk.on { color: #fff; } .chk.on b { background: #8B5CF6; border-color: #8B5CF6; }
+    .prev { min-height: 100%; display: flex; flex-direction: column; }
+    .post { margin-top: 14px; border-radius: 14px; background: var(--bg2); border: 1px solid rgba(139, 92, 246, .3); padding: 18px 20px; font-size: 15px; line-height: 1.75; color: #f4f4f5; }
+    .post .who { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .post .who b { font-size: 14px; } .post .who small { display: block; font-size: 11px; color: var(--t3); }
+    .post .ht { color: #67e8f9; }
+    .meta { display: flex; gap: 18px; margin-top: 10px; font-size: 12px; color: var(--t3); }
+    .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .tags span { height: 28px; padding: 0 12px; border-radius: 14px; background: rgba(0, 245, 255, .08); border: 1px solid rgba(0, 245, 255, .3); color: #67e8f9; font-size: 12.5px; display: inline-flex; align-items: center; }
+    .foot { margin-top: auto; padding-top: 16px; display: flex; gap: 10px; }
+    .ok { margin-top: 12px; height: 36px; border-radius: 10px; background: rgba(16, 185, 129, .12); border: 1px solid rgba(16, 185, 129, .35); color: #6ee7b7; display: flex; align-items: center; padding: 0 12px; font-size: 13px; }
+</style></head>
+<body data-on="content">
+<div class="main">
+    <div class="hd">
+        <div><h1>สร้างเนื้อหา AI</h1><p>สร้างเนื้อหาโพสต์ด้วย AI อัจฉริยะ</p></div>
+        <div class="act"><span class="btn">ล้าง</span></div>
+    </div>
+    <div class="cols">
+        <div class="stack">
+            <div class="card">
+                <h2>✦ เลือก AI Provider</h2><p class="sub">เลือก AI ที่ใช้สร้างเนื้อหา</p>
+                <div class="prov"><span class="on">● Ollama (ฟรี)</span><span>Gemini</span><span>OpenAI</span><span>Claude</span></div>
+            </div>
+            <div class="card">
+                <h2>รายละเอียดเนื้อหา</h2><p class="sub">กำหนดหัวข้อและรูปแบบ</p>
+                <div class="two">
+                    <div><span class="lbl">ประเภทเนื้อหา</span><span class="field dd">โพสต์โปรโมท</span></div>
+                    <div><span class="lbl">โทนเสียง</span><span class="field dd">เป็นมิตร/Friendly</span></div>
+                </div>
+                <div style="margin-top:8px"><span class="lbl">หัวข้อ/คำอธิบาย</span><div class="area">โปรโมทร้านกาแฟใหม่ย่านสุขุมวิท มีโปรเปิดร้านลด 50%</div></div>
+                <div class="two">
+                    <div><span class="lbl">Keywords (คั่นด้วย ,)</span><span class="field">กาแฟ, ร้านใหม่, โปรโมชั่น</span></div>
+                    <div><span class="lbl">Hashtags (คั่นด้วย ,)</span><span class="field mut">#ร้านกาแฟ</span></div>
+                </div>
+            </div>
+            <div class="card">
+                <h2>เลือกแพลตฟอร์มที่จะโพสต์</h2>
+                <div style="margin-top:12px"><span class="chk on"><b>✓</b>Facebook</span><span class="chk on"><b>✓</b>Instagram</span><span class="chk"><b></b>TikTok</span><span class="chk"><b></b>X</span><span class="chk"><b></b>LINE</span></div>
+            </div>
+            <div class="card">
+                <h2>ตัวเลือกเพิ่มเติม</h2>
+                <div class="two">
+                    <div><span class="lbl">ความยาวเนื้อหา</span><span class="field dd">ปานกลาง (3-5 ประโยค)</span></div>
+                    <div><span class="lbl">ภาษา</span><span class="field dd">ไทย</span></div>
+                </div>
+                <div style="margin-top:12px"><span class="chk on"><b>✓</b>ใส่ Emojis</span><span class="chk on"><b>✓</b>ใส่ Call-to-Action</span></div>
+            </div>
+        </div>
+        <div class="card prev">
+            <h2>ตัวอย่างเนื้อหา <small>สร้างด้วย Ollama · llama3.2:3b</small></h2>
+            <div class="ok">✓ สร้างเนื้อหาสำเร็จด้วย Ollama!</div>
+            <div class="post">
+                <div class="who"><span class="pf fb">f</span><span><b>ร้านกาแฟตัวอย่าง</b><small>ตัวอย่างโพสต์ · Facebook</small></span></div>
+                ☕ เปิดแล้ว! ร้านกาแฟใหม่ใจกลางสุขุมวิท<br>
+                ฉลองเปิดร้าน ลด 50% ทุกเมนู ตั้งแต่วันนี้ถึงสิ้นเดือน 🎉<br>
+                เมล็ดคั่วสดทุกสัปดาห์ บรรยากาศนั่งสบาย มีปลั๊กครบ เหมาะทั้งนั่งทำงานและนัดเพื่อน<br><br>
+                📍 แวะมาชิมแก้วแรกกับเรา แล้วบอกต่อเพื่อนได้เลย!<br>
+                <span class="ht">#ร้านกาแฟ #ร้านใหม่ #กาแฟสุขุมวิท #โปรโมชั่น</span>
+            </div>
+            <div class="meta"><span>238 ตัวอักษร</span><span>41 คำ</span></div>
+            <p class="lbl" style="margin-top:18px">Hashtags ที่แนะนำ</p>
+            <div class="tags"><span>#ร้านกาแฟ</span><span>#CoffeeLover</span><span>#กาแฟสด</span><span>#สุขุมวิท</span><span>#เปิดร้านใหม่</span><span>#โปรเปิดร้าน</span></div>
+            <div class="foot">
+                <span class="btn">⧉ คัดลอก</span><span class="btn">↻ สร้างใหม่</span>
+                <span class="btn" style="margin-left:auto">บันทึก Draft</span><span class="btn rgb">สร้างโพสต์ →</span>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="chrome.js"></script>
+</body></html>

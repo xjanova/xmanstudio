@@ -1,0 +1,40 @@
+/* SpiderX mock-ups — drawn from the app's own XAML (D:\Code\SpiderX\src\SpiderX.App: Resources/Styles/Colors.xaml,
+   Views/*.xaml): the Cyberpunk/Neon palette, rounded 20px cards on #12122A→#1A1A3A, emoji icons, the six-tab Shell.
+   No real capture of the app exists yet; every name, ID and address here is made up. */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1440px; height: 900px; overflow: hidden; }
+body { font-family: "Segoe UI", "Segoe UI Emoji", sans-serif; color: #F8FAFC; font-size: 14px; background: #0A0A1A; }
+.titlebar { height: 32px; display: flex; align-items: center; padding-left: 14px; gap: 10px; background: #0A0A1A; font-size: 12px; color: #A1A1C7; }
+.titlebar .caps { margin-left: auto; display: flex; height: 32px; }
+.titlebar .caps i { width: 46px; display: flex; align-items: center; justify-content: center; font-style: normal; color: #A1A1C7; font-size: 13px; }
+.tabs { height: 48px; display: flex; align-items: stretch; gap: 4px; padding: 0 16px; background: #12122A; border-bottom: 1px solid #2A2A4A; }
+.tabs span { display: flex; align-items: center; padding: 0 18px; font-size: 14px; color: #A1A1C7; position: relative; }
+.tabs span.on { color: #FFFFFF; font-weight: 600; }
+.tabs span.on::after { content: ""; position: absolute; left: 14px; right: 14px; bottom: 6px; height: 3px; border-radius: 2px; background: #7C3AED; }
+.page { position: absolute; left: 0; top: 80px; width: 1440px; height: 820px; overflow: hidden; padding: 16px 24px; }
+.card { border-radius: 20px; border: 1px solid #2A2A4A; background: linear-gradient(135deg, #12122A, #1A1A3A); padding: 18px 20px; }
+.flat { border-radius: 16px; border: 1px solid #2A2A4A; background: #12121F; padding: 16px; }
+.ico { width: 40px; height: 40px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-size: 20px; flex: none; }
+.g-violet { background: linear-gradient(135deg, #7C3AED, #9333EA); }
+.g-pink { background: linear-gradient(135deg, #EC4899, #F43F5E); }
+.g-cyan { background: linear-gradient(135deg, #06B6D4, #0EA5E9); }
+.g-green { background: linear-gradient(135deg, #22C55E, #16A34A); }
+.g-amber { background: linear-gradient(135deg, #F59E0B, #EF4444); }
+.g-scan { background: linear-gradient(135deg, #06B6D4, #22C55E); }
+.g-blue { background: linear-gradient(135deg, #06B6D4, #3B82F6); }
+.btn { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 18px; border-radius: 12px; font-weight: 700; font-size: 14px; color: #fff; }
+.btn.vp { background: linear-gradient(90deg, #7C3AED, #EC4899); }
+.btn.sc { background: linear-gradient(90deg, #06B6D4, #22C55E); }
+.btn.rd { background: linear-gradient(90deg, #EF4444, #DC2626); }
+.btn.pu { background: linear-gradient(90deg, #8B5CF6, #A855F7); }
+.btn.gh { background: #1A1A2E; border: 1px solid #3A3A5A; color: #94A3B8; }
+.h1 { font-size: 22px; font-weight: 700; }
+.sub { font-size: 13px; color: #94A3B8; }
+.mut { color: #64748B; }
+.cy { color: #06B6D4; } .gr { color: #00FF88; } .pk { color: #EC4899; } .vi { color: #A78BFA; }
+.mono { font-family: "Cascadia Mono", Consolas, monospace; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; }
+.dot { width: 12px; height: 12px; border-radius: 6px; background: #22C55E; box-shadow: 0 0 8px #22C55E; display: inline-block; }
+.bar { height: 8px; border-radius: 4px; background: #1A1A2E; overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, #06B6D4, #22C55E, #00FF88); }
+.row { display: flex; align-items: center; gap: 14px; }

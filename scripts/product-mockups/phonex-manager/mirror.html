@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .content { padding: 8px 8px 0; overflow: hidden; }
+    .head { border-radius: 8px; background: rgba(13, 27, 42, .6); padding: 10px 12px; display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .head .ico { font-size: 20px; }
+    .head .r { margin-left: auto; display: flex; gap: 8px; }
+    .sub { display: flex; border-bottom: 1px solid #1E3A5F; margin: 0 0 8px; }
+    .sub span { padding: 8px 14px 7px; font-size: 13px; color: #8892A0; border-bottom: 3px solid transparent; }
+    .sub span.on { color: #00D4FF; border-color: #00D4FF; }
+    .hint { font-size: 12px; color: #8892A0; margin: 0 0 8px 8px; }
+    .card { border-radius: 8px; background: rgba(13, 27, 42, .6); border: 1px solid #1E3A5F; padding: 12px 14px; }
+    .card .t { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .card .t i { font-style: normal; font-size: 23px; }
+    .card .t b { display: block; font-size: 14px; }
+    .card .t small { display: block; font-size: 10.5px; color: #8892A0; }
+    .card p.d { font-size: 11.5px; color: #8892A0; margin-bottom: 9px; }
+    .mir { display: grid; grid-template-columns: 1fr 230px; gap: 12px; margin: 0 8px 8px; }
+    .opts { display: flex; align-items: center; gap: 10px; font-size: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+    .opts .field { width: 52px; height: 26px; }
+    .keys { border-radius: 6px; background: rgba(27, 40, 56, .53); padding: 9px 11px; }
+    .keys b { font-size: 11px; display: block; margin-bottom: 4px; }
+    .keys pre { font-family: Consolas, monospace; font-size: 9.5px; color: #8892A0; line-height: 1.55; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 8px; }
+    .row { display: flex; gap: 6px; align-items: center; margin-bottom: 7px; }
+    .row .field { flex: 1; }
+    .hash { font-family: Consolas, monospace; font-size: 10.5px; color: #8892A0; line-height: 1.6; }
+    .hash span { color: #4DE8FF; }
+</style></head>
+<body data-on="Tools" data-dev="Samsung Galaxy A54 (R5EXAMPLE0001)" data-brand="Samsung" data-model="Galaxy A54" data-op="Mirroring Galaxy A54">
+<div class="head"><span class="ico">🧰</span><h2>ToolBox</h2><span class="mut" style="margin-left:16px;font-size:12px">Scrcpy started</span>
+    <span class="r"><span class="btn">📂 Open Tools Folder</span><span class="btn">🔄 Refresh</span></span></div>
+<div class="sub"><span>📱 Essential</span><span>📱 Samsung</span><span>🔌 Qualcomm/MTK</span><span class="on">🛠️ Utilities</span><span>📋 Device Info</span></div>
+<p class="hint">Screen mirroring, file transfer, and other utility tools</p>
+<div class="card mir">
+    <div>
+        <div class="t"><i>🖥️</i><div><b>Scrcpy - Screen Mirror</b><small>Display and control Android device on PC</small></div></div>
+        <p class="d">Mirror your Android screen to PC via USB or WiFi. Very low latency, perfect for presentations and screen recording.</p>
+        <div class="opts"><span>Bitrate:</span><span class="field">8</span><span class="mut">Mbps</span><span style="margin-left:8px">Max FPS:</span><span class="field">60</span>
+            <span style="margin-left:8px"><span class="chk"></span> Fullscreen</span><span><span class="chk on"></span> Show Touches</span><span><span class="chk on"></span> Stay Awake</span></div>
+        <div class="row" style="margin:0"><span class="btn ok">▶ Start Mirror</span><span class="btn acc">🔴 Record</span><span class="btn">📥 Install</span></div>
+    </div>
+    <div class="keys"><b>Keyboard Shortcuts</b><pre>Ctrl+H  = Home button
+Ctrl+B  = Back button
+Ctrl+S  = App switch
+Ctrl+M  = Menu
+Ctrl+O  = Turn screen off
+Ctrl+Shift+O = Turn on
+Ctrl+G  = Resize to 1:1
+Ctrl+X  = Resize to fit</pre></div>
+</div>
+<div class="two">
+    <div class="card">
+        <div class="t"><i>🍊</i><div><b>Xiaomi ADB/Fastboot Tools</b><small style="color:#F59E0B">Xiaomi device management - Requires Java</small></div></div>
+        <p class="d">All-in-one tool for Xiaomi devices: unlock bootloader, flash ROM, manage apps, camera2 API enabler.</p>
+        <div class="row"><span class="btn acc">▶ Launch</span><span class="btn">📥 Install</span></div>
+    </div>
+    <div class="card">
+        <div class="t"><i>🔐</i><div><b>Checksum Verification</b><small>Verify file integrity before flashing</small></div></div>
+        <div class="row"><span class="field">C:\PhoneX\ROMs\A546EXXS0EXAMPLE.tar.md5</span><span class="btn s dkb">📁</span></div>
+        <div class="row"><span class="field mut">Expected hash (optional)</span><span class="btn s">Calculate</span><span class="btn s acc">Verify</span></div>
+        <div class="hash">MD5&nbsp;&nbsp;&nbsp; <span>9e107d9d372bb6826bd81d3542a419d6</span><br>SHA256 <span>d7a8fbb307d7809469ca9abcb0082e4f8d5651e4…</span></div>
+    </div>
+</div>
+<script type="text/plain" id="log">
+[16:12:40] Refreshing device list...
+[16:12:41] Found 1 device(s)
+</script>
+<script src="chrome.js"></script>
+</body></html>

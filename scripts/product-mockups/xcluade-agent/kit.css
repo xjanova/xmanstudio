@@ -1,0 +1,70 @@
+/* XcluadeAgent mock-ups — drawn after the app's Blazor dashboard (src/XcluadeAgent.Api/Components in
+   github.com/xjanova/xcluadeagent): App.razor's colour variables, MainLayout's 250px sidebar and header,
+   and the Tailwind 2.2 gray/blue/green/yellow/red the pages use. No real capture exists yet: every
+   screen here is HTML with made-up data (example.com, example-org). */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1440px; height: 900px; overflow: hidden; }
+body { font-family: "Segoe UI", Inter, Roboto, sans-serif; font-size: 14px; color: #f8fafc; background: #0f172a; display: flex; }
+.mono { font-family: Consolas, "Cascadia Mono", monospace; }
+
+/* MainLayout.razor */
+.side { width: 250px; flex: none; height: 900px; background: #1e293b; border-right: 1px solid rgba(255, 255, 255, .1); display: flex; flex-direction: column; }
+.side .logo { padding: 16px; border-bottom: 1px solid #374151; display: flex; align-items: center; gap: 8px; }
+.side .logo .i { font-size: 24px; }
+.side .logo h1 { font-size: 18px; font-weight: 700; color: #fff; line-height: 1.2; }
+.side .logo p { font-size: 12px; color: #6b7280; }
+.side nav { flex: 1; padding: 16px 0; }
+.side nav a { display: flex; align-items: center; padding: 12px 16px; color: #94a3b8; text-decoration: none; }
+.side nav a span { margin-right: 12px; }
+.side nav a.on { color: #f8fafc; background: rgba(59, 130, 246, .1); border-left: 3px solid #3b82f6; padding-left: 13px; }
+.side nav .sec { margin-top: 16px; padding: 0 16px 8px; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: .05em; }
+.side .foot { padding: 16px; border-top: 1px solid #374151; display: flex; justify-content: space-between; font-size: 14px; color: #6b7280; }
+.main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.hdr { background: #1f2937; border-bottom: 1px solid #374151; padding: 14px 24px; display: flex; justify-content: flex-end; align-items: center; gap: 16px; }
+.hdr .b { padding: 6px 8px; border-radius: 8px; position: relative; }
+.hdr .b i { position: absolute; top: 2px; right: 2px; width: 8px; height: 8px; border-radius: 50%; background: #ef4444; }
+.hdr .u { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.hdr .u .av { width: 32px; height: 32px; border-radius: 50%; background: #3b82f6; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+.hdr .u small { color: #9ca3af; font-size: 11px; }
+.page { padding: 24px; display: flex; flex-direction: column; gap: 24px; overflow: hidden; }
+
+/* App.razor + the Tailwind 2 pieces the pages use */
+.top { display: flex; align-items: center; justify-content: space-between; }
+.top h1 { font-size: 24px; font-weight: 700; }
+.top p { color: #9ca3af; }
+.top .acts { display: flex; align-items: center; gap: 8px; }
+.card { background: #1e293b; border-radius: 12px; border: 1px solid rgba(255, 255, 255, .1); }
+.card h2 { font-size: 18px; font-weight: 600; }
+.p4 { padding: 16px; }
+.bb { border-bottom: 1px solid #374151; }
+.btn-primary { background: #3b82f6; color: #fff; padding: 8px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; }
+.btn-primary.sm { padding: 4px 12px; font-size: 13px; }
+.btn-secondary { background: #374151; color: #e5e7eb; padding: 8px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; }
+.btn-secondary.sm { padding: 4px 12px; font-size: 13px; }
+.btn-ghost { color: #9ca3af; padding: 4px 8px; border-radius: 6px; font-size: 13px; }
+.input { background: #111827; border: 1px solid #374151; border-radius: 8px; padding: 8px 12px; color: #d1d5db; font-size: 14px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.stat { display: flex; align-items: center; justify-content: space-between; }
+.stat p { color: #9ca3af; font-size: 14px; }
+.stat b { display: block; font-size: 30px; font-weight: 700; line-height: 1.2; }
+.stat .ic { width: 48px; height: 48px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+.row { display: flex; align-items: center; justify-content: space-between; }
+.kv { display: flex; justify-content: space-between; margin-bottom: 12px; }
+.kv span:first-child { color: #9ca3af; }
+.bar { height: 8px; border-radius: 9999px; background: #374151; margin: -4px 0 12px; }
+.bar i { display: block; height: 8px; border-radius: 9999px; background: #3b82f6; }
+.pill { padding: 2px 8px; border-radius: 4px; font-size: 13px; }
+.g4 { color: #4ade80; } .g5 { color: #22c55e; } .y4 { color: #fbbf24; } .y5 { color: #f59e0b; } .r4 { color: #f87171; } .r5 { color: #ef4444; }
+.b4 { color: #60a5fa; } .p4c { color: #a78bfa; } .mut { color: #9ca3af; } .dim { color: #6b7280; }
+.bg-g { background: rgba(34, 197, 94, .2); } .bg-y { background: rgba(245, 158, 11, .2); } .bg-r { background: rgba(239, 68, 68, .2); }
+.bg-b { background: rgba(59, 130, 246, .2); } .bg-p { background: rgba(139, 92, 246, .2); } .bg-gr { background: rgba(107, 114, 128, .2); }
+.note { border-radius: 8px; padding: 16px; border: 1px solid; }
+.note.g { background: rgba(34, 197, 94, .1); border-color: rgba(34, 197, 94, .5); }
+.note.b { background: rgba(59, 130, 246, .1); border-color: rgba(59, 130, 246, .3); }
+.note.y { background: rgba(245, 158, 11, .1); border-color: rgba(245, 158, 11, .3); }
+.note.r { background: rgba(239, 68, 68, .1); border-color: rgba(239, 68, 68, .3); }
+.note h3 { font-weight: 500; margin-bottom: 8px; font-size: 15px; }
+table { width: 100%; border-collapse: collapse; }
+thead { background: #1f2937; }
+th { text-align: left; padding: 14px 16px; font-weight: 500; }
+td { padding: 14px 16px; border-top: 1px solid #374151; white-space: nowrap; }

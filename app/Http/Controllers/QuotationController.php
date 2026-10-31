@@ -2237,6 +2237,12 @@ class QuotationController extends Controller
 
     /**
      * Search order/quotation by reference number or email
+     *
+     * This page needs no login, so it may only show what the searcher can
+     * prove is theirs. A whole reference number is that proof; part of one
+     * is not — "QT-2" used to list every customer's quotations with names
+     * and totals. An email address proves nothing (anyone can type one), so
+     * it only lists quotations to the signed-in owner of that address.
      */
     public function trackingSearch(Request $request)
     {
@@ -2246,21 +2252,46 @@ class QuotationController extends Controller
 
         $query = trim($request->query('query', ''));
 
-        // Search quotations
-        $quotations = Quotation::where('quote_number', 'like', "%{$query}%")
-            ->orWhere('customer_email', $query)
-            ->orderByDesc('created_at')
-            ->limit(20)
-            ->get();
+        if (filter_var($query, FILTER_VALIDATE_EMAIL)) {
+            $user = $request->user();
 
-        // Search projects linked to found quotations or by project number
+            if (! $user) {
+                return redirect()->guest(route('login'))
+                    ->with('status', 'เข้าสู่ระบบด้วยอีเมลที่ใช้สั่งงาน เพื่อดูใบเสนอราคาและโครงการของคุณ');
+            }
+
+            // Someone else's address lists nothing, same as an unknown one.
+            // Signing up does not verify the address, so an account opened
+            // under a customer's email only gets its own quotations until
+            // the address is confirmed.
+            $quotations = strcasecmp($query, $user->email) === 0
+                ? Quotation::where(fn ($q) => $q->where('user_id', $user->id)
+                    ->when($user->hasVerifiedEmail(), fn ($q) => $q->orWhere('customer_email', $user->email)))
+                    ->orderByDesc('created_at')
+                    ->limit(20)
+                    ->get()
+                : collect();
+            $projectNumber = null;
+        } else {
+            // Numbers are issued in upper case; people type them in any case.
+            $reference = strtoupper($query);
+            $quotations = Quotation::where('quote_number', $reference)
+                ->orderByDesc('created_at')
+                ->limit(20)
+                ->get();
+            $projectNumber = $reference;
+        }
+
+        // Projects by their own number, or behind a quotation found above
         $quotationIds = $quotations->pluck('id');
-        $projects = ProjectOrder::with(['quotation', 'features', 'progress' => fn ($q) => $q->limit(3)])
-            ->where('project_number', 'like', "%{$query}%")
-            ->orWhereIn('quotation_id', $quotationIds)
-            ->orderByDesc('created_at')
-            ->limit(20)
-            ->get();
+        $projects = $projectNumber === null && $quotationIds->isEmpty()
+            ? collect()
+            : ProjectOrder::with(['quotation', 'features', 'progress' => fn ($q) => $q->limit(3)])
+                ->where(fn ($q) => $q->whereIn('quotation_id', $quotationIds)
+                    ->when($projectNumber !== null, fn ($q) => $q->orWhere('project_number', $projectNumber)))
+                ->orderByDesc('created_at')
+                ->limit(20)
+                ->get();
 
         return view('quote.tracking', compact('quotations', 'projects', 'query'));
     }
@@ -2284,12 +2315,13 @@ class QuotationController extends Controller
 
         $query = trim($request->query('query', ''));
 
+        // Whole number only, in any case — numbers are issued in upper case
         $project = ProjectOrder::with([
             'features' => fn ($q) => $q->orderBy('order'),
             'timeline' => fn ($q) => $q->orderBy('event_date'),
             'progress' => fn ($q) => $q->where('is_public', true)->latest()->limit(5),
         ])
-            ->where('project_number', $query)
+            ->where('project_number', strtoupper($query))
             ->first();
 
         // Check for active (non-expired) unique payment amount

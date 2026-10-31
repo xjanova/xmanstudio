@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .head { display: flex; align-items: center; gap: 14px; padding: 16px 22px 6px; }
+    .head h2 { font-family: Cormorant; font-style: italic; font-weight: 500; font-size: 24px; }
+    .lead { padding: 0 22px 14px; font-family: PlexThai; color: var(--t2); font-size: 12px; border-bottom: 1px solid var(--hair); }
+    .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; padding: 18px 22px; }
+    .card { padding: 14px 16px; }
+    .card h3 { font-family: PlexMono; font-weight: 400; font-size: 10px; letter-spacing: .12em; color: var(--gold); margin-bottom: 12px; }
+    .lim { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .lim div p { font-family: PlexMono; font-size: 9px; letter-spacing: .08em; color: var(--t4); margin-bottom: 5px; }
+    .lim div .box { padding: 7px 10px; font-family: PlexMono; font-size: 12px; color: var(--gold-hi); }
+    .lim div small { display: block; font-family: PlexThai; font-size: 9.5px; color: var(--t4); margin-top: 4px; line-height: 1.4; }
+    .sw { display: flex; align-items: center; gap: 10px; margin-top: 12px; font-size: 11.5px; color: var(--t2); }
+    .prof { display: flex; flex-direction: column; gap: 6px; }
+    .prof span { padding: 7px 10px; border-radius: 8px; border: 1px solid var(--hair); display: flex; justify-content: space-between; font-size: 11.5px; color: var(--t2); }
+    .prof span.on { border-color: var(--gold); color: var(--gold-hi); background: rgba(212, 167, 106, .08); }
+    .prof span em { font-style: normal; font-family: PlexMono; font-size: 9.5px; color: var(--t4); }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+    .stats div { padding: 10px 12px; }
+    .stats p { font-family: PlexMono; font-size: 9px; letter-spacing: .1em; color: var(--t4); }
+    .stats b { display: block; font-family: Cormorant; font-weight: 500; font-size: 26px; color: var(--gold-hi); margin-top: 2px; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; font-family: PlexMono; font-weight: 400; font-size: 9px; letter-spacing: .1em; color: var(--t4); padding: 7px 8px; border-bottom: 1px solid var(--hair); }
+    td { padding: 8px; font-size: 11.5px; border-bottom: 1px solid var(--hair); white-space: nowrap; }
+    td.m { font-family: PlexMono; font-size: 10.5px; }
+    .bar2 { height: 4px; border-radius: 4px; background: rgba(255, 255, 255, .07); position: relative; margin-top: 8px; }
+    .stats .bar2 b { margin: 0; font-size: 0; height: 4px; }
+    .bar2 b { position: absolute; inset: 0 auto 0 0; border-radius: 4px; background: linear-gradient(90deg, var(--gold-lo), var(--gold-hi)); }
+</style></head>
+<body data-on="gpu" data-status='<span><span class="dot"></span>ComfyUI · พร้อม</span><span>Rented · RTX 4090</span><span>VRAM 21.2 / 24 GB</span><span>Queue · 1 running</span><span class="sp"></span><span class="g">YEARLY ☾</span><span>฿1,240 / ฿3,000 · 41%</span><span>v 0.11.0</span><span>Saved · 12s ago</span>'>
+<main class="work">
+    <div class="head"><h2>Rented GPU</h2><span class="pill"><i></i>1 machine running</span>
+        <span class="btn" style="margin-left:auto">🔍 What's available now?</span><span class="btn">↻ Refresh</span><span class="btn out">⏻ Release all</span></div>
+    <p class="lead">เช่าการ์ดจากตลาด → ติดตั้ง ComfyUI ให้อัตโนมัติ → เรนเดอร์ → คืนเครื่อง · คิดเงินเป็นวินาที ทุกวินาทีที่เครื่องเปิดอยู่</p>
+    <div class="cols">
+        <div style="display:flex;flex-direction:column;gap:18px">
+            <div class="box card"><h3>1 · CONNECT SIMPLEPOD</h3>
+                <div style="display:flex;gap:8px;align-items:center"><div class="box mono" style="flex:1;padding:7px 10px;color:var(--t3);font-size:11px">••••••••••••••••••••••••</div><span class="btn">Verify &amp; save</span><span class="btn">Open console ↗</span></div>
+                <p class="th mut" style="font-size:10.5px;margin-top:8px">คีย์เข้ารหัสด้วย Windows DPAPI ก่อนเขียนลงดิสก์ · Hugging Face token ใส่เพิ่มได้ถ้าโมเดลต้องใช้</p></div>
+            <div class="box card"><h3>2 · WHAT TO INSTALL ON THE RENTED CARD</h3>
+                <div class="prof"><span class="on">WAN 2.1 · image → video<em>workflow wan_image2video</em></span><span>SDXL · stills<em>sdxl_text2img</em></span><span>FLUX.1 dev · stills<em>flux_dev_text2img</em></span><span>Hunyuan · text → video<em>hunyuan_text2video</em></span><span>ACE-Step · text → music<em>ace_step_text2music</em></span></div></div>
+            <div class="box card"><h3>RENTAL HISTORY · BILLED · LAST 30 RENTALS</h3>
+                <table><tr><th>WHEN</th><th>CARD</th><th>UPTIME</th><th>JOBS</th><th>COST</th><th>ENDED BECAUSE</th></tr>
+                    <tr><td class="m">today 13:05</td><td>RTX 4090</td><td class="m">00:52</td><td class="m">9</td><td class="m g">$0.36</td><td class="mut">idle 10 min</td></tr>
+                    <tr><td class="m">today 09:40</td><td>RTX A6000</td><td class="m">01:24</td><td class="m">14</td><td class="m g">$0.67</td><td class="mut">idle 10 min</td></tr>
+                    <tr><td class="m">yesterday</td><td>RTX 4090</td><td class="m">00:31</td><td class="m">4</td><td class="m g">$0.22</td><td class="mut">released by you</td></tr>
+                    <tr><td class="m">yesterday</td><td>RTX 3090</td><td class="m">00:18</td><td class="m">0</td><td class="m g">$0.07</td><td class="mut">warm-up gave up</td></tr></table></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:18px">
+            <div class="box card"><h3>3 · SPENDING LIMITS</h3>
+                <div class="lim">
+                    <div><p>DAILY BUDGET · USD</p><div class="box">10.00</div><small>ถึงแล้ว = คืนเครื่องว่าง ไม่เช่าเพิ่ม</small></div>
+                    <div><p>MAX PRICE · USD/HR</p><div class="box">0.60</div><small>เครื่องที่แพงกว่านี้จะไม่ถูกเช่าเลย</small></div>
+                    <div><p>MAX MACHINES AT ONCE</p><div class="box">1</div><small>1–8</small></div>
+                    <div><p>IDLE RELEASE · MIN</p><div class="box">10</div><small>ว่างเกินนี้ = คืนเครื่อง</small></div>
+                    <div><p>HARD LIFETIME CAP · MIN</p><div class="box">240</div><small>กันพลาดขั้นสุดท้าย — ไม่มีเครื่องไหนอยู่เกินนี้</small></div>
+                    <div><p>WARM-UP GIVE-UP · MIN</p><div class="box">75</div><small>รอโหลด weights นานสุดเท่านี้</small></div>
+                </div>
+                <div class="sw"><span class="tog"></span>Allow renting <span class="tog" style="margin-left:24px"></span>Release everything when the app closes</div></div>
+            <div class="box card"><h3>RUNNING NOW</h3>
+                <div class="stats"><div class="box"><p>SPENT TODAY</p><b>$1.84</b><div class="bar2"><b style="width:18%"></b></div></div><div class="box"><p>BALANCE</p><b>$23.40</b></div><div class="box"><p>OF THAT · ACTUAL RENDERING</p><b>71%</b></div></div>
+                <table><tr><th>CARD</th><th>RATE</th><th>UPTIME</th><th>JOBS</th><th>COST</th><th></th></tr>
+                    <tr><td>RTX 4090 · 24 GB</td><td class="m">$0.42/h</td><td class="m">00:38:12</td><td class="m">6</td><td class="m g">$0.27</td><td><span class="btn" style="height:24px">Release</span></td></tr></table></div>
+        </div>
+    </div>
+</main>
+<script src="chrome.js"></script>
+</body></html>

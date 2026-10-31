@@ -1,0 +1,59 @@
+<!doctype html>
+<!-- ออเดอร์ — Views/Orders/OrdersPage.xaml: seven status counters, search + กรอง / Export / สร้างออเดอร์, and the order
+     table (เลขออเดอร์ · ลูกค้า · สินค้า · ยอดเงิน · สถานะ · วันที่ · view / print). Every order here is made up. -->
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .counts { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+    .counts div { padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, .12); background: linear-gradient(180deg, rgba(255, 255, 255, .083), rgba(255, 255, 255, .031)); }
+    .counts div.on { border-color: #6C63FF; background: rgba(108, 99, 255, .18); }
+    .counts span { font-size: 12px; color: #A0A0B8; }
+    .counts b { display: block; font-size: 22px; line-height: 1.25; }
+    .bar { display: flex; align-items: center; gap: 10px; margin: 16px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; font-weight: 700; color: #A0A0B8; font-size: 12px; padding: 10px 12px; border-bottom: 1px solid #2D2D50; }
+    td { padding: 11px 12px; border-bottom: 1px solid rgba(45, 45, 80, .6); color: #E6E6F0; vertical-align: middle; }
+    td .s { font-size: 11px; color: #6B6B80; }
+    .acts { display: flex; gap: 10px; color: #A0A0B8; }
+    .acts svg { width: 18px; height: 18px; }
+    .src { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; margin-left: 6px; }
+    .fb { background: rgba(96, 165, 250, .2); color: #60A5FA; }
+    .tt { background: rgba(255, 107, 157, .2); color: #FF8EB5; }
+    .pos { background: rgba(74, 222, 128, .18); color: #4ADE80; }
+</style></head>
+<body data-on="orders" data-title="ออเดอร์" data-sub="จัดการออเดอร์ทั้งหมดของร้าน" data-live="1" data-stats="86|12|฿48,250">
+<div id="page">
+    <div class="counts">
+        <div class="on"><span>ทั้งหมด</span><b>86</b></div>
+        <div><span>รอยืนยัน</span><b class="wn">5</b></div>
+        <div><span>ยืนยันแล้ว</span><b class="pri">18</b></div>
+        <div><span>รอแพ็ค</span><b class="inf">12</b></div>
+        <div><span>จัดส่งแล้ว</span><b class="ok">39</b></div>
+        <div><span>สำเร็จ</span><b class="ok">10</b></div>
+        <div><span>ยกเลิก</span><b class="er">2</b></div>
+    </div>
+    <div class="bar">
+        <div class="input" style="width:420px;display:flex;gap:8px;align-items:center">{ic:search}ค้นหาออเดอร์ (เลขออเดอร์, ชื่อ, เบอร์โทร)</div>
+        <span class="btn gl">{ic:filter}กรอง</span>
+        <span style="margin-left:auto" class="btn gl">{ic:down}Export</span>
+        <span class="btn pri">{ic:plus}สร้างออเดอร์</span>
+    </div>
+    <div class="card" style="padding:4px 8px">
+        <table>
+            <thead><tr><th>เลขออเดอร์</th><th>ลูกค้า</th><th>สินค้า</th><th style="text-align:right">ยอดเงิน</th><th>สถานะ</th><th>วันที่</th><th></th></tr></thead>
+            <tbody>
+                <tr><td><b>LX-2510-0186</b><span class="src fb">FB</span></td><td>คุณมะลิ ใจดี</td><td>เสื้อยืดโอเวอร์ไซซ์ ×2<div class="s">CF 1</div></td><td style="text-align:right"><b>฿890</b></td><td><span class="pill p-warn">รอยืนยัน</span></td><td>วันนี้ 20:41</td><td><span class="acts">{ic:eye}{ic:printer}</span></td></tr>
+                <tr><td><b>LX-2510-0185</b><span class="src fb">FB</span></td><td>Ploy Sample</td><td>กระเป๋าผ้าแคนวาส ×1 · หมวกบักเก็ต ×1</td><td style="text-align:right"><b>฿1,250</b></td><td><span class="pill p-pri">ยืนยันแล้ว</span></td><td>วันนี้ 20:39</td><td><span class="acts">{ic:eye}{ic:printer}</span></td></tr>
+                <tr><td><b>LX-2510-0184</b><span class="src tt">TikTok</span></td><td>คุณส้มโอ ตัวอย่าง</td><td>ต่างหูมุก ชุด 3 คู่ ×2</td><td style="text-align:right"><b>฿420</b></td><td><span class="pill p-info">รอแพ็ค</span></td><td>วันนี้ 20:36</td><td><span class="acts">{ic:eye}{ic:printer}</span></td></tr>
+                <tr><td><b>LX-2510-0183</b><span class="src tt">TikTok</span></td><td>Nok Example</td><td>รองเท้าผ้าใบ ขาวล้วน ×2</td><td style="text-align:right"><b>฿2,180</b></td><td><span class="pill p-info">รอแพ็ค</span></td><td>วันนี้ 20:32</td><td><span class="acts">{ic:eye}{ic:printer}</span></td></tr>
+                <tr><td><b>LX-2510-0182</b><span class="src fb">FB</span></td><td>คุณข้าวหอม สมมุติ</td><td>เสื้อยืดโอเวอร์ไซซ์ ×1 · ต่างหูมุก ×1</td><td style="text-align:right"><b>฿650</b></td><td><span class="pill p-ok">จัดส่งแล้ว</span></td><td>วันนี้ 20:19</td><td><span class="acts">{ic:eye}{ic:printer}</span></td></tr>
+                <tr><td><b>LX-2510-0181</b><span class="src pos">POS</span></td><td>Mint Demo</td><td>หมวกบักเก็ต ×2 · กระเป๋าผ้า ×1</td><td style="text-align:right"><b>฿1,040</b></td><td><span class="pill p-ok">จัดส่งแล้ว</span></td><td>วันนี้ 20:06</td><td><span class="acts">{ic:eye}{ic:printer}</span></td></tr>
+                <tr><td><b>LX-2510-0180</b><span class="src fb">FB</span></td><td>คุณฝน ทดสอบ</td><td>เสื้อยืดโอเวอร์ไซซ์ ×5</td><td style="text-align:right"><b>฿1,450</b></td><td><span class="pill p-ok">สำเร็จ</span></td><td>วันนี้ 19:58</td><td><span class="acts">{ic:eye}{ic:printer}</span></td></tr>
+                <tr><td><b>LX-2510-0179</b><span class="src tt">TikTok</span></td><td>Bee Sample</td><td>กระเป๋าผ้าแคนวาส ×1</td><td style="text-align:right"><b>฿350</b></td><td><span class="pill p-ok">สำเร็จ</span></td><td>วันนี้ 19:51</td><td><span class="acts">{ic:eye}{ic:printer}</span></td></tr>
+                <tr><td><b>LX-2510-0178</b><span class="src fb">FB</span></td><td>Jay Example</td><td>ต่างหูมุก ชุด 3 คู่ ×1</td><td style="text-align:right"><b>฿190</b></td><td><span class="pill p-err">ยกเลิก</span></td><td>วันนี้ 19:44</td><td><span class="acts">{ic:eye}{ic:printer}</span></td></tr>
+                <tr><td><b>LX-2510-0177</b><span class="src fb">FB</span></td><td>คุณแพร ตัวอย่าง</td><td>รองเท้าผ้าใบ ขาวล้วน ×1</td><td style="text-align:right"><b>฿990</b></td><td><span class="pill p-ok">สำเร็จ</span></td><td>วันนี้ 19:37</td><td><span class="acts">{ic:eye}{ic:printer}</span></td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<script src="chrome.js"></script>
+</body></html>

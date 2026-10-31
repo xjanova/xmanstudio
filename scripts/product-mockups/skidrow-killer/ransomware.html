@@ -1,0 +1,54 @@
+<!doctype html>
+<!-- Ransomware Protection (Views/RansomwareProtectionView.xaml): counters, the protected folders (the service's defaults:
+     Documents, Pictures, Desktop), alerts and the activity log in RansomwareProtectionService's own wording.
+     The user name and numbers are made up. -->
+<html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 20px 0 16px; }
+    .stats .card { display: flex; align-items: baseline; gap: 10px; }
+    .act { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 4px; background: #2e7d32; color: #fff; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .fd { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 6px; background: var(--bg3); margin-bottom: 7px; }
+    .fd .p { font-family: Consolas, monospace; font-size: 12px; color: var(--t2); }
+    .fd .s { margin-left: auto; font-size: 11px; color: var(--ok); }
+    .log { background: #071320; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-family: Consolas, monospace; font-size: 12px; line-height: 1.7; color: var(--t2); white-space: pre; height: 300px; overflow: hidden; }
+    .safe { display: flex; align-items: center; justify-content: center; gap: 10px; height: 150px; border-radius: 8px; background: rgba(76, 239, 80, .06); border: 1px dashed rgba(76, 239, 80, .35); color: var(--ok); }
+</style></head>
+<body data-on="ransomware" data-msg="Ransomware protection active">
+<div class="main">
+    <div style="display:flex;align-items:center;gap:12px"><h1>Ransomware Protection</h1><span class="act">Active</span>
+        <span style="margin-left:auto;display:flex;gap:8px"><span class="btn bad sm">Stop Protection</span><span class="btn sec sm">Refresh Snapshots</span></span></div>
+    <div class="sub">Protect your important files from encryption attacks using honeypot detection and behavioral analysis</div>
+
+    <div class="stats">
+        <div class="card"><span class="num acc">4</span><span><b>Protected</b><br><span class="lbl">Folders</span></span></div>
+        <div class="card"><span class="num warn">8</span><span><b>Honeypots</b><br><span class="lbl">Active Traps</span></span></div>
+        <div class="card"><span class="num cy">1,842</span><span><b>Monitored</b><br><span class="lbl">File Snapshots</span></span></div>
+        <div class="card"><span class="num ok">0</span><span><b>Alerts</b><br><span class="lbl">Triggered</span></span></div>
+    </div>
+
+    <div class="two">
+        <div class="glass" style="padding:16px 18px">
+            <div style="display:flex;align-items:center;margin-bottom:12px"><span class="h2">Protected Folders</span><span class="btn pri sm" style="margin-left:auto">+ Add Folder</span></div>
+            <div class="fd">📁 <span class="p">C:\Users\demo\Documents</span><span class="s">● watching</span></div>
+            <div class="fd">📁 <span class="p">C:\Users\demo\Pictures</span><span class="s">● watching</span></div>
+            <div class="fd">📁 <span class="p">C:\Users\demo\Desktop</span><span class="s">● watching</span></div>
+            <div class="fd">📁 <span class="p">D:\Work\Projects</span><span class="s">● watching</span></div>
+        </div>
+        <div>
+            <div class="glass" style="padding:16px 18px;margin-bottom:14px">
+                <div class="h2" style="margin-bottom:10px">Security Alerts</div>
+                <div class="safe">✓ No alerts. Your files are safe.</div>
+            </div>
+            <div class="glass" style="padding:16px 18px">
+                <div style="display:flex;align-items:center;margin-bottom:12px"><span class="h2">Activity Log</span><span class="btn sec sm" style="margin-left:auto">Clear</span></div>
+                <div class="log">[20:58:11] 🛡️ Ransomware protection started
+[20:58:11]    Protecting 4 folders
+[20:58:11]    Honeypot decoys: Enabled
+[21:02:40] 📁 Protected folder added: D:\Work\Projects</div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="chrome.js"></script>
+</body></html>

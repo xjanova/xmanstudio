@@ -1,0 +1,35 @@
+<!doctype html>
+<!-- Timeline (screens/timeline_screen.dart): her real journal — calls with a summary and the recording, things she learned,
+     what you asked. Labels from i18n/strings.dart (tlTitle, tlDidToday, tlStat*, tlKind*, tlCall*, callNotePlay).
+     Every entry is made up. -->
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 0 14px 12px; position: relative; z-index: 3; }
+    .stats div { text-align: center; padding: 9px 4px; border-radius: 16px; }
+    .stats b { display: block; font-size: 19px; font-weight: 700; line-height: 1.2; }
+    .stats span { font-size: 11px; color: rgba(35, 32, 74, .55); }
+    .list { position: relative; z-index: 3; margin: 0 14px; display: flex; flex-direction: column; gap: 8px; }
+    .ev { display: flex; gap: 10px; padding: 11px 12px; border-radius: 20px; }
+    .ev .t { flex: none; width: 40px; font-size: 11.5px; font-weight: 600; color: rgba(35, 32, 74, .55); padding-top: 2px; }
+    .ev .k { font-size: 10.5px; font-weight: 600; letter-spacing: .3px; margin-bottom: 2px; }
+    .ev .x { font-size: 12.5px; line-height: 1.5; }
+    .ev .play { margin-top: 7px; display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 11px; border-radius: 99px; font-size: 11px; font-weight: 600; color: #fff; background: var(--grad); }
+    .k.call { color: #e0357a; } .k.learn { color: #7c6cff; } .k.ask { color: #00a894; } .k.out { color: #e08a00; }
+</style></head>
+<body><div class="phone tl work">
+    <div class="orb mint" style="top:-40px;right:-80px;width:260px;height:260px"></div>
+    <div class="orb lilac" style="bottom:120px;left:-80px;width:260px;height:260px"></div>
+    <div class="sb">18:20<span class="r"><b></b><i></i></span></div>
+    <div class="hdr"><p class="over">ไทม์ไลน์</p><h1 class="display">สมุดบันทึกของมายด์</h1><p class="cap">วันนี้บันทึกไว้ 7 เรื่อง</p></div>
+    <div class="stats"><div class="glass"><b>18</b><span>คุยกัน</span></div><div class="glass"><b>2</b><span>จำได้</span></div><div class="glass"><b>2</b><span>นัด</span></div><div class="glass"><b>3</b><span>สาย</span></div></div>
+    <div class="list">
+        <div class="ev glass"><span class="t">16:42</span><div><p class="k out">สายโทร · โทรออก</p><p class="x">น้องมายโทรหาร้านดอกไม้ (ตัวอย่าง) — สั่งช่อดอกไม้ส่งพรุ่งนี้ก่อนเที่ยงแล้ว ร้านขอให้โอนมัดจำครึ่งหนึ่ง</p></div></div>
+        <div class="ev glass"><span class="t">14:05</span><div><p class="k call">สายโทร · สายเข้า</p><p class="x">คุณเอ (ตัวอย่าง) ขอเลื่อนนัดพรุ่งนี้เป็น 10:00 · อยากให้โทรกลับยืนยัน</p><span class="play">▶ ฟังเสียงสนทนา</span></div></div>
+        <div class="ev glass"><span class="t">11:20</span><div><p class="k learn">จำเรื่องใหม่</p><p class="x">คุณชอบกาแฟดำไม่ใส่น้ำตาล และไม่ชอบนัดก่อนเก้าโมง</p></div></div>
+        <div class="ev glass"><span class="t">10:58</span><div><p class="k call">สายโทร · ไม่ได้รับ</p><p class="x">เบอร์ไม่อยู่ในสมุดโทรศัพท์ — ปล่อยให้ดังตามปกติ</p></div></div>
+        <div class="ev glass"><span class="t">09:02</span><div><p class="k ask">คุณถาม</p><p class="x">วันนี้มีนัดอะไรบ้าง</p></div></div>
+    </div>
+    <div class="nav"><a><img src="assets/nav-mail.png" alt="">เมล</a><a><img src="assets/nav-calendar.png" alt="">ปฏิทิน</a><a class="gap">.</a><a class="on"><img src="assets/nav-timeline.png" alt="">ไทม์ไลน์</a><a><img src="assets/nav-settings.png" alt="">ตั้งค่า</a></div>
+    <div class="face-btn"><span style="background-image:url(assets/avatar-face.webp)"></span></div>
+    <div class="face-lbl">มายด์</div>
+</div></body></html>

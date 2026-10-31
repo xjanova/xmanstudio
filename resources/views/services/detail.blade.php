@@ -1,289 +1,185 @@
 @extends($publicLayout ?? 'layouts.app')
 
 @section('title', $option->name . ' - XMAN Studio')
+@section('meta_description', \Illuminate\Support\Str::limit(trim(($option->name_th ?? $option->name) . ' — ' . ($option->description_th ?? $option->description ?? ($category->name_th ?? $category->name))), 160))
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white">
-    <!-- Hero Section -->
-    <div class="relative py-20 overflow-hidden">
-        <x-page-art art="hero-services" :opacity="40" />
-        <div class="absolute inset-0 bg-gradient-to-r from-primary-600/20 to-purple-600/20"></div>
-        <div class="absolute inset-0" style="background-image: url('data:image/svg+xml,%3Csvg width=&quot;60&quot; height=&quot;60&quot; viewBox=&quot;0 0 60 60&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;%3E%3Cg fill=&quot;none&quot; fill-rule=&quot;evenodd&quot;%3E%3Cg fill=&quot;%239C92AC&quot; fill-opacity=&quot;0.05&quot;%3E%3Cpath d=&quot;M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z&quot;/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+@php
+    // ราคาและส่วนลดมาจาก QuotationOption + Pricing::saleDiscount() ตัวเดียวกับที่ตัวคิดราคาคิดเงินจริง
+    $discount = \App\Support\Quotation\Pricing::saleDiscount($category->key);
+    $salePrice = $option->price * (1 - $discount);
+    $art = asset('artwork/hero-services.webp');
+    $categoryName = $category->name_th ?? $category->name;
+    $optionName = $option->name_th ?? $option->name;
 
-        <div class="container mx-auto px-4 relative z-10">
-            <!-- Breadcrumb -->
-            <nav class="text-sm mb-8">
-                <ol class="flex items-center space-x-2 text-gray-400">
-                    <li><a href="{{ route('home') }}" class="hover:text-white transition">หน้าแรก</a></li>
-                    <li>/</li>
-                    <li><a href="{{ route('quote.index') }}" class="hover:text-white transition">บริการ</a></li>
-                    <li>/</li>
-                    <li class="text-white">{{ $category->name_th ?? $category->name }}</li>
-                    <li>/</li>
-                    <li class="text-primary-400">{{ $option->name_th ?? $option->name }}</li>
-                </ol>
-            </nav>
+    // เนื้อหายาว คุณสมบัติ และขั้นตอน: แอดมินใส่ได้ทั้งเป็นรายการธรรมดาหรือเป็นบล็อกจาก page builder (JSON ที่ขึ้นต้นด้วย [)
+    $longDesc = $option->long_description_th ?? $option->long_description;
+    $isPageBuilder = is_string($longDesc) && str_starts_with(trim($longDesc), '[');
+    $features = $option->features_th ?? $option->features;
+    $featuresIsPageBuilder = is_string($features) && str_starts_with(trim($features), '[');
+    $steps = $option->steps_th ?? $option->steps;
+    $stepsIsPageBuilder = is_string($steps) && str_starts_with(trim($steps), '[');
 
-            <div class="grid lg:grid-cols-2 gap-12 items-start">
-                <!-- Left Column - Image & Basic Info -->
-                <div>
-                    <!-- Service Image -->
-                    @if($option->image)
-                        <div class="relative rounded-2xl overflow-hidden shadow-2xl mb-8">
-                            <img src="{{ asset('storage/' . $option->image) }}"
-                                 alt="{{ $option->name }}"
-                                 class="w-full h-96 object-cover">
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+    $ld = [
+        '@context' => 'https://schema.org',
+        '@type' => 'Service',
+        'name' => $optionName,
+        'serviceType' => $categoryName,
+        'description' => $option->description_th ?? $option->description,
+        'url' => route('service.detail', [$category->key, $option->key]),
+        'provider' => ['@type' => 'Organization', 'name' => 'XMAN Studio', 'url' => url('/')],
+        'offers' => ['@type' => 'Offer', 'price' => (string) round($salePrice), 'priceCurrency' => 'THB', 'url' => route('quote.index')],
+    ];
+    if ($option->image) {
+        $ld['image'] = asset('storage/' . $option->image);
+    }
+@endphp
+<x-xp.page a="#67e8f9" b="#a78bfa" c="#7dd3fc" glow="103 232 249" g1="#a78bfa" g2="#67e8f9" g3="#f0abfc">
+
+    {{-- ============================ HERO ============================ --}}
+    <x-svc.hero :art="$art" compact :crumbs="[
+        ['หน้าแรก', route('home')],
+        ['บริการ', route('services.index')],
+        [$categoryName, route('services.index') . '#category-' . $category->key],
+        [$optionName, null],
+    ]">
+        <x-slot:chips>
+            <a href="{{ route('services.index') }}#category-{{ $category->key }}" class="xp-chip hover:!border-white/25"><span class="text-base leading-none">{{ $category->icon }}</span>{{ $categoryName }}</a>
+        </x-slot:chips>
+        <x-slot:title>{{ $optionName }}</x-slot:title>
+
+        @if($option->name_th && $option->name !== $option->name_th)
+            <p class="text-xl text-gray-400 -mt-2 mb-6">{{ $option->name }}</p>
+        @endif
+
+        <x-svc.price size="lg" :price="$option->price" :discount="$discount" class="mb-8" />
+
+        @if($option->description_th || $option->description)
+            <p class="text-lg text-gray-300 leading-relaxed mb-8">{{ $option->description_th ?? $option->description }}</p>
+        @endif
+
+        <x-slot:actions>
+            <a href="{{ route('quote.index') }}#quotation-form" class="xp-btn-main inline-flex items-center px-7 py-4 rounded-xl font-extrabold text-lg transition">สั่งซื้อบริการนี้</a>
+            <a href="{{ route('quote.index') }}" class="xp-btn-ghost inline-flex items-center px-7 py-4 rounded-xl font-bold text-lg transition">เลือกบริการอื่น</a>
+        </x-slot:actions>
+        <x-slot:badges>
+            <li class="flex items-center gap-2 text-gray-300"><span class="xp-tick">✓</span> มืออาชีพ</li>
+            <li class="flex items-center gap-2 text-gray-300"><span class="xp-tick">⚡</span> ส่งมอบรวดเร็ว</li>
+            <li class="flex items-center gap-2 text-gray-300"><span class="xp-tick">💎</span> คุณภาพสูง</li>
+        </x-slot:badges>
+        <x-slot:visual>
+            <div class="xp-tilt">
+                @if($option->image)
+                    <x-xp.screen :src="asset('storage/' . $option->image)" :alt="$option->name" :eager="true" />
+                @else
+                    <div class="svc-box">
+                        <div class="svc-in aspect-[16/10] flex flex-col items-center justify-center text-center p-8">
+                            <x-svc.cover :category="$category" class="opacity-90" />
+                            <div class="absolute inset-0 -z-10" style="background: radial-gradient(ellipse 55% 55% at 50% 55%, rgba(7,11,23,.55), transparent 75%)"></div>
+                            <span class="text-7xl sm:text-8xl mb-4 drop-shadow-[0_8px_30px_rgba(0,0,0,.6)]">{{ $category->icon }}</span>
+                            <p class="text-xl sm:text-2xl font-black text-white">{{ $option->name }}</p>
                         </div>
+                    </div>
+                @endif
+            </div>
+        </x-slot:visual>
+    </x-svc.hero>
+
+    {{-- ======================= LONG DESCRIPTION ======================= --}}
+    @if($longDesc)
+        <section class="relative py-16">
+            <div class="xp-glow w-[34rem] h-[34rem] -right-40 top-0" style="background: rgb(var(--xp-glow) / .1)"></div>
+            <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                <x-xp.head align="left" size="md" class="mb-8" eyebrow="About this service" title="รายละเอียดบริการ" />
+                <div class="xp-card p-6 sm:p-10">
+                    @if($isPageBuilder)
+                        <x-page-builder-render :content="$longDesc" theme="dark" />
                     @else
-                        <div class="relative rounded-2xl overflow-hidden shadow-2xl mb-8 bg-gradient-to-br from-primary-600 to-purple-600 h-96 flex items-center justify-center">
-                            <div class="text-center">
-                                <div class="text-8xl mb-4">{{ $category->icon }}</div>
-                                <h3 class="text-2xl font-bold">{{ $option->name }}</h3>
-                            </div>
-                        </div>
+                        <p class="text-gray-300 text-lg leading-relaxed whitespace-pre-line">{{ $longDesc }}</p>
                     @endif
-
-                    <!-- Category Badge -->
-                    <div class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600/20 border border-primary-500/30 rounded-full text-primary-400 mb-6">
-                        <span class="text-2xl">{{ $category->icon }}</span>
-                        <span class="font-medium">{{ $category->name_th ?? $category->name }}</span>
-                    </div>
-                </div>
-
-                <!-- Right Column - Details -->
-                <div>
-                    <h1 class="text-4xl lg:text-5xl font-bold mb-4 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-                        {{ $option->name_th ?? $option->name }}
-                    </h1>
-
-                    @if($option->name_th && $option->name !== $option->name_th)
-                        <p class="text-xl text-gray-400 mb-6">{{ $option->name }}</p>
-                    @endif
-
-                    <!-- Price -->
-                    @php
-                        $discount = \App\Support\Quotation\Pricing::saleDiscount($category->key);
-                        $salePrice = $option->price * (1 - $discount);
-                    @endphp
-                    <div class="mb-8">
-                        <div class="flex items-center gap-3 mb-2">
-                            <span class="text-lg text-gray-500 line-through">{{ number_format($option->price, 0) }} ฿</span>
-                            <span class="px-3 py-1 bg-red-500 text-white text-sm font-bold rounded-full animate-pulse">SALE -{{ intval($discount * 100) }}%</span>
-                        </div>
-                        <div class="inline-flex items-baseline gap-2 px-6 py-3 bg-gradient-to-r from-red-500 to-pink-600 rounded-xl">
-                            <span class="text-4xl font-bold">{{ number_format($salePrice, 0) }}</span>
-                            <span class="text-xl">฿</span>
-                        </div>
-                        <x-tpix-price variant="detail" :thb="$salePrice" class="mt-2" />
-                    </div>
-
-                    <!-- Short Description -->
-                    @if($option->description_th || $option->description)
-                        <p class="text-lg text-gray-300 mb-8 leading-relaxed">
-                            {{ $option->description_th ?? $option->description }}
-                        </p>
-                    @endif
-
-                    <!-- Action Buttons -->
-                    <div class="flex flex-wrap gap-4 mb-8">
-                        <a href="{{ route('quote.index') }}#quotation-form"
-                           class="px-8 py-4 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 rounded-xl font-semibold text-lg transition-all transform hover:scale-105 shadow-lg">
-                            สั่งซื้อบริการนี้
-                        </a>
-                        <a href="{{ route('quote.index') }}"
-                           class="px-8 py-4 border-2 border-gray-600 hover:border-primary-500 rounded-xl font-semibold text-lg transition-all">
-                            เลือกบริการอื่น
-                        </a>
-                    </div>
-
-                    <!-- Trust Badges -->
-                    <div class="grid grid-cols-3 gap-4 p-6 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10">
-                        <div class="text-center">
-                            <div class="text-2xl mb-1">✓</div>
-                            <div class="text-sm text-gray-400">มืออาชีพ</div>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-2xl mb-1">⚡</div>
-                            <div class="text-sm text-gray-400">ส่งมอบรวดเร็ว</div>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-2xl mb-1">💎</div>
-                            <div class="text-sm text-gray-400">คุณภาพสูง</div>
-                        </div>
-                    </div>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Long Description Section -->
-    @if($option->long_description_th || $option->long_description)
-        @php
-            $longDesc = $option->long_description_th ?? $option->long_description;
-            $isPageBuilder = is_string($longDesc) && str_starts_with(trim($longDesc), '[');
-        @endphp
-        <div class="py-16 bg-gray-900/50">
-            <div class="container mx-auto px-4">
-                <h2 class="text-3xl font-bold mb-8">รายละเอียดบริการ</h2>
-                @if($isPageBuilder)
-                    <x-page-builder-render :content="$longDesc" theme="dark" />
-                @else
-                    <div class="prose prose-invert prose-lg max-w-none">
-                        <p class="text-gray-300 leading-relaxed whitespace-pre-line">
-                            {{ $longDesc }}
-                        </p>
-                    </div>
-                @endif
-            </div>
-        </div>
+        </section>
     @endif
 
-    <!-- Features Section -->
-    @if($option->features_th || $option->features)
-        @php
-            $features = $option->features_th ?? $option->features;
-            $featuresIsPageBuilder = is_string($features) && str_starts_with(trim($features), '[');
-        @endphp
-        <div class="py-16">
-            <div class="container mx-auto px-4">
-                <h2 class="text-3xl font-bold mb-12 text-center">คุณสมบัติเด่น</h2>
+    {{-- =========================== FEATURES =========================== --}}
+    @if($features)
+        <section class="relative py-16">
+            <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <x-xp.head class="mb-12" size="md" eyebrow="What you get" title="คุณสมบัติเด่น" />
                 @if($featuresIsPageBuilder)
-                    <x-page-builder-render :content="$features" theme="dark" />
+                    <div class="max-w-5xl mx-auto"><x-page-builder-render :content="$features" theme="dark" /></div>
                 @else
-                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <ul class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
                         @foreach((is_array($features) ? $features : []) as $feature)
-                            <div class="flex items-start gap-4 p-6 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 hover:border-primary-500/50 transition-all group">
-                                <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-primary-600 to-purple-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                    </svg>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="text-gray-300">{{ $feature }}</p>
-                                </div>
-                            </div>
+                            <li class="xp-card p-6 flex items-start gap-4 transition">
+                                <span class="xp-tick !w-9 !h-9 !text-base !mt-0">✓</span>
+                                <p class="text-gray-200 leading-relaxed">{{ $feature }}</p>
+                            </li>
                         @endforeach
-                    </div>
+                    </ul>
                 @endif
             </div>
-        </div>
+        </section>
     @endif
 
-    <!-- Steps/Process Section -->
-    @if($option->steps_th || $option->steps)
-        @php
-            $steps = $option->steps_th ?? $option->steps;
-            $stepsIsPageBuilder = is_string($steps) && str_starts_with(trim($steps), '[');
-        @endphp
-        <div class="py-16 bg-gray-900/50">
-            <div class="container mx-auto px-4">
-                <h2 class="text-3xl font-bold mb-12 text-center">ขั้นตอนการทำงาน</h2>
+    {{-- ============================ STEPS ============================ --}}
+    @if($steps)
+        <section class="relative py-16">
+            <div class="xp-glow w-[36rem] h-[24rem] left-1/2 -translate-x-1/2 top-24" style="background: color-mix(in srgb, var(--xp-b) 10%, transparent)"></div>
+            <div class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <x-xp.head class="mb-12" size="md" eyebrow="How we work" title="ขั้นตอนการทำงาน" />
                 @if($stepsIsPageBuilder)
-                    <div class="max-w-4xl mx-auto">
-                        <x-page-builder-render :content="$steps" theme="dark" />
-                    </div>
+                    <x-page-builder-render :content="$steps" theme="dark" />
                 @else
-                    <div class="max-w-4xl mx-auto">
+                    <ol>
                         @foreach((is_array($steps) ? $steps : []) as $index => $step)
-                            <div class="flex gap-6 mb-8 last:mb-0">
-                                <!-- Step Number -->
-                                <div class="flex-shrink-0">
-                                    <div class="w-16 h-16 bg-gradient-to-br from-primary-600 to-purple-600 rounded-full flex items-center justify-center text-2xl font-bold shadow-lg">
-                                        {{ $index + 1 }}
-                                    </div>
+                            <li class="flex gap-5">
+                                <div class="flex flex-col items-center">
+                                    <span class="svc-step">{{ $index + 1 }}</span>
+                                    @unless($loop->last)<span class="svc-line" aria-hidden="true"></span>@endunless
                                 </div>
-                                <!-- Step Content -->
-                                <div class="flex-1 pt-3">
-                                    <div class="p-6 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10">
-                                        <p class="text-lg text-gray-300">{{ $step }}</p>
-                                    </div>
+                                <div class="xp-card flex-1 p-5 sm:p-6 {{ $loop->last ? '' : 'mb-5' }}">
+                                    <p class="text-lg text-gray-200 leading-relaxed">{{ $step }}</p>
                                 </div>
-                            </div>
-                            @if(!$loop->last)
-                                <div class="flex gap-6 mb-4">
-                                    <div class="flex-shrink-0 w-16 flex justify-center">
-                                        <div class="w-0.5 h-8 bg-gradient-to-b from-primary-600 to-purple-600"></div>
-                                    </div>
-                                    <div class="flex-1"></div>
-                                </div>
-                            @endif
+                            </li>
                         @endforeach
-                    </div>
+                    </ol>
                 @endif
             </div>
-        </div>
+        </section>
     @endif
 
-    <!-- Related Services -->
+    {{-- ======================= RELATED SERVICES ======================= --}}
     @if($relatedServices->count() > 0)
-        <div class="py-16">
-            <div class="container mx-auto px-4">
-                <h2 class="text-3xl font-bold mb-12 text-center">บริการที่เกี่ยวข้อง</h2>
-                <div class="grid md:grid-cols-3 gap-6">
+        <section class="relative py-16">
+            <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <x-xp.head class="mb-12" size="md" eyebrow="More in {{ $category->name }}" title="บริการที่เกี่ยวข้อง" />
+                <div class="grid md:grid-cols-3 gap-5">
                     @foreach($relatedServices as $related)
-                        <a href="{{ route('service.detail', [$category->key, $related->key]) }}"
-                           class="block p-6 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 hover:border-primary-500/50 transition-all group">
-                            <h3 class="text-xl font-bold mb-2 group-hover:text-primary-400 transition">
-                                {{ $related->name_th ?? $related->name }}
-                            </h3>
+                        <a href="{{ route('service.detail', [$category->key, $related->key]) }}" class="xp-card p-6 flex flex-col transition group">
+                            <h3 class="text-xl font-bold text-white mb-2 group-hover:text-cyan-200 transition">{{ $related->name_th ?? $related->name }}</h3>
                             @if($related->description_th || $related->description)
-                                <p class="text-gray-400 text-sm mb-4 line-clamp-2">
-                                    {{ $related->description_th ?? $related->description }}
-                                </p>
+                                <p class="text-gray-400 text-sm mb-5 line-clamp-2">{{ $related->description_th ?? $related->description }}</p>
                             @endif
-                            @php
-                                $relDiscount = \App\Support\Quotation\Pricing::saleDiscount($category->key);
-                                $relSalePrice = $related->price * (1 - $relDiscount);
-                            @endphp
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <span class="text-xs text-gray-500 line-through">{{ number_format($related->price, 0) }} ฿</span>
-                                    <span class="text-2xl font-bold text-red-400">
-                                        {{ number_format($relSalePrice, 0) }} ฿
-                                    </span>
-                                    <x-tpix-price :thb="$relSalePrice" />
-                                </div>
-                                <span class="text-primary-400 group-hover:translate-x-2 transition-transform">→</span>
+                            <div class="mt-auto flex items-end justify-between gap-3">
+                                <x-svc.price size="sm" :price="$related->price" :discount="$discount" />
+                                <span class="xp-link text-xl transition-transform group-hover:translate-x-1" aria-hidden="true">→</span>
                             </div>
                         </a>
                     @endforeach
                 </div>
             </div>
-        </div>
+        </section>
     @endif
 
-    <!-- CTA Section -->
-    <div class="py-20 bg-gradient-to-r from-primary-600 to-purple-600">
-        <div class="container mx-auto px-4 text-center">
-            <h2 class="text-4xl font-bold mb-6">พร้อมที่จะเริ่มต้นแล้วหรือยัง?</h2>
-            <p class="text-xl mb-8 text-white/90">ติดต่อเราวันนี้เพื่อรับคำปรึกษาฟรี</p>
-            <div class="flex flex-wrap gap-4 justify-center">
-                <a href="{{ route('quote.index') }}#quotation-form"
-                   class="px-8 py-4 bg-white text-primary-600 hover:bg-gray-100 rounded-xl font-semibold text-lg transition-all transform hover:scale-105 shadow-lg">
-                    สั่งซื้อเลย
-                </a>
-                <a href="{{ route('quote.index') }}"
-                   class="px-8 py-4 border-2 border-white hover:bg-white/10 rounded-xl font-semibold text-lg transition-all">
-                    ดูบริการทั้งหมด
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
+    {{-- ============================= CTA ============================= --}}
+    <x-svc.cta :art="$art" title="พร้อมที่จะ" glow="เริ่มต้นแล้วหรือยัง?"
+               sub="ติดต่อเราวันนี้เพื่อรับคำปรึกษาฟรี" en="Talk to us today — the first consultation is free.">
+        <a href="{{ route('quote.index') }}#quotation-form" class="xp-btn-main inline-flex items-center px-8 py-4 rounded-xl font-extrabold transition">สั่งซื้อเลย</a>
+        <a href="{{ route('services.index') }}" class="xp-btn-ghost inline-flex items-center px-8 py-4 rounded-xl font-bold transition">ดูบริการทั้งหมด</a>
+    </x-svc.cta>
+</x-xp.page>
 
-@push('scripts')
-<script>
-    // Smooth scroll to quotation form
-    document.querySelectorAll('a[href*="#quotation-form"]').forEach(link => {
-        link.addEventListener('click', function(e) {
-            const href = this.getAttribute('href');
-            if (href.includes('#')) {
-                e.preventDefault();
-                window.location.href = href;
-            }
-        });
-    });
-</script>
-@endpush
+<script type="application/ld+json">{!! json_encode($ld, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) !!}</script>
 @endsection

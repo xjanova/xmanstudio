@@ -1,0 +1,37 @@
+{
+  "out_dir": "images/products/postx-agent/v2",
+  "screens": [
+    {
+      "name": "dashboard",
+      "html": "dashboard.html"
+    },
+    {
+      "name": "content",
+      "html": "content.html"
+    },
+    {
+      "name": "schedule",
+      "html": "schedule.html"
+    },
+    {
+      "name": "art-hero",
+      "src": "D:/Code/xmanstudio-campaign-media/product-pages/postx-agent/art-hero.png",
+      "width": 1536,
+      "quality": 82
+    },
+    {
+      "name": "art-2",
+      "src": "D:/Code/xmanstudio-campaign-media/product-pages/postx-agent/art-2.png",
+      "width": 1536,
+      "quality": 82
+    },
+    {
+      "name": "og",
+      "ext": "jpg",
+      "w": 1200,
+      "h": 630,
+      "width": 1200,
+      "html": "../_shared/og.html?art=file%3A%2F%2F%2FD%3A%2FCode%2Fxmanstudio-campaign-media%2Fproduct-pages%2Fpostx-agent%2Fart-hero.png&name=PostXAgent&glow=X&line=AI+%E0%B8%8A%E0%B9%88%E0%B8%A7%E0%B8%A2%E0%B9%82%E0%B8%9B%E0%B8%A3%E0%B9%82%E0%B8%A1%E0%B8%95%E0%B9%81%E0%B8%9A%E0%B8%A3%E0%B8%99%E0%B8%94%E0%B9%8C%7C%E0%B8%AA%E0%B8%A3%E0%B9%89%E0%B8%B2%E0%B8%87%E0%B9%82%E0%B8%9E%E0%B8%AA%E0%B8%95%E0%B9%8C+%E0%B8%95%E0%B8%B1%E0%B9%89%E0%B8%87%E0%B9%80%E0%B8%A7%E0%B8%A5%E0%B8%B2+%E0%B9%82%E0%B8%9E%E0%B8%AA%E0%B8%95%E0%B9%8C%E0%B9%83%E0%B8%AB%E0%B9%89%E0%B9%80%E0%B8%AD%E0%B8%87&sub=Coming+Soon+%C2%B7+Windows+%C2%B7+XMAN+Studio&c1=00f5ff&c2=8b5cf6&c3=ec4899"
+    }
+  ]
+}

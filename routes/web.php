@@ -544,7 +544,9 @@ Route::post('/contact', [ContactController::class, 'send'])
 Route::prefix('quote')->name('quote.')->group(function () {
     Route::get('/', [QuotationController::class, 'index'])->name('index');
     Route::get('/track', [QuotationController::class, 'tracking'])->name('track');
-    Route::get('/track/search', [QuotationController::class, 'trackingSearch'])->name('track.search');
+    // ค้นด้วยเลขเต็มเท่านั้น และจำกัดอัตรา — เลขที่ใบไล่เดาได้ (ดูหมายเหตุ /d/{token} ข้างล่าง)
+    Route::get('/track/search', [QuotationController::class, 'trackingSearch'])
+        ->middleware('throttle:10,1,quote-track-search')->name('track.search');
     Route::get('/services', [QuotationController::class, 'getServices'])->name('services');
 
     Route::post('/preview', [QuotationController::class, 'preview'])->name('preview');
@@ -587,7 +589,7 @@ Route::post('/quotation/submit', [QuotationController::class, 'submitOrder'])->m
 
 // Public project tracking (no login required)
 Route::get('/tracking', [QuotationController::class, 'publicTracking'])->name('tracking');
-Route::get('/tracking/search', [QuotationController::class, 'publicTrackingSearch'])->name('tracking.search');
+Route::get('/tracking/search', [QuotationController::class, 'publicTrackingSearch'])->name('tracking.search')->middleware('throttle:10,1,tracking-search');
 Route::post('/tracking/payment-init', [QuotationController::class, 'projectPaymentInit'])->name('tracking.payment.init')->middleware('throttle:20,1,tracking-payment-init');
 Route::get('/tracking/payment-status/{projectNumber}', [QuotationController::class, 'projectPaymentStatus'])->name('tracking.payment.status')->middleware('throttle:60,1,tracking-payment-status');
 

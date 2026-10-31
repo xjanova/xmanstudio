@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .filters { display: grid; grid-template-columns: 150px 150px 1fr 150px 150px 140px auto; gap: 10px; align-items: center; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 12px 0; }
+    .stats .panel { padding: 12px 16px; }
+    .stats p { font-size: 11.5px; color: #9fb4da; }
+    .ex { display: flex; gap: 8px; margin-left: auto; }
+</style></head>
+<body data-on="reports">
+<div class="main">
+    <div class="hdr">
+        <span class="ico">📊</span>
+        <div><h1>รายงาน / ผลตรวจ</h1><p>รวมเหตุการณ์ บล็อก หลักฐาน และผลตรวจของแอดมิน — กรองแล้วส่งออกได้ทั้งชุด</p></div>
+        <div class="pills"><span class="pill-pro"></span><span class="pill-guard"></span></div>
+    </div>
+
+    <div class="panel" style="margin-top:10px">
+        <div class="filters">
+            <span class="field">01/10/2026</span>
+            <span class="field">28/10/2026</span>
+            <span class="field mut">IP หรือ CIDR · ประเทศ · ASN · คำค้นในหลักฐาน</span>
+            <span class="field dd">ทุกประเภท</span>
+            <span class="field dd">ความรุนแรง: ทั้งหมด</span>
+            <span class="field dd">คะแนน ≥ 60</span>
+            <span class="btn cy">🔎 ค้นหา</span>
+        </div>
+    </div>
+
+    <div class="stats">
+        <div class="panel"><p>เหตุการณ์ในช่วงนี้</p><div class="big cy">12,486</div></div>
+        <div class="panel"><p>IP ที่ถูกบล็อก</p><div class="big red">1,932</div></div>
+        <div class="panel"><p>มีหลักฐานแนบ</p><div class="big amb">1,207</div></div>
+        <div class="panel"><p>ความแม่นยำจากผลตรวจแอดมิน (precision)</p><div class="big grn">98.6%</div></div>
+    </div>
+
+    <div class="panel" style="padding:10px 14px">
+        <h2>ผลค้นหา · เรียงใหม่ก่อน <small>แสดง 200 จาก 12,486 รายการ</small>
+            <span class="ex"><span class="btn gr">⬇ Excel .xlsx ทั้งชุด</span><span class="btn">⬇ CSV ทั้งชุด</span><span class="btn am">⬇ PDF สรุป</span></span>
+        </h2>
+        <table>
+            <thead><tr><th>เวลา (UTC)</th><th>ประเภท</th><th>IP</th><th>ประเทศ / ASN</th><th>พอร์ต</th><th>คะแนน</th><th>หลักฐาน</th><th>ผลตรวจ</th></tr></thead>
+            <tbody>
+                <tr><td class="mut">28/10 06:42:19</td><td class="sev red">สเปรย์รหัส</td><td class="mono">203.0.113.47</td><td><span class="flag" style="background:linear-gradient(#fff 33%,#2a5bd7 33% 66%,#d52b1e 66%)"></span>RU · AS-EXAMPLE</td><td>3389</td><td class="red">94</td><td>ลอง 6 ชื่อผู้ใช้ใน 30 นาที</td><td><span class="tag t-grn">ยืนยันว่าถูก</span></td></tr>
+                <tr><td class="mut">28/10 06:40:02</td><td class="sev red">ยิงหาช่องโหว่เว็บ</td><td class="mono">198.51.100.12</td><td><span class="flag" style="background:#de2910"></span>CN · AS-EXAMPLE</td><td>443</td><td class="red">91</td><td>GET /.env · GET /.git/config</td><td><span class="tag t-grn">ยืนยันว่าถูก</span></td></tr>
+                <tr><td class="mut">28/10 06:37:55</td><td class="sev amb">เดารหัสฐานข้อมูล</td><td class="mono">192.0.2.199</td><td><span class="flag" style="background:linear-gradient(#ae1c28 33%,#fff 33% 66%,#21468b 66%)"></span>NL · AS-EXAMPLE</td><td>1433</td><td class="amb">78</td><td>MSSQL ผู้ใช้ "sa" ผิด 5 ครั้ง</td><td><span class="tag t-cy">รอตรวจ</span></td></tr>
+                <tr><td class="mut">28/10 06:31:10</td><td class="sev red">Honeypot</td><td class="mono">203.0.113.8</td><td><span class="flag" style="background:linear-gradient(#b22234 50%,#fff 50%)"></span>US · AS-EXAMPLE</td><td>6379</td><td class="red">99</td><td>แตะพอร์ตล่อ Redis · พิมพ์ CONFIG SET dir</td><td><span class="tag t-grn">ยืนยันว่าถูก</span></td></tr>
+                <tr><td class="mut">28/10 06:22:47</td><td class="sev amb">สแกนแบบซ่อนตัว</td><td class="mono">198.51.100.230</td><td><span class="flag" style="background:linear-gradient(#ed2939 50%,#fff 50%)"></span>SG · AS-EXAMPLE</td><td>—</td><td class="amb">72</td><td>แพ็กเก็ต XMAS ไปหลายพอร์ต</td><td><span class="tag t-cy">รอตรวจ</span></td></tr>
+                <tr><td class="mut">28/10 06:15:03</td><td class="sev red">เดารหัส RDP</td><td class="mono">192.0.2.31</td><td><span class="flag" style="background:linear-gradient(#000 33%,#dd0000 33% 66%,#ffce00 66%)"></span>DE · AS-EXAMPLE</td><td>3389</td><td class="red">88</td><td>ผิด 5 ครั้งใน 10 นาที (event 4625)</td><td><span class="tag t-grn">ยืนยันว่าถูก</span></td></tr>
+                <tr><td class="mut">28/10 05:58:41</td><td class="sev amb">ทราฟฟิกท่วม</td><td class="mono">203.0.113.150</td><td><span class="flag" style="background:linear-gradient(90deg,#009246 33%,#fff 33% 66%,#ce2b37 66%)"></span>IT · AS-EXAMPLE</td><td>80</td><td class="amb">70</td><td>HTTP 640 คำขอใน 60 วินาที</td><td><span class="tag t-amb">ผิดพลาด → ปลดแล้ว</span></td></tr>
+                <tr><td class="mut">28/10 05:44:26</td><td class="sev red">IP ในรายชื่ออันตราย</td><td class="mono">198.51.100.77</td><td><span class="flag" style="background:linear-gradient(#0039a6 50%,#d52b1e 50%)"></span>RU · AS-EXAMPLE</td><td>22</td><td class="red">96</td><td>Spamhaus DROP</td><td><span class="tag t-grn">ยืนยันว่าถูก</span></td></tr>
+                <tr><td class="mut">28/10 05:30:12</td><td class="sev red">เดารหัส SSH</td><td class="mono">192.0.2.88</td><td><span class="flag" style="background:linear-gradient(90deg,#002395 33%,#fff 33% 66%,#ed2939 66%)"></span>FR · AS-EXAMPLE</td><td>22</td><td class="red">86</td><td>sshd: Failed password · VM ผ่าน SSH</td><td><span class="tag t-cy">รอตรวจ</span></td></tr>
+                <tr><td class="mut">28/10 05:12:58</td><td class="sev red">เครื่องถูกเจาะ?</td><td class="mono">—</td><td class="mut">เครื่องแม่ (Windows)</td><td>—</td><td class="red">97</td><td>พบงานตั้งเวลาใหม่ที่ไม่รู้จัก</td><td><span class="tag t-grn">ยืนยันว่าถูก</span></td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<script src="chrome.js"></script>
+</body></html>

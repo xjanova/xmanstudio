@@ -27,7 +27,10 @@ class ProductCustomPagesTest extends TestCase
 
     public function test_products_whose_custom_page_key_never_matched_keep_the_generic_page(): void
     {
-        foreach (['xcluade-agent', 'livexshop-pro', 'postx-agent'] as $slug) {
+        // postx-agent has had its own reviewed page since 2026-10 (products.postxagent — PostXAgentProductPageTest)
+        // livexshop-pro too (products.livexshoppro — LiveXShopProProductPageTest)
+        // and xcluade-agent (products.xcluade-agent — XcluadeAgentProductPageTest), so a made-up slug stands in
+        foreach (['some-other-tool'] as $slug) {
             $this->product($slug, ['is_coming_soon' => true, 'price' => 3490]);
 
             $this->get("/products/{$slug}")->assertOk()->assertViewIs('products.show');
@@ -36,7 +39,8 @@ class ProductCustomPagesTest extends TestCase
 
     public function test_the_products_that_have_a_custom_page_still_get_it(): void
     {
-        foreach (['winx-tools' => 'products.winxtools', 'cluadex-ai-coding-assistant' => 'products.xcluadeagent'] as $slug => $view) {
+        // XcluadeAgent has its own page — never the CluadeX one (products.xcluadeagent) with its ฿199-a-year buttons
+        foreach (['winx-tools' => 'products.winxtools', 'cluadex-ai-coding-assistant' => 'products.xcluadeagent', 'xcluade-agent' => 'products.xcluade-agent'] as $slug => $view) {
             $this->product($slug);
 
             $this->get("/products/{$slug}")->assertOk()->assertViewIs($view);

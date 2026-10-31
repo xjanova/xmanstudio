@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 12px; }
+    .card { padding: 16px 18px; }
+    .card .top { display: flex; align-items: center; gap: 12px; }
+    .score { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: Kanit; font-size: 22px;
+        background: conic-gradient(var(--c) calc(var(--v) * 1%), rgba(255, 255, 255, .08) 0); position: relative; }
+    .score::before { content: ""; position: absolute; inset: 6px; border-radius: 50%; background: #0b1838; }
+    .score span { position: relative; }
+    ul.ev { list-style: none; margin: 12px 0; }
+    ul.ev li { padding: 5px 0 5px 18px; position: relative; font-size: 12.5px; color: #cfe0ff; }
+    ul.ev li::before { content: "›"; position: absolute; left: 4px; color: #6fe0ff; }
+    .acts { display: flex; gap: 8px; }
+    .note { margin-top: 12px; display: flex; gap: 14px; align-items: center; }
+</style></head>
+<body data-on="suspects">
+<div class="main">
+    <div class="hdr">
+        <span class="ico">🕵️</span>
+        <div><h1>ผู้ต้องสงสัย</h1><p>ผลวิเคราะห์รวมจากทุกเครื่องที่ดูแล — ระบบรวบหลักฐานให้ เจ้าของเครื่องเป็นคนตัดสิน</p></div>
+        <div class="pills"><span class="pill-pro"></span><span class="pill-guard"></span></div>
+    </div>
+
+    <div class="panel note">
+        <span class="tag t-red">รอตัดสิน 3</span><span class="tag t-grn">บล็อกแล้ววันนี้ 41</span><span class="tag t-cy">ไว้ใจ 2</span>
+        <span class="mut" style="margin-left:auto">วิเคราะห์ล่าสุด 06:45 · ดูย้อนหลัง 7 วัน</span>
+    </div>
+
+    <div class="grid">
+        <div class="panel card">
+            <div class="top">
+                <span class="score" style="--v:92;--c:#ff6b7d"><span class="red">92</span></span>
+                <div><div class="mono" style="font-size:17px">203.0.113.47</div><div class="mut">Russia · AS-EXAMPLE · เห็นครั้งแรก 3 วันก่อน</div></div>
+                <span class="tag t-red" style="margin-left:auto">น่าจะเป็นผู้โจมตี</span>
+            </div>
+            <ul class="ev">
+                <li>ลองรหัสกับ 6 ชื่อผู้ใช้ใน 30 นาที บนเครื่องแม่และ VM 2 เครื่อง</li>
+                <li>ยิงช้า ๆ ต่ำกว่าเกณฑ์บล็อก ตลอด 19 ชั่วโมง</li>
+                <li>แตะพอร์ตล่อ 23 (Telnet) 2 ครั้ง</li>
+            </ul>
+            <div class="acts"><span class="btn rd">⛔ บล็อกถาวร</span><span class="btn">บล็อก 7 วัน</span><span class="btn gr">✓ ไว้ใจ</span><span class="btn">ดูหลักฐาน</span></div>
+        </div>
+        <div class="panel card">
+            <div class="top">
+                <span class="score" style="--v:81;--c:#ff6b7d"><span class="red">81</span></span>
+                <div><div class="mono" style="font-size:17px">198.51.100.0/24</div><div class="mut">10 IP ในเครือข่ายเดียวกัน · Netherlands</div></div>
+                <span class="tag t-red" style="margin-left:auto">รุมเดาบัญชีเดียว</span>
+            </div>
+            <ul class="ev">
+                <li>10 IP ผลัดกันเดารหัสบัญชี Administrator</li>
+                <li>แต่ละ IP ผิดไม่ถึงเกณฑ์ แต่รวมกัน 74 ครั้งใน 1 ชั่วโมง</li>
+                <li>ไม่เคยล็อกอินสำเร็จจากเครือข่ายนี้</li>
+            </ul>
+            <div class="acts"><span class="btn rd">⛔ บล็อกทั้งช่วง</span><span class="btn">บล็อก 7 วัน</span><span class="btn gr">✓ ไว้ใจ</span><span class="btn">ดูหลักฐาน</span></div>
+        </div>
+        <div class="panel card">
+            <div class="top">
+                <span class="score" style="--v:64;--c:#ffc35a"><span class="amb">64</span></span>
+                <div><div class="mono" style="font-size:17px">192.0.2.199</div><div class="mut">Thailand · ประเทศผ่อนปรน (เกณฑ์ ×4)</div></div>
+                <span class="tag t-amb" style="margin-left:auto">ควรจับตา</span>
+            </div>
+            <ul class="ev">
+                <li>เข้า RDP ผิด 9 ครั้งใน 2 วัน แล้วล็อกอินสำเร็จ 1 ครั้ง</li>
+                <li>IP นี้ไม่เคยใช้เข้าเครื่องนี้มาก่อน</li>
+            </ul>
+            <div class="acts"><span class="btn rd">⛔ บล็อก</span><span class="btn gr">✓ ไว้ใจ</span><span class="btn">ปล่อยไว้</span></div>
+        </div>
+        <div class="panel card">
+            <div class="top">
+                <span class="score" style="--v:97;--c:#ff6b7d"><span class="red">97</span></span>
+                <div><div style="font-family:Kanit;font-size:17px">เครื่องแม่ (Windows)</div><div class="mut">ความผิดปกติในเครื่อง</div></div>
+                <span class="tag t-red" style="margin-left:auto">อาจถูกเจาะ</span>
+            </div>
+            <ul class="ev">
+                <li>มีงานตั้งเวลาใหม่รันไฟล์จาก C:\Users\Public\</li>
+                <li>Windows Defender ถูกปิดเมื่อ 05:10</li>
+                <li>โปรเซสนี้ติดต่อออกไปพอร์ต 3333 (ลักษณะตัวขุดเหรียญ)</li>
+            </ul>
+            <div class="acts"><span class="btn rd">🛠 จัดการ (ฆ่า + กักกัน)</span><span class="btn">ดูหลักฐาน</span><span class="btn">ไม่ใช่ภัย</span></div>
+        </div>
+    </div>
+</div>
+<script src="chrome.js"></script>
+</body></html>

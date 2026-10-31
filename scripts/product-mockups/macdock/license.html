@@ -1,0 +1,48 @@
+<!doctype html>
+<!-- "ไลเซ่น & อัปเดต" (LicenseWindow.cs) after the free licence came in: its colours, layout and Thai strings.
+     The key and machine name are made up (FREE-… keys show as the first 9 + … + last 4). -->
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .lw { left: 485px; top: 150px; width: 470px; }
+    .lw .in { background: linear-gradient(135deg, #0d111e, #1c1534); padding: 20px 26px 22px; font-family: "Segoe UI", NotoThai, sans-serif; }
+    .logo { display: block; height: 48px; margin: 0 auto; filter: drop-shadow(0 0 6px rgba(94, 242, 255, .6)); }
+    .h { text-align: center; color: #e8ecf5; font-size: 20px; font-weight: 600; margin: 12px 0 4px; }
+    .v { text-align: center; color: #a8bcd4; font-size: 12.5px; margin-bottom: 16px; }
+    .card { background: rgba(0, 0, 0, .25); border: 1px solid rgba(94, 242, 255, .31); border-radius: 10px; padding: 12px 14px; }
+    .st { color: #6ef0a0; font-size: 16px; font-weight: 600; }
+    .dt { color: #a8bcd4; font-size: 13px; margin-top: 4px; line-height: 1.45; }
+    .btn { height: 32px; margin-top: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #e8ecf5;
+        background: rgba(255, 255, 255, .19); border: 1px solid rgba(94, 242, 255, .38); }
+    .first { margin-top: 16px; }
+    .cb { display: flex; align-items: center; gap: 8px; margin-top: 18px; color: #e8ecf5; font-size: 13px; }
+    .cb i { width: 14px; height: 14px; border: 1px solid #5ef2ff; background: #5ef2ff; color: #000; font-style: normal; font-size: 11px; display: flex; align-items: center; justify-content: center; }
+    .hint { color: #a8bcd4; font-size: 12px; margin-top: 16px; line-height: 1.5; }
+</style></head>
+<body>
+<script src="dock.js"></script>
+<script>
+MacDock.dock({ edge: 'top', items: [
+    { g: 'browser', name: 'Web Browser', run: true },
+    '|',
+    { g: 'folder', name: 'Documents' }, { g: 'download', name: 'Downloads' },
+    { hdr: 'งานเอกสาร' }, { g: 'notes', name: 'Notes' }, { g: 'sheet', name: 'Spreadsheet' },
+    { hdr: 'เครื่องมือ' }, { g: 'calc', name: 'Calculator' }, { g: 'gear', name: 'Settings' },
+] });
+</script>
+<div class="win lw">
+    <div class="tb"><span>ไลเซ่น &amp; อัปเดต — MacDock</span><b>✕</b></div>
+    <div class="in">
+        <img class="logo" src="assets/xman-logo.png" alt="">
+        <p class="h">ไลเซ่นฟรี &amp; อัปเดตอัตโนมัติ</p>
+        <p class="v">MacDock 1.0.0 &nbsp;•&nbsp; XMAN Studio</p>
+        <div class="card">
+            <p class="st">✓ ได้รับไลเซ่นฟรีแล้ว — อัปเดตอัตโนมัติเปิดใช้งานได้</p>
+            <p class="dt">คีย์: FREE-EXAM…PLE0<br>ผูกกับเครื่อง: DESKTOP-EXAMPLE</p>
+        </div>
+        <div class="btn first">ดูไลเซ่นของฉันบน xman4289.com</div>
+        <div class="cb"><i>✓</i>อัปเดตอัตโนมัติ (ตรวจทุก 6 ชั่วโมง ถามก่อนติดตั้ง)</div>
+        <div class="btn" style="margin-top: 10px">ตรวจหาอัปเดตตอนนี้</div>
+        <p class="hint">ไลเซ่นฟรีผูกกับบัญชี xman studio ของคุณและเครื่องนี้ ใช้เปิดการอัปเดตอัตโนมัติ ไฟล์อัปเดตโหลดจาก xman4289.com เท่านั้น และถูกตรวจ sha256 ก่อนติดตั้งทุกครั้ง</p>
+    </div>
+</div>
+</body></html>

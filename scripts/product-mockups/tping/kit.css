@@ -1,0 +1,69 @@
+/* Tping mock-ups — drawn to the app's own Compose code (xjanova/tping, app/src/main/java/com/xjanova/tping):
+   the dark Material 3 scheme of ui/theme/Theme.kt (background #121212, primary #6750A4, primaryContainer #4F378B),
+   HomeScreen's cards and gradients, and the floating overlay of overlay/FloatingOverlayContent.kt
+   (#181818 panel, REC #EF4444, PLAY #22C55E, PAUSE #F59E0B, TAG #3B82F6, GAME #E040FB, rapid/turbo #FF6D00).
+   Every Thai string is the app's own; the data (names, e-mails, apps) is made up.
+   A phone screen is 390×845 drawn at 2× (780×1690) so it stays sharp on retina screens. */
+@font-face { font-family: Thai; src: url(../_fonts/NotoSansThai-500.ttf); font-weight: 400 500; }
+@font-face { font-family: Thai; src: url(../_fonts/NotoSansThai-600.ttf); font-weight: 600; }
+@font-face { font-family: Thai; src: url(../_fonts/NotoSansThai-700.ttf); font-weight: 700; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 780px; height: 1690px; overflow: hidden; background: #121212; }
+.phone { zoom: 2; width: 390px; height: 845px; position: relative; overflow: hidden; font-family: Thai, sans-serif; font-size: 13px; color: #e6e1e5; background: #121212; }
+svg { display: block; }
+
+/* Android status bar + gesture bar */
+.sb { position: relative; z-index: 9; height: 26px; display: flex; align-items: center; padding: 0 16px; font-size: 12px; font-weight: 600; color: #e6e1e5; }
+.sb.dark { color: #1c1b1f; }
+.sb .r { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+.sb .r i { display: inline-block; width: 15px; height: 9px; border-radius: 2px; border: 1.5px solid currentColor; position: relative; }
+.sb .r i::after { content: ""; position: absolute; left: 1px; top: 1px; bottom: 1px; width: 8px; background: currentColor; border-radius: 1px; }
+.sb .r b { width: 12px; height: 10px; background: linear-gradient(45deg, transparent 50%, currentColor 50%); }
+.gb { position: absolute; left: 50%; bottom: 7px; width: 110px; height: 4px; margin-left: -55px; border-radius: 4px; background: rgba(230, 225, 229, .55); z-index: 9; }
+.gb.dark { background: rgba(28, 27, 31, .45); }
+
+/* Material top app bar (primaryContainer) */
+.appbar { display: flex; align-items: center; gap: 12px; height: 62px; padding: 0 16px; background: #4f378b; }
+.appbar h1 { font-size: 20px; font-weight: 700; line-height: 1.15; color: #fff; }
+.appbar p { font-size: 11px; color: rgba(234, 221, 255, .6); }
+.appbar .v { margin-left: auto; font-size: 11px; color: rgba(234, 221, 255, .5); }
+.appbar .back { width: 24px; height: 24px; color: #fff; }
+
+.list { padding: 12px 16px 0; display: flex; flex-direction: column; gap: 12px; }
+.card { border-radius: 16px; background: #211f26; box-shadow: 0 1px 3px rgba(0, 0, 0, .5); padding: 14px 16px; }
+.r12 { border-radius: 12px; }
+.row { display: flex; align-items: center; gap: 10px; }
+.mut { color: rgba(230, 225, 229, .6); }
+.ico { width: 22px; height: 22px; flex: none; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 36px; padding: 0 16px; border-radius: 18px; font-weight: 600; font-size: 13px; color: #fff; background: #6750a4; }
+.chip { display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border-radius: 8px; font-size: 12px; border: 1px solid #49454f; color: #cac4d0; }
+
+/* the floating overlay (dark panel over another app) */
+.ov { position: absolute; z-index: 6; width: 240px; border-radius: 16px; background: rgba(24, 24, 24, .96); box-shadow: 0 12px 34px rgba(0, 0, 0, .55); overflow: hidden; }
+.ov .hd { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; color: #fff; font-size: 13px; font-weight: 700; }
+.ov .hd.rec { background: linear-gradient(90deg, #ef4444, rgba(239, 68, 68, .7)); }
+.ov .hd.game { background: linear-gradient(90deg, #e040fb, rgba(224, 64, 251, .7)); }
+.ov .hd.play { background: linear-gradient(90deg, #22c55e, rgba(34, 197, 94, .7)); }
+.ov .desc { padding: 6px 14px; font-size: 11px; color: #bbb; }
+.ov .btns { display: flex; justify-content: space-evenly; padding: 4px 8px; }
+.ob { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 12px; border-radius: 10px; font-size: 10px; color: #bbb; min-width: 64px; }
+.ob svg { width: 22px; height: 22px; }
+.ov .foot { text-align: center; font-size: 9px; color: #555; padding: 4px 0 6px; }
+.mini { position: absolute; z-index: 6; width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; font-weight: 700; box-shadow: 0 8px 20px rgba(0, 0, 0, .5); }
+
+/* a dialog the overlay opens (#222) */
+.dlg { position: absolute; z-index: 7; border-radius: 16px; background: rgba(34, 34, 34, .97); box-shadow: 0 16px 44px rgba(0, 0, 0, .6); padding: 16px; color: #ccc; }
+.dlg h2 { display: flex; align-items: center; gap: 8px; color: #fff; font-size: 15px; font-weight: 700; }
+.dlg .sub { color: #999; font-size: 11px; margin-top: 4px; }
+.dim { position: absolute; inset: 0; z-index: 5; background: rgba(0, 0, 0, .45); }
+
+/* a made-up app underneath the overlay (light) */
+.host { position: absolute; inset: 0; background: #f6f7fb; color: #1c1b1f; }
+.host .bar { height: 56px; display: flex; align-items: center; gap: 12px; padding: 0 16px; background: #fff; border-bottom: 1px solid #e6e8ef; font-size: 17px; font-weight: 700; }
+.host .logo { width: 30px; height: 30px; border-radius: 9px; background: linear-gradient(135deg, #0ea5e9, #14b8a6); }
+.host .form { padding: 18px 18px 0; display: flex; flex-direction: column; gap: 14px; }
+.host label { font-size: 12px; color: #5f6170; display: block; margin-bottom: 5px; }
+.host .in { height: 46px; border-radius: 10px; border: 1px solid #d5d8e2; background: #fff; display: flex; align-items: center; padding: 0 12px; font-size: 14px; color: #1c1b1f; }
+.host .in.ph { color: #a0a3b1; }
+.host .in.focus { border: 2px solid #3b82f6; box-shadow: 0 0 0 4px rgba(59, 130, 246, .15); }
+.host .cta { height: 48px; border-radius: 12px; background: #0ea5e9; color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-top: 6px; }

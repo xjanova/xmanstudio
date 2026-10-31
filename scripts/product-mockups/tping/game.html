@@ -1,0 +1,72 @@
+<!doctype html>
+<!-- Game mode: the crosshair (CrosshairOverlay — magenta lines, ring, the dark coordinate block with ยกเลิก / ตกลง)
+     and the game panel (ExpandedOverlay "game_recording": กด กดค้าง กรอก · กดรัว รอ 1s รอ 3s · Captcha ย้อน หน้าหลัก · หยุด).
+     The game underneath is a made-up scene drawn in CSS. -->
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .scene { position: absolute; inset: 0; overflow: hidden;
+        background: radial-gradient(ellipse 70% 40% at 50% 30%, #3b2a7a 0%, transparent 70%), radial-gradient(ellipse 60% 40% at 30% 85%, #0f5f6a 0%, transparent 70%), linear-gradient(180deg, #1b1446 0%, #0d1830 60%, #08241f 100%); }
+    .hud { position: absolute; left: 14px; right: 14px; top: 36px; display: flex; justify-content: space-between; font: 700 13px Thai, sans-serif; color: #fff; }
+    .hud span { padding: 5px 12px; border-radius: 12px; background: rgba(0, 0, 0, .35); border: 1px solid rgba(255, 255, 255, .2); }
+    .gem { position: absolute; width: 54px; height: 54px; transform: rotate(45deg); border-radius: 10px; }
+    .tower { position: absolute; left: 140px; top: 170px; width: 110px; height: 170px; border-radius: 20px 20px 8px 8px; background: linear-gradient(180deg, #8b7bff, #4b3bb0); box-shadow: 0 0 40px rgba(139, 123, 255, .6); }
+    .tower::after { content: ""; position: absolute; left: 30px; top: -36px; width: 50px; height: 50px; border-radius: 50%; background: radial-gradient(circle, #fff7b0, #ffcf3a 60%, #ff8a1f); box-shadow: 0 0 30px #ffcf3a; }
+    .pad { position: absolute; right: 26px; bottom: 120px; width: 96px; height: 96px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #ff8a8a, #e23a5a); border: 4px solid rgba(255, 255, 255, .5); color: #fff; font: 700 15px Thai, sans-serif; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 30px rgba(226, 58, 90, .6); }
+    .pad2 { right: 132px; bottom: 70px; width: 70px; height: 70px; background: radial-gradient(circle at 40% 35%, #8af0ff, #1f9fd6); box-shadow: 0 0 24px rgba(31, 159, 214, .6); font-size: 12px; }
+    .stick { position: absolute; left: 30px; bottom: 80px; width: 120px; height: 120px; border-radius: 50%; border: 3px solid rgba(255, 255, 255, .3); background: rgba(255, 255, 255, .06); }
+    .stick::after { content: ""; position: absolute; left: 36px; top: 36px; width: 48px; height: 48px; border-radius: 50%; background: rgba(255, 255, 255, .35); }
+    .h { position: absolute; z-index: 6; left: 0; right: 0; height: 1px; background: rgba(224, 64, 251, .6); }
+    .v { position: absolute; z-index: 6; top: 0; bottom: 0; width: 1px; background: rgba(224, 64, 251, .6); }
+    .ring { position: absolute; z-index: 6; width: 40px; height: 40px; border-radius: 50%; border: 2px solid #e040fb; background: rgba(224, 64, 251, .15); }
+    .dot { position: absolute; z-index: 6; width: 8px; height: 8px; border-radius: 50%; background: #e040fb; }
+    .coord { position: absolute; z-index: 7; border-radius: 14px; background: rgba(17, 17, 17, .9); padding: 10px; box-shadow: 0 8px 22px rgba(0, 0, 0, .5); }
+    .coord b { display: block; color: #ffd54f; font-size: 11px; font-weight: 700; }
+    .coord p { display: flex; align-items: center; gap: 4px; margin-top: 4px; color: #e040fb; font: 600 13px Consolas, monospace; }
+    .coord .bt { display: flex; gap: 10px; margin-top: 8px; font-size: 13px; color: #fff; }
+    .coord .bt span { padding: 7px 16px; border-radius: 8px; background: #444; }
+    .coord .bt span.ok { background: #e040fb; font-weight: 700; }
+    .ov .btns { justify-content: space-between; padding: 3px 8px; }
+    .ob { min-width: 0; flex: 1; margin: 0 2px; padding: 5px 4px; }
+</style></head>
+<body><div class="phone">
+    <div class="scene">
+        <div class="sb">09:41<span class="r"><b></b><i></i></span></div>
+        <div class="hud"><span>ด่าน 12</span><span>⭐ 3,420</span></div>
+        <div class="gem" style="left:40px;top:120px;background:linear-gradient(135deg,#5eead4,#14b8a6)"></div>
+        <div class="gem" style="left:300px;top:150px;background:linear-gradient(135deg,#f9a8d4,#db2777);width:40px;height:40px"></div>
+        <div class="tower"></div>
+        <div class="stick"></div>
+        <div class="pad">โจมตี</div>
+        <div class="pad pad2">สกิล</div>
+    </div>
+
+    <!-- crosshair at (316, 676) in the 390×845 frame -->
+    <div class="h" style="top:676px"></div><div class="v" style="left:316px"></div>
+    <div class="ring" style="left:296px;top:656px"></div><div class="dot" style="left:312px;top:672px"></div>
+    <div class="coord" style="left:150px;top:592px"><b>กดรัว</b><p><i data-i="drag" data-s="14" style="color:#666"></i>948, 2028</p>
+        <div class="bt"><span>ยกเลิก</span><span class="ok">ตกลง</span></div></div>
+
+    <div class="ov" style="left:12px;top:276px;width:264px">
+        <div class="hd game"><span style="display:flex;align-items:center;gap:4px"><i data-i="drag" data-s="16" style="color:rgba(255,255,255,.7)"></i>● GAME [6]</span><i data-i="close" data-s="18" style="color:#fff"></i></div>
+        <div class="desc">CLICK ที่ (480, 1050) — 6 ขั้นตอน</div>
+        <div class="btns">
+            <span class="ob" style="background:rgba(224,64,251,.15)"><i data-i="touch" style="color:#e040fb"></i>กด</span>
+            <span class="ob" style="background:rgba(255,112,67,.15)"><i data-i="hand" style="color:#ff7043"></i>กดค้าง</span>
+            <span class="ob" style="background:rgba(59,130,246,.15)"><i data-i="edit" style="color:#3b82f6"></i>กรอก</span>
+        </div>
+        <div class="btns">
+            <span class="ob" style="background:rgba(255,109,0,.25)"><i data-i="flash" style="color:#ff6d00"></i>กดรัว</span>
+            <span class="ob" style="background:rgba(245,158,11,.15)"><i data-i="timer" style="color:#f59e0b"></i>รอ 1s</span>
+            <span class="ob" style="background:rgba(245,158,11,.15)"><i data-i="timer" style="color:#f59e0b"></i>รอ 3s</span>
+        </div>
+        <div class="btns">
+            <span class="ob" style="background:rgba(0,188,212,.15)"><i data-i="puzzle" style="color:#00bcd4"></i>Captcha</span>
+            <span class="ob" style="background:rgba(120,144,156,.15)"><i data-i="back" style="color:#78909c"></i>ย้อน</span>
+            <span class="ob" style="background:rgba(120,144,156,.15)"><i data-i="home" style="color:#78909c"></i>หน้าหลัก</span>
+        </div>
+        <div class="btns"><span class="ob" style="background:rgba(239,68,68,.15)"><i data-i="stop" style="color:#ef4444"></i>หยุด</span></div>
+        <div class="foot">Xman Studio</div>
+    </div>
+    <div class="gb"></div>
+</div>
+<script src="icons.js"></script></body></html>

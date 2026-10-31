@@ -1,0 +1,86 @@
+<!doctype html>
+<!-- ไลฟ์สด — Views/Live/LivePage.xaml: the 350px control panel (status, platform, session name, live URL, start/stop,
+     live stats, mobile app card) and the Live Chat list with its ทั้งหมด / CF Only filter.
+     Chat capture is not built yet: the chat lines, names and URL here are made up to show the design. -->
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .grid { display: grid; grid-template-columns: 350px 1fr; gap: 16px; height: 100%; }
+    .ctl { display: flex; flex-direction: column; gap: 10px; }
+    .ctl .card { padding: 13px 16px; }
+    .ctl .lbl { margin: 9px 0 5px; }
+    .ctl .input { padding: 7px 12px; }
+    .status { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; background: rgba(74, 222, 128, .1); border: 1px solid rgba(74, 222, 128, .3); }
+    .status .dot { width: 12px; height: 12px; border-radius: 6px; background: #4ADE80; box-shadow: 0 0 10px #4ADE80; }
+    .plat { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .plat span { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; border-radius: 10px; border: 1px solid #2D2D50; background: #0D0D15; font-size: 12px; color: #A0A0B8; }
+    .plat span.on { border-color: #6C63FF; background: rgba(108, 99, 255, .18); color: #fff; }
+    .plat svg { width: 22px; height: 22px; }
+    .st { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+    .st div { background: #0D0D15; border-radius: 8px; padding: 6px 10px; }
+    .st b { display: block; font-size: 18px; line-height: 1.2; }
+    .st span { font-size: 11px; color: #A0A0B8; }
+    .chat { display: flex; flex-direction: column; height: 100%; }
+    .tabs { margin-left: auto; display: flex; gap: 6px; }
+    .tabs span { padding: 5px 12px; border-radius: 8px; font-size: 12px; color: #A0A0B8; border: 1px solid #2D2D50; }
+    .tabs span.on { background: #6C63FF; color: #fff; border-color: #6C63FF; }
+    .msg { display: flex; gap: 12px; padding: 9px 12px; border-radius: 10px; margin-top: 6px; background: rgba(13, 13, 21, .5); }
+    .msg.cf { background: rgba(108, 99, 255, .14); border: 1px solid rgba(108, 99, 255, .45); }
+    .msg.dup { opacity: .55; }
+    .av { width: 34px; height: 34px; border-radius: 17px; flex: none; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+    .msg .who { font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+    .msg .t { font-size: 14px; color: #E6E6F0; margin-top: 1px; }
+    .msg .tm { margin-left: auto; font-size: 11px; color: #6B6B80; font-weight: 400; }
+    .src { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; }
+    .fb { background: rgba(96, 165, 250, .2); color: #60A5FA; }
+    .tt { background: rgba(255, 107, 157, .2); color: #FF8EB5; }
+</style></head>
+<body data-on="live" data-title="ไลฟ์สด" data-sub="ควบคุมการ Live และดึงแชท" data-live="1" data-stats="86|12|฿48,250">
+<div id="page">
+<div class="grid">
+    <div class="ctl">
+        <div class="card">
+            <div class="h">ควบคุมการ Live</div>
+            <div class="status" style="margin-top:12px"><span class="dot"></span><div><div style="font-weight:700">กำลัง Live อยู่</div><div class="sub" style="font-size:12px">01:12:45</div></div></div>
+            <div class="lbl">เลือก Platform</div>
+            <div class="plat"><span class="on">{ic:fb}Facebook</span><span>{ic:music}TikTok</span><span>{ic:chat}LINE</span></div>
+            <div class="lbl">ชื่อ Live Session</div>
+            <div class="input" style="color:#fff">ไลฟ์เปิดกล่องสินค้าใหม่ รอบค่ำ</div>
+            <div class="lbl">URL ถ่ายทอดสด</div>
+            <div class="input">https://live.example.com/shop/demo-1234</div>
+            <div class="btn red" style="width:100%;justify-content:center;margin-top:14px">{ic:stop}หยุดดึงแชท</div>
+        </div>
+        <div class="card">
+            <div class="h">สถิติ Live</div>
+            <div class="st">
+                <div><b>1,284</b><span>แชททั้งหมด</span></div>
+                <div><b class="pri">97</b><span>CF ทั้งหมด</span></div>
+                <div><b class="ok">฿31,460</b><span>ยอดขาย</span></div>
+                <div><b>58</b><span>ออเดอร์</span></div>
+                <div><b>1.3</b><span>CF/นาที</span></div>
+                <div><b class="wn">6</b><span>Duplicate</span></div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="row">{ic:phone pri}<div><div style="font-weight:700">Mobile App</div><div class="sub ok" style="font-size:12px">เชื่อมต่อแล้ว</div></div><span class="btn gl" style="margin-left:auto;font-size:12px;padding:6px 10px">{ic:qr}แสดง QR Code เชื่อมต่อ</span></div>
+        </div>
+    </div>
+
+    <div class="card chat">
+        <div class="row"><div><div class="h">Live Chat</div><div class="sub" style="font-size:12px">1,284 ข้อความ</div></div><div class="tabs"><span class="on">ทั้งหมด</span><span>CF Only</span></div></div>
+        <div style="margin-top:8px">
+            <div class="msg cf"><span class="av" style="background:#FF6B9D">ม</span><div style="flex:1"><div class="who">คุณมะลิ ใจดี <span class="src fb">FB</span><span class="pill p-pri">CF</span><span class="tm">20:41:08</span></div><div class="t">cf1 2ชิ้น ค่ะ</div></div></div>
+            <div class="msg"><span class="av" style="background:#60A5FA">P</span><div style="flex:1"><div class="who">Ploy Sample <span class="src fb">FB</span><span class="tm">20:41:05</span></div><div class="t">ตัวนี้มีไซซ์ L ไหมคะ</div></div></div>
+            <div class="msg cf"><span class="av" style="background:#4ADE80;color:#0D0D15">N</span><div style="flex:1"><div class="who">Nok Example <span class="src tt">TikTok</span><span class="pill p-pri">CF</span><span class="tm">20:40:59</span></div><div class="t">CF 3</div></div></div>
+            <div class="msg"><span class="av" style="background:#FBBF24;color:#0D0D15">ส</span><div style="flex:1"><div class="who">คุณส้มโอ ตัวอย่าง <span class="src fb">FB</span><span class="tm">20:40:51</span></div><div class="t">สวยมากกก ขอดูด้านหลังหน่อยค่ะ</div></div></div>
+            <div class="msg cf"><span class="av" style="background:#8B83FF">ข</span><div style="flex:1"><div class="who">คุณข้าวหอม สมมุติ <span class="src fb">FB</span><span class="pill p-pri">CF</span><span class="tm">20:40:44</span></div><div class="t">ซีเอฟ2 ค่ะแม่ค้า</div></div></div>
+            <div class="msg cf dup"><span class="av" style="background:#4ADE80;color:#0D0D15">N</span><div style="flex:1"><div class="who">Nok Example <span class="src tt">TikTok</span><span class="pill p-warn">ซ้ำ</span><span class="tm">20:40:41</span></div><div class="t">CF 3</div></div></div>
+            <div class="msg cf"><span class="av" style="background:#FF8EB5">M</span><div style="flex:1"><div class="who">Mint Demo <span class="src tt">TikTok</span><span class="pill p-pri">CF</span><span class="tm">20:40:37</span></div><div class="t">cf1 cf4 อย่างละชิ้น</div></div></div>
+            <div class="msg"><span class="av" style="background:#60A5FA">ฝ</span><div style="flex:1"><div class="who">คุณฝน ทดสอบ <span class="src fb">FB</span><span class="tm">20:40:30</span></div><div class="t">โอนแล้วนะคะ ส่งสลิปในแชทแล้ว</div></div></div>
+            <div class="msg cf"><span class="av" style="background:#FBBF24;color:#0D0D15">B</span><div style="flex:1"><div class="who">Bee Sample <span class="src fb">FB</span><span class="pill p-pri">CF</span><span class="tm">20:40:22</span></div><div class="t">#2</div></div></div>
+            <div class="msg"><span class="av" style="background:#8B83FF">J</span><div style="flex:1"><div class="who">Jay Example <span class="src tt">TikTok</span><span class="tm">20:40:15</span></div><div class="t">ส่งต่างจังหวัดกี่วันคะ</div></div></div>
+        </div>
+    </div>
+</div>
+</div>
+<script src="chrome.js"></script>
+</body></html>

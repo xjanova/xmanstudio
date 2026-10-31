@@ -411,7 +411,7 @@ function drawGrid(filter) {
       <h3>${esc(n)} <span style="color:var(--ink-3);font-weight:400;font-size:12px">${esc(sub)}</span></h3>
       <p>${esc(descText(p, th))}</p>
       <div class="prod-foot"><span class="prod-cat">${esc(cat)}</span>
-        <span class="prod-price${price?'':' free'}">${priceTxt}</span></div>
+        <span class="prod-price${price===0?' free':''}">${priceTxt}</span></div>
       ${open}
     </article>`;
   }).join('');

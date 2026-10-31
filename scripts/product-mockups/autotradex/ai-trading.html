@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .top { display: flex; align-items: center; gap: 12px; height: 62px; }
+    .demo { display: flex; align-items: center; gap: 16px; padding: 10px 16px; border-radius: 14px; background: linear-gradient(135deg, rgba(245, 158, 11, .2), rgba(217, 119, 6, .1)); border: 1px solid rgba(245, 158, 11, .5); }
+    .toggle { display: flex; border-radius: 10px; overflow: hidden; border: 1px solid rgba(255, 255, 255, .2); font-size: 11px; font-weight: 800; }
+    .toggle span { padding: 6px 12px; } .toggle .on { background: #F59E0B; color: #1a1004; }
+    .ptab { padding: 8px 14px; border-radius: 10px; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .12); font-weight: 600; font-size: 12px; }
+    .ptab.on { background: rgba(124, 58, 237, .35); border-color: rgba(167, 139, 250, .6); }
+    .main { display: grid; grid-template-columns: 300px minmax(0, 1fr) 340px; gap: 12px; margin-top: 10px; height: 700px; }
+    .col > .card + .card { margin-top: 10px; }
+    .card { padding: 13px 15px; }
+    .exs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 8px; }
+    .exs span { display: flex; align-items: center; gap: 6px; padding: 6px; border-radius: 9px; background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .1); font-size: 11px; font-weight: 600; }
+    .exs span.on { border-color: rgba(167, 139, 250, .7); background: rgba(124, 58, 237, .3); }
+    .st { display: flex; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 10px; background: rgba(255, 255, 255, .04); border: 1px solid rgba(255, 255, 255, .08); margin-top: 6px; }
+    .st.on { border-color: rgba(167, 139, 250, .7); background: rgba(124, 58, 237, .25); }
+    .st p { font-size: 11px; color: rgba(255, 255, 255, .5); }
+    .kv { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+    .kv label { font-size: 10px; color: rgba(255, 255, 255, .45); display: block; margin-bottom: 3px; }
+    .iv { display: flex; gap: 4px; } .iv span { padding: 4px 9px; border-radius: 7px; font-size: 11px; color: rgba(255, 255, 255, .55); } .iv span.on { background: rgba(124, 58, 237, .5); color: #fff; }
+    .line { display: flex; justify-content: space-between; font-size: 12px; padding: 4px 0; }
+    .ind { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+    .ind span { display: flex; justify-content: space-between; padding: 6px 9px; border-radius: 8px; background: rgba(0, 0, 0, .2); font-size: 11px; }
+</style></head>
+<body data-on="AI Trading">
+<div class="page">
+    <div class="top">
+        <div class="demo">
+            <span style="font-size:22px">🎮</span>
+            <div><b class="amb" style="font-size:13px">DEMO MODE</b><p class="mut" style="font-size:10px">ใช้เงินเสมือน - ปลอดภัย</p></div>
+            <span class="dim" style="font-size:11px">💰 เริ่มต้น: <b style="color:#fff">$10,000.00</b> → 📊 ปัจจุบัน: <b style="color:#fff">$10,128.40</b></span>
+            <span class="badge b-grn">📈 +$128.40 (1.28%)</span>
+            <span class="toggle"><span class="on">DEMO</span><span>REAL</span></span>
+        </div>
+        <span class="ptab on">BTC/USDT</span><span class="ptab">ETH/USDT</span><span class="ptab">SOL/USDT</span><span class="ptab" style="color:rgba(255,255,255,.5)">＋</span>
+        <span class="mut" style="font-size:11px">3/10</span>
+        <span class="btn pur sp">🔍 SCAN PAIRS</span>
+    </div>
+
+    <div class="main">
+        <div class="col">
+            <div class="card">
+                <p class="lbl">SELECT EXCHANGE / เลือกกระดาน</p>
+                <div class="exs"><span class="on"><i class="ex" style="background:#F3BA2F">BN</i>Binance</span><span><i class="ex" style="background:#23AF91">KC</i>KuCoin</span><span><i class="ex" style="background:#e5e7eb">OK</i>OKX</span><span><i class="ex" style="background:#F7A600">BY</i>Bybit</span><span><i class="ex" style="background:#2354E6;color:#fff">GT</i>Gate.io</span><span><i class="ex" style="background:#4CBA64">BK</i>Bitkub</span></div>
+                <p class="grn" style="font-size:11px;margin-top:8px">● Connected / เชื่อมต่อแล้ว</p>
+            </div>
+            <div class="card">
+                <p class="lbl">AI STRATEGY / กลยุทธ์ AI</p>
+                <div class="st on"><span style="font-size:18px">🤖</span><div><b>AUTO STRATEGY</b><p>AI จะเลือกกลยุทธ์ตามสภาพตลาด</p></div><span class="badge b-pur sp">SMART</span></div>
+                <div class="st"><span style="font-size:16px">⚡</span><div><b>Scalping / สกัลปิง</b><p>Quick trades, small profits</p></div></div>
+                <div class="st"><span style="font-size:16px">📈</span><div><b>Momentum / โมเมนตัม</b><p>Follow the trend</p></div></div>
+                <div class="st"><span style="font-size:16px">🔄</span><div><b>Mean Reversion / คืนค่าเฉลี่ย</b><p>Buy oversold, sell overbought</p></div></div>
+                <div class="st"><span style="font-size:16px">📊</span><div><b>Grid Trading / กริด</b><p>Auto buy/sell at intervals</p></div></div>
+            </div>
+            <div class="card">
+                <p class="lbl">TRADE SETTINGS / ตั้งค่าเทรด</p>
+                <div class="kv">
+                    <div><label>Trade Amount (USDT)</label><span class="field">100</span></div>
+                    <div><label>Max Trades/Hour</label><span class="field">10</span></div>
+                    <div><label>Take Profit %</label><span class="field grn">1.0</span></div>
+                    <div><label>Stop Loss %</label><span class="field red">0.5</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card" style="height:480px">
+                <div class="row"><span class="coin" style="background:#F7931A">BTC</span><b style="font-size:16px">BTC/USDT</b><span class="badge b-pur">BINANCE</span>
+                    <b style="font-size:20px;margin-left:10px">$67,412.30</b><span class="badge b-grn">+1.24%</span>
+                    <span class="iv sp"><span>1m</span><span>5m</span><span class="on">15m</span><span>1h</span><span>4h</span><span>1D</span></span></div>
+                <p class="mut" style="font-size:11px;margin-top:4px">24h Vol: $1.82B · High: $67,980 | Low: $66,105 · <span class="cy">AI Markers ON</span></p>
+                <svg id="candles" width="700" height="400" style="display:block;margin-top:8px"></svg>
+            </div>
+            <div class="card" style="margin-top:10px;height:210px">
+                <div class="row"><p class="lbl">CURRENT POSITION / Position ปัจจุบัน</p><span class="badge b-grn sp">🎯 Demo · IN POSITION</span></div>
+                <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:12px">
+                    <div class="stat"><p class="lbl">Entry Price</p><p class="mid" style="font-size:15px">$67,105.00</p></div>
+                    <div class="stat"><p class="lbl">Current Price</p><p class="mid" style="font-size:15px">$67,412.30</p></div>
+                    <div class="stat"><p class="lbl">Size</p><p class="mid" style="font-size:15px">0.00149 BTC</p></div>
+                    <div class="stat"><p class="lbl">Take Profit</p><p class="mid grn" style="font-size:15px">$67,776.05</p></div>
+                    <div class="stat"><p class="lbl">Stop Loss</p><p class="mid red" style="font-size:15px">$66,769.48</p></div>
+                </div>
+                <div class="row" style="margin-top:14px"><span class="dim">Unrealized P&amp;L</span><b class="grn" style="font-size:18px">+$0.46</b><span class="grn">(+0.46%)</span><span class="btn red sp">CLOSE</span></div>
+            </div>
+        </div>
+
+        <div class="col">
+            <div class="card">
+                <div class="row"><b>🤖 AI CONTROL PANEL</b><span class="badge b-grn sp">RUNNING</span><span class="mono dim">01:24:16</span></div>
+                <div class="row" style="margin-top:10px;gap:8px"><span class="btn gh" style="flex:1">▲ BUY</span><span class="btn gh" style="flex:1">▼ SELL</span><span class="btn red" style="flex:1">⏹ STOP AI</span></div>
+            </div>
+            <div class="card">
+                <p class="lbl">📊 AI SIGNAL</p>
+                <div class="row" style="margin-top:8px"><span class="badge b-grn" style="font-size:16px;padding:6px 14px">📈 BUY</span><span class="dim">Confidence:</span><b style="font-size:18px">78%</b></div>
+                <p class="dim" style="font-size:11px;margin-top:8px">EMA crossover + MACD bullish · 1h/4h ขาขึ้นตรงกัน · ข่าวเป็นกลาง</p>
+            </div>
+            <div class="card">
+                <p class="lbl">📈 MARKET ANALYSIS / วิเคราะห์ตลาด</p>
+                <p class="line" style="margin-top:6px"><span class="dim">สภาพตลาด:</span><b class="grn">TRENDING UP</b></p>
+                <p class="line"><span class="dim">Volatility:</span><b>2.5% <span class="mut" style="font-weight:500">(ปานกลาง)</span></b></p>
+                <p class="line"><span class="dim">RSI (14):</span><b>58.4</b></p>
+                <p class="line"><span class="dim">💡 กลยุทธ์แนะนำ:</span><b class="pur">⚡ Momentum</b></p>
+            </div>
+            <div class="card">
+                <p class="lbl">INDICATORS / ตัวชี้วัด</p>
+                <div class="ind">
+                    <span>MTF <b class="grn">+32</b></span><span>NEWS <b class="dim">+4</b></span>
+                    <span>F&amp;G <b class="amb">61 Greed</b></span><span>HIST <b class="dim">−2</b></span>
+                    <span>MACD <b class="grn">Bull</b></span><span>EMA 9/21 <b class="grn">Cross ↑</b></span>
+                </div>
+            </div>
+            <div class="card">
+                <p class="lbl">RISK MANAGEMENT / จัดการความเสี่ยง</p>
+                <p class="line" style="margin-top:6px"><span class="dim">Daily Loss Limit</span><b>$0.00 / $50.00</b></p>
+                <span class="btn red" style="width:100%;margin-top:6px">🛑 EMERGENCY STOP</span>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="chrome.js"></script>
+<script>
+    (function () {
+        var s = 11, w = 700, h = 400, n = 64, o = 100, out = '';
+        function rnd() { s = (s * 9301 + 49297) % 233280; return s / 233280; }
+        var bars = [];
+        for (var i = 0; i < n; i++) { var c = o + (rnd() - .44) * 3.2; var hi = Math.max(o, c) + rnd() * 1.4, lo = Math.min(o, c) - rnd() * 1.4; bars.push([o, c, hi, lo]); o = c; }
+        var max = Math.max.apply(null, bars.map(function (b) { return b[2]; })), min = Math.min.apply(null, bars.map(function (b) { return b[3]; }));
+        function y(v) { return 10 + (h - 20) * (1 - (v - min) / (max - min)); }
+        for (var k = 1; k < 6; k++) out += '<line x1="0" x2="' + w + '" y1="' + (k * h / 6) + '" y2="' + (k * h / 6) + '" stroke="rgba(255,255,255,.05)"/>';
+        var bw = w / n;
+        bars.forEach(function (b, i) {
+            var x = i * bw + bw / 2, up = b[1] >= b[0], col = up ? '#10B981' : '#EF4444';
+            out += '<line x1="' + x + '" x2="' + x + '" y1="' + y(b[2]) + '" y2="' + y(b[3]) + '" stroke="' + col + '"/>';
+            out += '<rect x="' + (x - bw * .33) + '" width="' + (bw * .66) + '" y="' + Math.min(y(b[0]), y(b[1])) + '" height="' + Math.max(1.5, Math.abs(y(b[0]) - y(b[1]))) + '" fill="' + col + '"/>';
+        });
+        // AI markers: a buy and a sell the demo bot took
+        [[18, 'B', '#10B981', 3], [31, 'S', '#EF4444', 2], [52, 'B', '#10B981', 3]].forEach(function (m) {
+            var b = bars[m[0]], x = m[0] * bw + bw / 2, yy = m[1] === 'B' ? y(b[3]) + 16 : y(b[2]) - 16;
+            out += '<circle cx="' + x + '" cy="' + yy + '" r="9" fill="' + m[2] + '"/><text x="' + x + '" y="' + (yy + 4) + '" text-anchor="middle" font-size="10" font-weight="800" fill="#fff" font-family="Segoe UI">' + m[1] + '</text>';
+        });
+        var last = bars[n - 1][1];
+        out += '<line x1="0" x2="' + w + '" y1="' + y(last) + '" y2="' + y(last) + '" stroke="#A78BFA" stroke-dasharray="4 4"/>';
+        document.getElementById('candles').innerHTML = out;
+    })();
+</script>
+</body></html>

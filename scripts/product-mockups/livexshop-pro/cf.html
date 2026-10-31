@@ -1,0 +1,79 @@
+<!doctype html>
+<!-- แชท CF — Views/Chat/ChatPage.xaml: CF Queue (400px, รอดำเนินการ / ดำเนินการแล้ว / Duplicate), สร้างออเดอร์
+     (the CF message, เลือกสินค้า, รายการสินค้า, หมายเหตุ, รวมทั้งหมด, ข้าม / สร้างออเดอร์) and ข้อมูลลูกค้า (320px).
+     CF detection is not built yet: every CF, product, price and customer here is made up. -->
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .grid { display: grid; grid-template-columns: 400px minmax(0, 1fr) 320px; gap: 16px; height: 100%; }
+    .grid > .card { display: flex; flex-direction: column; }
+    .tabs3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 12px; }
+    .tabs3 span { text-align: center; padding: 6px 4px; border-radius: 8px; font-size: 12px; color: #A0A0B8; border: 1px solid #2D2D50; }
+    .tabs3 span.on { background: #6C63FF; color: #fff; border-color: #6C63FF; }
+    .cfi { padding: 10px 12px; border-radius: 10px; margin-top: 8px; background: rgba(13, 13, 21, .55); border: 1px solid transparent; }
+    .cfi.sel { border-color: #6C63FF; background: rgba(108, 99, 255, .14); }
+    .cfi .who { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13px; }
+    .cfi .t { font-size: 14px; margin-top: 2px; }
+    .cfi .tm { margin-left: auto; font-size: 11px; color: #6B6B80; font-weight: 400; }
+    .src { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; }
+    .fb { background: rgba(96, 165, 250, .2); color: #60A5FA; }
+    .tt { background: rgba(255, 107, 157, .2); color: #FF8EB5; }
+    .quote { display: flex; gap: 12px; padding: 12px; border-radius: 10px; background: #0D0D15; margin-top: 12px; }
+    .av { width: 44px; height: 44px; border-radius: 22px; flex: none; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; background: #FF6B9D; }
+    .item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; background: rgba(13, 13, 21, .55); margin-top: 8px; }
+    .thumb { width: 44px; height: 44px; border-radius: 8px; flex: none; }
+    .qty { display: flex; align-items: center; border: 1px solid #2D2D50; border-radius: 8px; overflow: hidden; }
+    .qty span { width: 30px; text-align: center; padding: 4px 0; color: #A0A0B8; }
+    .qty b { width: 34px; text-align: center; border-left: 1px solid #2D2D50; border-right: 1px solid #2D2D50; padding: 4px 0; }
+    .sum { margin-top: auto; border-top: 1px solid #2D2D50; padding-top: 14px; display: flex; align-items: center; gap: 10px; }
+    .kv { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+    .kv div { background: #0D0D15; border-radius: 8px; padding: 10px; text-align: center; }
+    .kv b { display: block; font-size: 20px; }
+    .kv span { font-size: 11px; color: #A0A0B8; }
+    .ci { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #E6E6F0; margin-top: 8px; }
+    .ci svg { width: 16px; height: 16px; color: #A0A0B8; }
+    .oi { display: flex; justify-content: space-between; font-size: 13px; padding: 8px 0; border-bottom: 1px solid rgba(45, 45, 80, .6); }
+</style></head>
+<body data-on="chat" data-title="แชท CF" data-sub="จัดการ CF และสร้างออเดอร์" data-live="1" data-stats="86|12|฿48,250">
+<div id="page">
+<div class="grid">
+    <div class="card">
+        <div class="row"><span class="h">CF Queue</span><span class="pill p-pri">7</span><span style="margin-left:auto;color:#A0A0B8">{ic:refresh}</span></div>
+        <div class="tabs3"><span class="on">รอดำเนินการ</span><span>ดำเนินการแล้ว</span><span>Duplicate</span></div>
+        <div class="cfi sel"><div class="who">คุณมะลิ ใจดี <span class="src fb">FB</span><span class="tm">20:41:08</span></div><div class="t">cf1 2ชิ้น ค่ะ</div></div>
+        <div class="cfi"><div class="who">Nok Example <span class="src tt">TikTok</span><span class="tm">20:40:59</span></div><div class="t">CF 3</div></div>
+        <div class="cfi"><div class="who">คุณข้าวหอม สมมุติ <span class="src fb">FB</span><span class="tm">20:40:44</span></div><div class="t">ซีเอฟ2 ค่ะแม่ค้า</div></div>
+        <div class="cfi"><div class="who">Mint Demo <span class="src tt">TikTok</span><span class="tm">20:40:37</span></div><div class="t">cf1 cf4 อย่างละชิ้น</div></div>
+        <div class="cfi"><div class="who">Bee Sample <span class="src fb">FB</span><span class="tm">20:40:22</span></div><div class="t">#2</div></div>
+        <div class="cfi"><div class="who">คุณฝน ทดสอบ <span class="src fb">FB</span><span class="tm">20:39:58</span></div><div class="t">เอา5 ค่ะ</div></div>
+        <div class="cfi"><div class="who">Jay Example <span class="src tt">TikTok</span><span class="tm">20:39:40</span></div><div class="t">สั่ง1 สีดำ</div></div>
+    </div>
+
+    <div class="card">
+        <span class="h">สร้างออเดอร์</span>
+        <div class="quote"><span class="av">ม</span><div><div style="font-weight:700">คุณมะลิ ใจดี <span class="src fb">FB</span></div><div style="font-size:15px;margin-top:2px">"cf1 2ชิ้น ค่ะ"</div><div class="sub" style="font-size:12px">ไลฟ์เปิดกล่องสินค้าใหม่ รอบค่ำ · 20:41:08</div></div></div>
+        <div class="lbl">เลือกสินค้า</div>
+        <div class="row"><div class="input" style="flex:1;display:flex;gap:8px;align-items:center">{ic:search}ค้นหาสินค้า (ชื่อ/SKU/รหัส CF)</div><span class="btn gl">{ic:barcode}</span></div>
+        <div class="lbl">รายการสินค้า</div>
+        <div class="item"><span class="thumb" style="background:linear-gradient(135deg,#FF6B9D,#6C63FF)"></span><div style="flex:1"><div style="font-weight:700;white-space:nowrap">เสื้อยืดโอเวอร์ไซซ์</div><div class="sub" style="font-size:12px;white-space:nowrap">CF 1 · คงเหลือ 24</div></div><div class="qty"><span>−</span><b>2</b><span>+</span></div><b style="width:56px;text-align:right">฿580</b></div>
+        <div class="btn gl" style="margin-top:10px;width:max-content">{ic:plus}เพิ่มสินค้า</div>
+        <div class="lbl">หมายเหตุ</div>
+        <div class="input" style="height:64px">หมายเหตุเพิ่มเติม...</div>
+        <div class="sum"><div><div class="sub">รวมทั้งหมด</div><div style="font-size:28px;font-weight:700">฿580</div></div><span class="btn gl" style="margin-left:auto">{ic:skip}ข้าม</span><span class="btn pri">{ic:check}สร้างออเดอร์</span></div>
+    </div>
+
+    <div class="card">
+        <div class="row"><span class="h">ข้อมูลลูกค้า</span><span style="margin-left:auto;color:#A0A0B8">{ic:pencil}</span></div>
+        <div class="row" style="margin-top:12px"><span class="av">ม</span><div><div style="font-weight:700;font-size:16px">คุณมะลิ ใจดี</div><span class="pill p-ok">ลูกค้าประจำ</span></div></div>
+        <div class="kv"><div><b>7</b><span>ออเดอร์</span></div><div><b>฿4,830</b><span>ยอดซื้อรวม</span></div></div>
+        <div class="lbl">ข้อมูลติดต่อ</div>
+        <div class="ci">{ic:tel}08x-xxx-0123</div>
+        <div class="ci">{ic:pin}99/9 ถ.ตัวอย่าง เขตสมมุติ กรุงเทพฯ</div>
+        <div class="lbl">ออเดอร์ล่าสุด</div>
+        <div class="oi"><span>LX-2510-0142</span><span class="ok">฿690</span></div>
+        <div class="oi"><span>LX-2510-0097</span><span class="ok">฿1,120</span></div>
+        <div class="oi"><span>LX-2509-0311</span><span class="ok">฿450</span></div>
+    </div>
+</div>
+</div>
+<script src="chrome.js"></script>
+</body></html>

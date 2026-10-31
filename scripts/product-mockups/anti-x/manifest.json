@@ -1,0 +1,307 @@
+{
+  "out_dir": "images/products/anti-x/v2",
+  "screens": [
+    {
+      "name": "dashboard",
+      "src": "D:/Code/AntiX/design/screens/night-dashboard.png",
+      "blur": [
+        [
+          20,
+          832,
+          130,
+          50
+        ],
+        [
+          1078,
+          712,
+          285,
+          145
+        ]
+      ]
+    },
+    {
+      "name": "live",
+      "src": "D:/Code/AntiX/design/screens/night-live.png",
+      "blur": [
+        [
+          20,
+          832,
+          130,
+          50
+        ],
+        [
+          620,
+          213,
+          162,
+          34
+        ],
+        [
+          620,
+          261,
+          162,
+          34
+        ],
+        [
+          620,
+          309,
+          162,
+          34
+        ],
+        [
+          620,
+          357,
+          162,
+          34
+        ],
+        [
+          620,
+          405,
+          162,
+          34
+        ],
+        [
+          620,
+          453,
+          162,
+          34
+        ],
+        [
+          620,
+          501,
+          162,
+          34
+        ],
+        [
+          620,
+          549,
+          162,
+          34
+        ],
+        [
+          620,
+          597,
+          162,
+          34
+        ],
+        [
+          620,
+          645,
+          162,
+          34
+        ],
+        [
+          620,
+          693,
+          162,
+          34
+        ],
+        [
+          620,
+          741,
+          162,
+          34
+        ],
+        [
+          620,
+          789,
+          162,
+          34
+        ],
+        [
+          620,
+          837,
+          162,
+          34
+        ],
+        [
+          786,
+          229,
+          150,
+          20
+        ],
+        [
+          786,
+          277,
+          150,
+          20
+        ],
+        [
+          786,
+          325,
+          150,
+          20
+        ],
+        [
+          786,
+          373,
+          150,
+          20
+        ],
+        [
+          786,
+          421,
+          150,
+          20
+        ],
+        [
+          786,
+          469,
+          150,
+          20
+        ],
+        [
+          786,
+          517,
+          150,
+          20
+        ],
+        [
+          786,
+          565,
+          150,
+          20
+        ],
+        [
+          786,
+          613,
+          150,
+          20
+        ],
+        [
+          786,
+          661,
+          150,
+          20
+        ],
+        [
+          786,
+          709,
+          150,
+          20
+        ],
+        [
+          786,
+          757,
+          150,
+          20
+        ],
+        [
+          786,
+          805,
+          150,
+          20
+        ],
+        [
+          786,
+          853,
+          150,
+          20
+        ]
+      ]
+    },
+    {
+      "name": "blocks",
+      "src": "D:/Code/AntiX/design/screens/night-blocks.png",
+      "blur": [
+        [
+          20,
+          832,
+          130,
+          50
+        ]
+      ]
+    },
+    {
+      "name": "events",
+      "src": "D:/Code/AntiX/design/screens/night-events.png",
+      "blur": [
+        [
+          20,
+          832,
+          130,
+          50
+        ],
+        [
+          814,
+          205,
+          158,
+          680
+        ]
+      ]
+    },
+    {
+      "name": "machines",
+      "src": "D:/Code/AntiX/design/screens/night-machines.png",
+      "blur": [
+        [
+          20,
+          832,
+          130,
+          50
+        ],
+        [
+          372,
+          160,
+          960,
+          36
+        ],
+        [
+          355,
+          272,
+          420,
+          46
+        ],
+        [
+          925,
+          272,
+          300,
+          46
+        ],
+        [
+          355,
+          461,
+          420,
+          46
+        ],
+        [
+          925,
+          461,
+          330,
+          30
+        ]
+      ]
+    },
+    {
+      "name": "reports",
+      "html": "reports.html"
+    },
+    {
+      "name": "suspects",
+      "html": "suspects.html"
+    },
+    {
+      "name": "honeypot",
+      "html": "honeypot.html"
+    },
+    {
+      "name": "art-hero",
+      "src": "D:/Code/xmanstudio-campaign-media/product-pages/anti-x/art-hero.png",
+      "width": 1536,
+      "quality": 82
+    },
+    {
+      "name": "art-honeypot",
+      "src": "D:/Code/xmanstudio-campaign-media/product-pages/anti-x/art-honeypot.png",
+      "width": 1536,
+      "quality": 82
+    },
+    {
+      "name": "og",
+      "ext": "jpg",
+      "w": 1200,
+      "h": 630,
+      "width": 1200,
+      "html": "../_shared/og.html?art=file%3A%2F%2F%2FD%3A%2FCode%2Fxmanstudio-campaign-media%2Fproduct-pages%2Fanti-x%2Fart-hero.png&name=Anti+X&glow=X&line=%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B9%80%E0%B8%88%E0%B8%B2%E0%B8%B0%E0%B9%80%E0%B8%8B%E0%B8%B4%E0%B8%A3%E0%B9%8C%E0%B8%9F%E0%B9%80%E0%B8%A7%E0%B8%AD%E0%B8%A3%E0%B9%8C+Windows%7C%E0%B9%81%E0%B8%9A%E0%B8%9A%E0%B9%80%E0%B8%A3%E0%B8%B5%E0%B8%A2%E0%B8%A5%E0%B9%84%E0%B8%97%E0%B8%A1%E0%B9%8C&sub=%E0%B8%9F%E0%B8%A3%E0%B8%B5%E0%B8%9E%E0%B8%B7%E0%B9%89%E0%B8%99%E0%B8%90%E0%B8%B2%E0%B8%99+%C2%B7+%E0%B8%97%E0%B8%94%E0%B8%A5%E0%B8%AD%E0%B8%87+Pro+14+%E0%B8%A7%E0%B8%B1%E0%B8%99+%C2%B7+%E0%B9%84%E0%B8%A1%E0%B9%88%E0%B8%A5%E0%B9%87%E0%B8%AD%E0%B8%81%E0%B8%95%E0%B8%B1%E0%B8%A7%E0%B9%80%E0%B8%AD%E0%B8%87&c1=ff4d5e&c2=ffb547&c3=34e3a1"
+    }
+  ]
+}

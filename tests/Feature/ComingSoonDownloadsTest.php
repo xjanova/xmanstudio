@@ -271,7 +271,7 @@ class ComingSoonDownloadsTest extends TestCase
     public static function appPages(): array
     {
         return [
-            'CluadeX' => ['cluadex-ai-coding-assistant', ['/cluadex', '/cluadex/pricing', '/products/cluadex-ai-coding-assistant'], ['/cluadex/download', '/download/cluadex-ai-coding-assistant']],
+            'CluadeX' => ['cluadex-ai-coding-assistant', ['/products/cluadex-ai-coding-assistant', '/cluadex/pricing'], ['/cluadex/download', '/download/cluadex-ai-coding-assistant']],
             'Tping' => ['tping', ['/tping', '/tping/pricing', '/tping/download', '/tping/install-guide'], ['/tping/download/apk']],
             'SMS Checker' => ['smschecker', ['/smschecker', '/smschecker/pricing', '/smschecker/download'], ['/smschecker/download/apk']],
             'LocalVPN' => ['localvpn', ['/products/localvpn', '/localvpn/pricing', '/localvpn/download', '/localvpn/install-guide'], ['/localvpn/download/apk', '/localvpn/download/windows']],

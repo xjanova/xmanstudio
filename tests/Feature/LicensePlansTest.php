@@ -257,9 +257,8 @@ class LicensePlansTest extends TestCase
         $this->post(route('cart.add', $cluadex), ['license_type' => 'yearly'])->assertRedirect();
         $this->assertEquals(199, (float) CartItem::sole()->price);
 
-        // the landing page's Pro card quotes the entry plan, per year
-        $this->get('/cluadex')->assertOk()
-            ->assertSee('฿199<span class="text-base text-gray-400">/ปี</span>', false);
+        // the old landing page is the product page now, which quotes the same table
+        $this->get('/cluadex')->assertRedirect(route('products.show', 'cluadex-ai-coding-assistant'));
     }
 
     public function test_the_product_pages_quote_the_table_and_post_no_price(): void
@@ -267,8 +266,8 @@ class LicensePlansTest extends TestCase
         $this->licensed('cluadex-ai-coding-assistant');
 
         $html = $this->get('/products/cluadex-ai-coding-assistant')->assertOk()->getContent();
-        $this->assertStringContainsString('ซื้อ License รายปี - ฿199', $html);
-        $this->assertStringContainsString('ซื้อ License ตลอดชีพ - ฿1,999', $html);
+        $this->assertStringContainsString('ซื้อ Pro รายปี — ฿199', $html);
+        $this->assertStringContainsString('ซื้อ Pro ตลอดชีพ — ฿1,999', $html);
         // the cart never read a posted price; the forms stop sending one
         $this->assertStringNotContainsString('name="price"', $html);
 

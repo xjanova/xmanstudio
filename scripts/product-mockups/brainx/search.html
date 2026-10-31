@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    .sky { position: absolute; left: 0; top: 34px; width: 1440px; height: 840px; background: url(assets/galaxy.jpg) center 40% / 128% auto no-repeat; opacity: .95; }
+    .acts { position: absolute; top: 52px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; }
+    .q { position: absolute; top: 100px; left: 50%; transform: translateX(-50%); width: 640px; height: 46px; border-radius: 23px; display: flex; align-items: center; gap: 12px; padding: 0 20px;
+        background: rgba(9, 14, 30, .86); border: 1px solid rgba(216, 185, 120, .55); box-shadow: 0 0 0 4px rgba(216, 185, 120, .08), 0 18px 40px -18px #000; font-size: 15px; }
+    .q .ic { color: #d8b978; font-size: 16px; }
+    .q .k { margin-left: auto; font-size: 11px; color: #8d90ad; }
+    .card { left: 330px; top: 438px; width: 780px; height: 392px; }
+    .card .head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+    .card .head .muted { margin-left: auto; font-size: 11.5px; }
+    .hit { padding: 11px 4px 11px 0; border-bottom: 1px solid rgba(255, 255, 255, .06); display: grid; grid-template-columns: 1fr 70px; gap: 4px 14px; }
+    .hit:last-child { border-bottom: 0; }
+    .hit .t { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: #fff; }
+    .hit .s { grid-column: 1; font-size: 12.5px; color: #b9bcd3; line-height: 1.55; }
+    .hit .s mark { background: rgba(216, 185, 120, .22); color: #f2e3bf; border-radius: 3px; padding: 0 2px; }
+    .hit .sc { grid-row: 1 / span 2; grid-column: 2; text-align: right; font-size: 12px; color: #8d90ad; }
+    .hit .sc b { display: block; font-size: 17px; color: #5be9e9; font-weight: 600; }
+    .exp { left: 22px; top: 186px; width: 262px; }
+    .exp .row { display: flex; justify-content: space-between; font-size: 12.5px; margin: 7px 0 5px; }
+    .exp .row i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 8px; }
+    .ring { position: absolute; border-radius: 50%; border: 1.5px solid rgba(216, 185, 120, .85); box-shadow: 0 0 18px rgba(216, 185, 120, .6); }
+</style></head>
+<body class="space" data-status="hybrid search · 5 hits in 0.21 s">
+<div class="sky"></div>
+<span class="ring" style="left:590px;top:226px;width:26px;height:26px"></span>
+<span class="ring" style="left:780px;top:300px;width:22px;height:22px"></span>
+<span class="ring" style="left:452px;top:372px;width:20px;height:20px"></span>
+
+<div class="acts"><span class="btn">Re-index</span><span class="btn">🌱 Garden</span><span class="btn">Vault</span><span class="btn">Settings</span></div>
+<div class="q"><span class="ic">⌕</span><span>ทำไมแอปต้องตรวจลายเซ็นก่อนติดตั้งอัปเดต</span><span class="k mono">hybrid · Ctrl+F</span></div>
+
+<div class="panel exp">
+    <div class="ph"><b>EXPERTISE</b></div>
+    <div class="row"><span><i style="background:#5be9e9"></i>Programming</span><span class="mono">34.2%</span></div><div class="bar"><i style="width:82%"></i></div>
+    <div class="row"><span><i style="background:#9d7bff"></i>AI MachineLearning</span><span class="mono">21.5%</span></div><div class="bar"><i style="width:52%"></i></div>
+    <div class="row"><span><i style="background:#ff4f9e"></i>Design Art</span><span class="mono">12.8%</span></div><div class="bar"><i style="width:31%"></i></div>
+    <div class="row"><span><i style="background:#ffc23c"></i>Business Finance</span><span class="mono">7.1%</span></div><div class="bar"><i style="width:17%"></i></div>
+    <div class="row"><span><i style="background:#4ae3a7"></i>Engineering</span><span class="mono">5.6%</span></div><div class="bar"><i style="width:13%"></i></div>
+</div>
+
+<div class="panel glass card">
+    <div class="head"><div class="ph" style="margin:0"><b>SEARCH</b><span>5 hits</span></div><span class="muted mono">semantic + keyword · fused by rank</span></div>
+    <div class="hit">
+        <div class="t"><span class="tag cy">PROGRAMMING</span>Signed update feed — how the app checks a release</div>
+        <div class="s">…ทุกแพ็กเกจที่ดาวน์โหลดมาต้อง<mark>ตรวจลายเซ็น</mark>กับกุญแจสาธารณะในตัวแอปก่อน ไม่ผ่านก็<mark>ไม่ติดตั้ง</mark> แม้ไฟล์จะมาจากเซิร์ฟเวอร์ของเราเอง…</div>
+        <div class="sc"><b>0.91</b>match</div>
+    </div>
+    <div class="hit">
+        <div class="t"><span class="tag">AI MACHINELEARNING</span>Release checklist — before a version goes out</div>
+        <div class="s">…ข้อ 4: build ใหม่ทุกครั้งต้องเซ็น feed แล้วลอง<mark>อัปเดต</mark>จากเวอร์ชันก่อนหน้าบนเครื่องทดสอบ…</div>
+        <div class="sc"><b>0.84</b>match</div>
+    </div>
+    <div class="hit">
+        <div class="t"><span class="tag pk">DESIGN ART</span>Update dialog — wording for a failed check</div>
+        <div class="s">…ข้อความเมื่อ<mark>ลายเซ็น</mark>ไม่ตรง: บอกผู้ใช้ว่าไฟล์ถูกปฏิเสธ และจะลองใหม่รอบถัดไป ไม่ใช้คำว่า error…</div>
+        <div class="sc"><b>0.77</b>match</div>
+    </div>
+    <div class="hit">
+        <div class="t"><span class="tag am">BUSINESS FINANCE</span>Why customers trust a desktop installer</div>
+        <div class="s">…คนส่วนใหญ่ไม่ได้อ่านว่าไฟล์มาจากไหน — ความปลอดภัยต้องอยู่ในตัวโปรแกรม ไม่ใช่อยู่ที่คู่มือ…</div>
+        <div class="sc"><b>0.69</b>meaning</div>
+    </div>
+</div>
+</body>
+<script src="chrome.js"></script>
+</html>

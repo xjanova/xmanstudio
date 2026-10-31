@@ -1,0 +1,81 @@
+/* Live x Shop Pro mock-ups — drawn from the app's own XAML (D:\Code\LiveShop pro\src\Desktop: Themes/DarkTheme.xaml,
+   Themes/GlassmorphismStyles.xaml, Views/Main/MainWindow.xaml, Views/*/*.xaml): the #0D0D15 dark theme, #6C63FF→#FF6B9D
+   accent gradient, glass cards, Sarabun, the 260px sidebar and the page header. The app has no working data yet
+   (its pages are still being built), so no real capture exists; every name, number and order here is made up. */
+@font-face { font-family: Sarabun; src: url(../../../storage/fonts/Sarabun-Regular.ttf); font-weight: 400; }
+@font-face { font-family: Sarabun; src: url(../../../storage/fonts/Sarabun-Bold.ttf); font-weight: 700; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1440px; height: 900px; overflow: hidden; }
+body { font-family: Sarabun, "Segoe UI", sans-serif; color: #FFFFFF; font-size: 14px; background: #0D0D15; }
+svg.i { width: 20px; height: 20px; fill: currentColor; flex: none; }
+
+/* MetroWindow title bar (TitleBarHeight 40) with its right-hand commands */
+.titlebar { height: 40px; display: flex; align-items: center; gap: 10px; padding-left: 12px; background: #0D0D15; border-bottom: 1px solid #2D2D50; font-size: 13px; color: #A0A0B8; }
+.titlebar .ttl { color: #E6E6F0; }
+.titlebar .cmds { margin-left: auto; display: flex; align-items: center; gap: 4px; height: 40px; }
+.titlebar .cmd { display: flex; align-items: center; gap: 6px; padding: 0 12px; height: 40px; color: #D6D6E6; }
+.titlebar .led { width: 10px; height: 10px; border-radius: 5px; background: #F87171; }
+.titlebar .led.on { background: #4ADE80; box-shadow: 0 0 8px #4ADE80; }
+.titlebar .badge { position: relative; }
+.titlebar .badge b { position: absolute; top: -6px; right: -9px; min-width: 16px; height: 16px; border-radius: 8px; background: #6C63FF; color: #fff; font-size: 10px; display: flex; align-items: center; justify-content: center; }
+.titlebar .caps { display: flex; height: 40px; margin-left: 6px; }
+.titlebar .caps i { width: 46px; display: flex; align-items: center; justify-content: center; font-style: normal; color: #A0A0B8; font-size: 13px; }
+
+.app { position: absolute; top: 40px; left: 0; width: 1440px; height: 860px; display: flex; }
+
+/* Navigation sidebar — Width 260, SurfaceDark, right border */
+.side { width: 260px; flex: none; background: #1E1E35; border-right: 1px solid #2D2D50; display: flex; flex-direction: column; }
+.side .logo { padding: 22px 20px 16px; }
+.side .brand { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.side .brand svg { width: 40px; height: 40px; color: #6C63FF; }
+.side .brand .n { font-size: 18px; font-weight: 700; line-height: 1.1; }
+.side .brand .s { font-size: 11px; color: #A0A0B8; }
+.side .qs { margin-top: 14px; background: #0D0D15; border-radius: 8px; padding: 10px 6px; display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; }
+.side .qs b { display: block; font-size: 17px; }
+.side .qs span { font-size: 11px; color: #A0A0B8; }
+.side nav { flex: 1; padding: 0 12px; overflow: hidden; }
+.side .grp { font-size: 11px; color: #6B6B80; letter-spacing: .06em; padding: 10px 16px 4px; }
+.side .it { display: flex; align-items: center; gap: 12px; padding: 7px 16px; margin: 1px 0; border-radius: 8px; color: #A0A0B8; font-size: 14px; }
+.side .it.on { background: rgba(108, 99, 255, .125); color: #6C63FF; font-weight: 700; }
+.side .it .live { margin-left: auto; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; background: #F87171; color: #fff; }
+.side .foot { background: #0D0D15; padding: 12px 16px; }
+.side .lic { background: #1E1E35; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; font-size: 12px; color: #4ADE80; display: flex; align-items: center; gap: 6px; }
+.side .lic svg { width: 16px; height: 16px; }
+.side .ver { text-align: center; font-size: 10px; color: #6B6B80; }
+
+/* Main area: page header (SurfaceDark, Padding 24,16) + content (Padding 24) */
+.main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.head { background: #1E1E35; border-bottom: 1px solid #2D2D50; padding: 14px 24px; display: flex; align-items: center; }
+.head .t { font-size: 24px; font-weight: 700; line-height: 1.2; }
+.head .st { font-size: 13px; color: #A0A0B8; }
+.head .right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.search { display: flex; align-items: center; gap: 8px; background: #0D0D15; border-radius: 8px; padding: 8px 12px; width: 250px; color: #A0A0B8; font-size: 13px; }
+.search svg { width: 18px; height: 18px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 10px; font-weight: 700; font-size: 14px; color: #fff; white-space: nowrap; }
+.btn svg { width: 18px; height: 18px; }
+.btn.pri { background: linear-gradient(90deg, #6C63FF, #FF6B9D); color: #fff; }
+.btn.gl { background: linear-gradient(180deg, rgba(255, 255, 255, .08), rgba(255, 255, 255, .03)); border: 1px solid rgba(255, 255, 255, .16); color: #E6E6F0; font-weight: 400; }
+.btn.red { background: #F87171; }
+.content { flex: 1; padding: 22px 24px; overflow: hidden; }
+
+/* GlassCard: white 15%→6% on the dark stage, 1px light border, RadiusLarge, Padding 16 */
+.card { background: linear-gradient(180deg, rgba(255, 255, 255, .145), rgba(255, 255, 255, .083) 50%, rgba(255, 255, 255, .063)); border: 1px solid rgba(255, 255, 255, .2); border-radius: 16px; padding: 16px; box-shadow: 0 8px 24px rgba(0, 0, 0, .35); }
+.gbtn { background: linear-gradient(180deg, rgba(255, 255, 255, .083), rgba(255, 255, 255, .031)); border: 1px solid rgba(255, 255, 255, .12); border-radius: 12px; padding: 14px; text-align: center; }
+.h { font-size: 16px; font-weight: 700; }
+.sub { font-size: 13px; color: #A0A0B8; }
+.mut { color: #6B6B80; }
+.row { display: flex; align-items: center; gap: 12px; }
+.ibox { width: 56px; height: 56px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex: none; }
+.ibox svg { width: 28px; height: 28px; }
+.pill { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+.p-warn { background: rgba(251, 191, 36, .16); color: #FBBF24; }
+.p-ok { background: rgba(74, 222, 128, .15); color: #4ADE80; }
+.p-info { background: rgba(96, 165, 250, .16); color: #60A5FA; }
+.p-pri { background: rgba(108, 99, 255, .2); color: #8B83FF; }
+.p-pink { background: rgba(255, 107, 157, .18); color: #FF8EB5; }
+.p-err { background: rgba(248, 113, 113, .16); color: #F87171; }
+.pri { color: #6C63FF; } .pk { color: #FF6B9D; } .ok { color: #4ADE80; } .wn { color: #FBBF24; } .inf { color: #60A5FA; } .er { color: #F87171; }
+.input { background: #0D0D15; border: 1px solid #2D2D50; border-radius: 8px; padding: 9px 12px; font-size: 13px; color: #A0A0B8; }
+.lbl { font-size: 13px; color: #A0A0B8; margin: 14px 0 6px; }
+.b svg.i, .sub svg.i { width: 12px; height: 12px; vertical-align: -1px; }
+#page { height: 100%; }

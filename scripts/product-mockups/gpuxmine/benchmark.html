@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<style>
+    /* Views/BenchmarkView.xaml: NODE SCORE, the assessment result, the jobs this machine can take, SUB-SCORES · LIVE */
+    .grid { display: grid; grid-template-columns: 1fr 1.35fr; gap: 14px; flex: 1; }
+    .col { display: flex; flex-direction: column; gap: 14px; }
+    .note { font-size: 12px; color: #6b737d; line-height: 1.55; margin-top: 8px; }
+    .lane { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 14px; padding: 11px 14px; border-radius: 7px; border: 1px solid #b3bac2;
+        background: linear-gradient(#fdfdfe, #eceff3 50%, #dbe0e6); }
+    .lane b { font-size: 14px; }
+    .lane small { grid-column: 1; font-size: 11.5px; color: #6b737d; }
+    .v { font-weight: bold; font-size: 12px; padding: 4px 11px; border-radius: 10px; grid-row: span 2; }
+    .v.full { background: linear-gradient(#bdf7a6, #3fae3a); color: #133a10; }
+    .v.slow { background: linear-gradient(#ffeaa9, #d8a62f); color: #3a2c07; }
+    .v.no { background: linear-gradient(#eef1f5, #c6ccd4); color: #4e565f; }
+    .kv { display: grid; grid-template-columns: 1fr auto; row-gap: 9px; font-size: 13px; }
+</style></head>
+<body data-on="benchmark">
+<main class="content">
+    <div class="grid">
+        <div class="col">
+            <section class="chrome">
+                <div class="lbl">Node score</div>
+                <div class="lcd" style="padding:18px;text-align:center">
+                    <div class="mono gold" style="font-size:72px;line-height:1">640</div>
+                    <div class="mono blue" style="font-size:18px;letter-spacing:.2em;margin-top:6px">GOLD</div>
+                </div>
+                <p class="note">1000 = เครื่องอ้างอิง · คะแนนครึ่งหนึ่งเมื่อการ์ดช้าลงครึ่งหนึ่ง</p>
+                <div style="display:flex;gap:10px;margin-top:12px"><span class="btn gold">ประเมินเครื่องใหม่</span><span class="btn">ประเมินใหม่แบบเต็มกำลัง</span></div>
+            </section>
+            <section class="chrome">
+                <div class="lbl">ผลการประเมิน</div>
+                <div class="mono" style="font-size:13px;line-height:1.7;color:#2c3238">
+                    NVIDIA GeForce RTX 3060 · VRAM 12 GB<br>
+                    งานอ้างอิง 2.34 วินาที (เครื่องอ้างอิง 1.5 วินาที)<br>
+                    เพดานไฟการ์ด 170 W จากสเปค 170 W (100%)<br>
+                    โมเดลในเครื่อง: checkpoint 1 · upscaler 1 · diffusion 0<br>
+                    วัดเมื่อ 2026-10-27 09:14
+                </div>
+            </section>
+            <section class="chrome" style="flex:1">
+                <i class="screw" style="left:-6px;top:-6px"></i><i class="screw" style="right:-6px;top:-6px"></i><i class="screw" style="left:-6px;bottom:-6px"></i><i class="screw" style="right:-6px;bottom:-6px"></i>
+                <div class="lbl">Sub-scores · live</div>
+                <div class="kv">
+                    <span>GPU load</span><span class="mono goldtxt">92%</span>
+                    <span>Core temp</span><span class="mono">61 °C</span>
+                    <span>Session uptime</span><span class="mono">06:42</span>
+                    <span>Relay latency</span><span class="mono">38ms</span>
+                </div>
+            </section>
+        </div>
+        <div class="col">
+            <section class="chrome" style="flex:1">
+                <div style="display:flex;justify-content:space-between"><span class="lbl">งานที่เครื่องนี้รับได้</span><span class="muted">วัดจริง ไม่ใช่การประกาศเอง</span></div>
+                <div style="display:grid;gap:9px">
+                    <div class="lane"><b>image</b><span class="v full">รับงานได้</span><small>ประมาณ 9.4 วินาที/ชิ้น</small></div>
+                    <div class="lane"><b>upscale</b><span class="v full">รับงานได้ · รอบแรก</span><small>VRAM และโมเดลพร้อม — ปรับตามเวลาจริงเมื่อทำงานครบ 3 ชิ้น</small></div>
+                    <div class="lane"><b>video</b><span class="v no">รับไม่ได้</span><small>ไม่มีไฟล์โมเดลใน diffusion_models</small></div>
+                    <div class="lane"><b>audio</b><span class="v no">รับไม่ได้</span><small>ยังไม่มีโมเดลในเครื่อง</small></div>
+                </div>
+                <p class="note">รอบแรกเครื่องได้เต็มความเร็วไว้ก่อนทุกงานที่ VRAM และโมเดลพร้อม แล้วระบบจะปรับตามเวลาจริงเมื่อทำงานครบ 3 ชิ้น — เร็วกว่าที่คาดก็อยู่เต็มความเร็วต่อ ช้ากว่าก็ลงมาเป็น "งานไม่เร่ง" ซึ่งยังได้งานและได้เงิน แค่เป็นงานที่ไม่มีคนนั่งรอ ส่วน "รับไม่ได้" คือทำไม่ได้จริง ๆ</p>
+                <div class="lcd" style="margin-top:14px;padding:12px 14px">
+                    <div class="l" style="margin-bottom:6px">ข้อสังเกตเรื่องเครื่อง</div>
+                    <div class="orange" style="font-size:12.5px">! อุณหภูมิขึ้นถึง 74 °C ระหว่างวัด — ตรวจการระบายอากาศของเคส</div>
+                </div>
+                <p class="note">ทั้งหมดนี้มีผลกับคะแนน แต่ไม่ได้ทำให้เครื่องรับงานไม่ได้ — แก้แล้วประเมินใหม่ คะแนนจะขึ้นเอง</p>
+            </section>
+        </div>
+    </div>
+</main>
+<script src="chrome.js"></script>
+</body></html>
