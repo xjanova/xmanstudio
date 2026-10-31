@@ -45,12 +45,41 @@ on:
         required: false
         default: 'eth0'
 
+# The secrets file below has one fixed path, so two runs at once would delete
+# each other's copy.
+concurrency:
+  group: wireguard-setup
+  cancel-in-progress: false
+
 jobs:
   wireguard:
     name: "WireGuard: ${{ inputs.action }}"
     runs-on: ubuntu-latest
 
     steps:
+      # Never pass a secret through ssh-action's `envs:`. It prepends them to the
+      # script as `export KEY='value'` lines and sends the lot as the SSH exec
+      # command, so sshd runs `bash -c '<script>'` and the values can be read from
+      # ps for the whole run, on a server shared with other sites. Plain ssh
+      # carries the root password on stdin, which no command line sees. The script
+      # reads this file and deletes it before it does anything else.
+      - name: Send root password to the server over stdin
+        timeout-minutes: 2
+        env:
+          SUDO_PASS: ${{ secrets.SUDO_PASS }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT || 22 }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          eval "$(ssh-agent -s)" > /dev/null
+          trap 'ssh-agent -k > /dev/null' EXIT
+          printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -q -
+          printf '%s\0' "$SUDO_PASS" | ssh -T -p "$SSH_PORT" \
+            -o BatchMode=yes -o ConnectTimeout=30 \
+            -o StrictHostKeyChecking=accept-new -o LogLevel=ERROR \
+            "$SSH_USER@$SSH_HOST" 'umask 077 && cat > "$HOME/.xmanstudio-wireguard-secrets"'
+
       - name: Execute via SSH
         uses: appleboy/ssh-action@v1
         env:
@@ -64,15 +93,23 @@ jobs:
           WG_MAX_CLIENTS: ${{ inputs.max_clients }}
           WG_NET_INTERFACE: ${{ inputs.net_interface }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-          SUDO_PASS: ${{ secrets.SUDO_PASS }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
           command_timeout: 5m
-          envs: WG_ACTION,WG_SERVER_NAME,WG_COUNTRY_CODE,WG_COUNTRY_NAME,WG_PORT,WG_INTERFACE,WG_ADDRESS,WG_MAX_CLIENTS,WG_NET_INTERFACE,DEPLOY_PATH,SUDO_PASS
+          envs: WG_ACTION,WG_SERVER_NAME,WG_COUNTRY_CODE,WG_COUNTRY_NAME,WG_PORT,WG_INTERFACE,WG_ADDRESS,WG_MAX_CLIENTS,WG_NET_INTERFACE,DEPLOY_PATH
           script: |
+            # The root password from the step above. Not exported, so nothing this
+            # script starts inherits it.
+            SECRETS_FILE="$HOME/.xmanstudio-wireguard-secrets"
+            SUDO_PASS=""
+            if [ -f "$SECRETS_FILE" ]; then
+              IFS= read -r -d '' SUDO_PASS < "$SECRETS_FILE" || true
+              rm -f "$SECRETS_FILE"
+            fi
+
             ACTION="${WG_ACTION}"
             echo "=============================="
             echo "Action: $ACTION"
@@ -82,7 +119,7 @@ jobs:
 
             # SUDO_PASS is the root password, use su -c instead of sudo
             if [ -n "$SUDO_PASS" ]; then
-              echo "ROOT_PASS: set (${#SUDO_PASS} chars)"
+              echo "ROOT_PASS: set"
             else
               echo "ROOT_PASS: NOT SET"
             fi
@@ -174,7 +211,7 @@ jobs:
                 " 2>/dev/null || true
 
                 echo "=== Creating DB record ==="
-                php artisan wireguard:setup \
+                printf '%s\n' "$WG_PRIVKEY" | php artisan wireguard:setup \
                   --name="${WG_SERVER_NAME}" \
                   --country="${WG_COUNTRY_CODE}" \
                   --country-name="${WG_COUNTRY_NAME}" \
@@ -183,8 +220,8 @@ jobs:
                   --address="${WG_ADDRESS}" \
                   --max-clients="${WG_MAX_CLIENTS}" \
                   --public-key="$WG_PUBKEY" \
-                  --private-key="$WG_PRIVKEY" \
-                  --db-only
+                  --private-key-stdin \
+                  --db-only || { echo "ERROR: Could not create DB record"; exit 1; }
 
                 echo "=== Verifying ==="
                 do_sudo wg show "${WG_INTERFACE}" || echo "WARNING: Interface not showing"
@@ -269,7 +306,8 @@ jobs:
                   --interface="${WG_INTERFACE}" \
                   --address="${WG_ADDRESS}" \
                   --max-clients="${WG_MAX_CLIENTS}" \
-                  --net-interface="${WG_NET_INTERFACE}"
+                  --net-interface="${WG_NET_INTERFACE}" \
+                  --db-only
                 echo "=== DONE ==="
                 ;;
 
@@ -279,3 +317,15 @@ jobs:
                 ;;
             esac
 
+      # The script deletes the file as it starts. This is for a run that stopped
+      # before the script got that far.
+      - name: Remove secrets file from the server
+        if: always()
+        continue-on-error: true
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script: rm -f "$HOME/.xmanstudio-wireguard-secrets"

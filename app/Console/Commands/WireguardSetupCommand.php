@@ -6,6 +6,7 @@ use App\Models\WireguardServer;
 use App\Services\WireguardService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Process;
+use Symfony\Component\Console\Input\StreamableInputInterface;
 
 class WireguardSetupCommand extends Command
 {
@@ -19,8 +20,8 @@ class WireguardSetupCommand extends Command
         {--dns=1.1.1.1, 8.8.8.8 : DNS servers for clients}
         {--max-clients=250 : Maximum number of clients}
         {--net-interface=eth0 : Network interface for NAT masquerade}
-        {--public-key= : Pre-generated public key (skip key generation)}
-        {--private-key= : Pre-generated private key (skip key generation)}
+        {--public-key= : Pre-generated public key (needs --private-key-stdin)}
+        {--private-key-stdin : Read the pre-generated private key from stdin (skip key generation)}
         {--skip-install : Skip WireGuard package installation}
         {--db-only : Only create database record, skip all system setup}';
 
@@ -54,11 +55,20 @@ class WireguardSetupCommand extends Command
         $this->info("Setting up WireGuard server: {$name}");
         $this->info("Interface: {$interface}, Port: {$port}, Address: {$address}");
 
-        // Use pre-generated keys or generate new ones
-        $privateKey = $this->option('private-key');
-        $publicKey = $this->option('public-key');
+        // Use pre-generated keys or generate new ones. The private key comes in on
+        // stdin because an option would put it on the command line, where ps shows it.
+        if ($this->option('private-key-stdin')) {
+            $publicKey = $this->option('public-key');
+            $privateKey = $this->readPrivateKey();
 
-        if ($privateKey && $publicKey) {
+            // Never fall back to generating a pair here: the caller's interface is
+            // already running on this key, so a new pair would silently not match it.
+            if (! $publicKey || ! $this->isWireguardKey($privateKey)) {
+                $this->error('--private-key-stdin needs --public-key and one WireGuard private key on stdin.');
+
+                return self::FAILURE;
+            }
+
             $this->info('Using provided key pair.');
             $this->info("Public Key: {$publicKey}");
         } else {
@@ -67,11 +77,12 @@ class WireguardSetupCommand extends Command
             $privateKey = $keyPair['private_key'];
             $publicKey = $keyPair['public_key'];
             $this->info("Public Key: {$publicKey}");
-        }
 
-        // Output config for external setup (workflow will use this)
-        if (! $this->option('db-only')) {
-            $this->info("Private Key: {$privateKey}");
+            // For someone at a terminal setting the server up by hand. The workflow
+            // passes --db-only, because its output is a public Actions log.
+            if (! $this->option('db-only')) {
+                $this->info("Private Key: {$privateKey}");
+            }
         }
 
         // Detect public IP for endpoint
@@ -129,5 +140,17 @@ class WireguardSetupCommand extends Command
         );
 
         return self::SUCCESS;
+    }
+
+    private function readPrivateKey(): string
+    {
+        $stream = $this->input instanceof StreamableInputInterface ? $this->input->getStream() : null;
+
+        return trim((string) fgets($stream ?? STDIN));
+    }
+
+    private function isWireguardKey(string $key): bool
+    {
+        return strlen((string) base64_decode($key, true)) === 32;
     }
 }
