@@ -86,6 +86,12 @@
                        class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent">
                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">พูลตื้นมาก (USDT ไม่กี่ตัวก็ดันราคาได้) — ยอดชำระหนึ่งรายการต้องไม่เกินค่านี้ × USDT ในพูล × USD/THB</p>
             </div>
+            <div class="sm:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ส่วนลดแพ็กเกจ AI Credits เมื่อชำระด้วย TPIX (%)</label>
+                <input type="number" name="tpix_ai_credit_discount_percent" min="0" max="{{ \App\Services\TpixPay\TpixPaySettings::MAX_AI_CREDIT_DISCOUNT }}" step="1" value="{{ old('tpix_ai_credit_discount_percent', $settings['ai_credit_discount_percent']) }}"
+                       class="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">0–{{ \App\Services\TpixPay\TpixPaySettings::MAX_AI_CREDIT_DISCOUNT }} — ใช้กับแพ็กเกจ AI Credits (ai.xman4289.com) ทั้งหน้าชำระเงินของเว็บนี้และหน้า /tpix ของ ai.xman4289.com · ค่าคอมมิชชันพันธมิตรคิดจากยอดหลังหักส่วนลด · 0 = ไม่มีส่วนลด</p>
+            </div>
         </div>
 
         <button type="submit" class="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold shadow-lg hover:from-amber-600 hover:to-orange-600 transition">บันทึก</button>
