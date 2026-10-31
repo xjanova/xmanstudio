@@ -165,7 +165,9 @@
     return '<span class="button soon-tag" role="note" title="ยังไม่เปิดให้ดาวน์โหลดหรือสั่งซื้อ"><span aria-hidden="true">◌</span> COMING SOON · เร็ว ๆ นี้</span>';
   }
 
+  /** The product's page; none while the shop has its sales closed (that page answers 404). */
   function pageLink(p, cls) {
+    if (p.closed) return '';
     return '<a class="button ' + cls + '" href="' + esc(p.href) + '"' + (p.external ? newTab : '') + '>' +
       (cls === 'primary' ? '<span aria-hidden="true">⌘</span> ' + esc(p.hrefLabel) : esc(p.hrefLabel) + ' <span aria-hidden="true">↗</span>') + '</a>';
   }
@@ -223,7 +225,7 @@
       priceEl.className = 'spot-price';
       spotCopy.insertBefore(priceEl, acts);
     }
-    priceEl.innerHTML = esc(p.price) + (canDownload(p) || p.status !== 'live'
+    priceEl.innerHTML = esc(p.price) + (!p.closed && (canDownload(p) || p.status !== 'live')
       ? ' <span class="sep">·</span> <a href="' + esc(p.href) + '"' + (p.external ? newTab : '') + '>' + esc(p.hrefLabel) + ' ↗</a>'
       : '');
     var st = $('#spot-status');
