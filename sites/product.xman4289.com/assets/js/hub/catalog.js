@@ -397,10 +397,12 @@
       ],
     },
     /* SmsChecker sells per term, but its numbers come only from the shop's live table
-       (plansKey): nothing is seeded here, so its price shows once the shop answers. */
+       (plansKey): nothing is seeded here, so its price shows once the shop answers.
+       Sales are closed in the shop's admin (2026-09-23) and its pages answer 404 until
+       they reopen: `closed` hides the links, the shop's status lifts it. */
     {
       id: 'smschecker', name: 'SmsChecker', sub: 'BANK TRANSFER AUTO-CONFIRM', cat: 'mobile',
-      status: 'soon', free: false, price: '[[{from} · ]]ทดลองฟรี 24 ชม.', plansKey: 'smschecker', plans: {},
+      status: 'soon', closed: true, free: false, price: '[[{from} · ]]ทดลองฟรี 24 ชม.', plansKey: 'smschecker', plans: {},
       platforms: ['Android'], tags: ['14 Thai banks', 'Satang matching', 'No root', 'AES-256-GCM'],
       palette: ['#5ce98a', '#0a2a20', '#5ec8d6'], planet: 1,
       art: art('smschecker'),
@@ -554,7 +556,7 @@
     };
     // what this file says, so the live data is always applied to it and never on top of itself
     p.base = {
-      status: p.status, shots: p.shots.slice(), version: p.version, released: p.released,
+      status: p.status, closed: !!p.closed, shots: p.shots.slice(), version: p.version, released: p.released,
       download: p.download, downloadLabel: p.downloadLabel, dlPage: !!p.dlPage,
       plans: p.plans ? Object.assign({}, p.plans) : null, amount: p.amount, addonSoon: p.addon ? p.addon.soon : false,
     };
@@ -578,6 +580,8 @@
      GET /api/v1/catalog (CORS *) → { success, products: [{ slug, status, image_url,
      real_image, version, download_url, url, … }] }, matched on `shop`:
      - status: on_sale → live; coming_soon / off_sale → soon. The shop wins.
+       off_sale also sets `closed`: the shop answers 404 for that product's pages,
+       so no link points there.
      - real_image: image_url is a real screenshot set in the shop's admin → it goes
        first in `shots` (LIVE CAPTURE badge, card hover, dialog gallery, 3D screen).
        real_image false = only the shop's fallback art: ignored, the hub's art stays.
@@ -666,6 +670,7 @@
       var b = p.base;
       var row = p.shop ? bySlug[p.shop] : null;
       var status = row && STATUS[row.status] ? STATUS[row.status] : b.status;
+      var closed = row && STATUS[row.status] ? row.status === 'off_sale' : b.closed;
       var real = realImage(row);
       var shots = real ? [real].concat(b.shots.filter(function (s) { return s !== real; })) : b.shots.slice();
       var version = liveVersion(row) || b.version;
@@ -674,10 +679,11 @@
       var download = b.download || shopDl;
       var price = row && row.price != null && row.price !== '' && isFinite(Number(row.price)) && Number(row.price) >= 0 ? Number(row.price) : b.amount;
       var sig = function (q) {
-        return [q.status, q.shots.join('\n'), q.version, q.download, q.price, q.desc, q.features.join('\n'), q.nova.join('\n')].join('|');
+        return [q.status, !!q.closed, q.shots.join('\n'), q.version, q.download, q.price, q.desc, q.features.join('\n'), q.nova.join('\n')].join('|');
       };
       var before = sig(p);
       p.status = status;
+      p.closed = closed;
       p.shots = shots;
       p.version = version;
       p.released = version === b.version ? b.released : null;
