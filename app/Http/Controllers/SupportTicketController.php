@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\SupportTicket;
+use App\Support\Attachments;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -83,23 +84,16 @@ class SupportTicketController extends Controller
             'priority' => 'required|string|in:' . implode(',', array_keys(SupportTicket::getPriorities())),
             'message' => 'required|string|min:10',
             'order_id' => 'nullable|exists:orders,id',
+            'attachments' => 'nullable|array',
             'attachments.*' => 'nullable|file|max:10240|mimes:jpg,jpeg,png,gif,pdf,doc,docx,zip',
         ]);
 
         $user = Auth::user();
 
-        // Handle file attachments
-        $attachments = [];
-        if ($request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
-                $path = $file->store('ticket-attachments/' . date('Y/m'), 'public');
-                $attachments[] = [
-                    'name' => $file->getClientOriginalName(),
-                    'path' => $path,
-                    'size' => $file->getSize(),
-                    'type' => $file->getMimeType(),
-                ];
-            }
+        // Kept off the web root: customers attach slips and ID cards (App\Support\Attachments)
+        $attachments = Attachments::store($request->file('attachments', []), Attachments::TICKETS . '/' . date('Y/m'));
+        if ($attachments === null) {
+            return back()->withInput()->with('error', 'บันทึกไฟล์แนบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
         }
 
         $ticket = SupportTicket::create([
@@ -157,21 +151,14 @@ class SupportTicketController extends Controller
 
         $validated = $request->validate([
             'message' => 'required|string|min:3',
+            'attachments' => 'nullable|array',
             'attachments.*' => 'nullable|file|max:10240|mimes:jpg,jpeg,png,gif,pdf,doc,docx,zip',
         ]);
 
-        // Handle file attachments
-        $attachments = [];
-        if ($request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
-                $path = $file->store('ticket-attachments/' . date('Y/m'), 'public');
-                $attachments[] = [
-                    'name' => $file->getClientOriginalName(),
-                    'path' => $path,
-                    'size' => $file->getSize(),
-                    'type' => $file->getMimeType(),
-                ];
-            }
+        // Kept off the web root: customers attach slips and ID cards (App\Support\Attachments)
+        $attachments = Attachments::store($request->file('attachments', []), Attachments::TICKETS . '/' . date('Y/m'));
+        if ($attachments === null) {
+            return back()->withInput()->with('error', 'บันทึกไฟล์แนบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
         }
 
         $ticket->addReply(Auth::user(), $validated['message'], $attachments);

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\SupportTicket;
 use App\Models\User;
+use App\Support\Attachments;
 use App\Support\SqlDialect;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -129,21 +130,14 @@ class SupportTicketController extends Controller
         $validated = $request->validate([
             'message' => 'required|string|min:3',
             'is_internal' => 'nullable|boolean',
+            'attachments' => 'nullable|array',
             'attachments.*' => 'nullable|file|max:10240|mimes:jpg,jpeg,png,gif,pdf,doc,docx,zip',
         ]);
 
-        // Handle file attachments
-        $attachments = [];
-        if ($request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
-                $path = $file->store('ticket-attachments/' . date('Y/m'), 'public');
-                $attachments[] = [
-                    'name' => $file->getClientOriginalName(),
-                    'path' => $path,
-                    'size' => $file->getSize(),
-                    'type' => $file->getMimeType(),
-                ];
-            }
+        // Kept off the web root: the reply may carry a customer's details (App\Support\Attachments)
+        $attachments = Attachments::store($request->file('attachments', []), Attachments::TICKETS . '/' . date('Y/m'));
+        if ($attachments === null) {
+            return back()->withInput()->with('error', 'บันทึกไฟล์แนบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
         }
 
         $isInternal = $request->boolean('is_internal');
