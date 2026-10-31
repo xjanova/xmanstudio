@@ -124,6 +124,8 @@ class AixmanTpixApiTest extends TestCase
             'CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json',
             'HTTP_X_AIXMAN_TIMESTAMP' => $ts, 'HTTP_X_AIXMAN_SIGNATURE' => $sig,
         ];
+        // The clock stands still: a second ticking over mid-test would bring $now + 301 back inside the window
+        $this->freezeSecond();
         $now = now()->getTimestamp();
 
         // No headers at all
