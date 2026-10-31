@@ -38,7 +38,7 @@ class WireguardSetupCommandTest extends TestCase
 
     public function test_private_key_from_stdin_is_stored_and_never_printed(): void
     {
-        [$exitCode, $output] = $this->runWithStdin(self::PRIVATE_KEY."\n", ['--public-key' => self::PUBLIC_KEY]);
+        [$exitCode, $output] = $this->runWithStdin(self::PRIVATE_KEY . "\n", ['--public-key' => self::PUBLIC_KEY]);
 
         $this->assertSame(0, $exitCode, $output);
         $this->assertStringNotContainsString(self::PRIVATE_KEY, $output);
@@ -70,7 +70,7 @@ class WireguardSetupCommandTest extends TestCase
     {
         $badKey = 'not-a-wireguard-key-but-maybe-a-secret';
 
-        [$exitCode, $output] = $this->runWithStdin($badKey."\n", ['--public-key' => self::PUBLIC_KEY]);
+        [$exitCode, $output] = $this->runWithStdin($badKey . "\n", ['--public-key' => self::PUBLIC_KEY]);
 
         $this->assertSame(1, $exitCode);
         $this->assertSame(0, WireguardServer::count());
@@ -79,7 +79,7 @@ class WireguardSetupCommandTest extends TestCase
 
     public function test_stdin_key_needs_the_public_key(): void
     {
-        [$exitCode] = $this->runWithStdin(self::PRIVATE_KEY."\n");
+        [$exitCode] = $this->runWithStdin(self::PRIVATE_KEY . "\n");
 
         $this->assertSame(1, $exitCode);
         $this->assertSame(0, WireguardServer::count());
