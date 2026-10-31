@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Process;
 class WireguardService
 {
     /**
-     * Run a command with sudo, using SUDO_PASS env var if available.
+     * Run a command with sudo.
      */
     private function sudoRun(string $command, int $timeout = 60): ProcessResult
     {
