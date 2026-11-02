@@ -31,12 +31,26 @@ class PackController extends Controller
      * GET /api/packs - everything on sale, no authentication.
      *
      * Someone who has not bought anything still needs to see what exists.
+     *
+     * Knowledge packs are listed only for `?with=knowledge`, which the app
+     * sends from the release that can install them. An older app reads any
+     * kind it does not know as a character, shows it among the outfits, and
+     * fails to install it - after the customer has paid.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         $tpix = app(TpixPriceService::class);
 
+        // A comma list so a later kind can be opted into the same way. Anything
+        // that is not a plain string (?with[]=...) opts into nothing.
+        $with = $request->query('with');
+        $with = is_string($with) ? array_map('trim', explode(',', $with)) : [];
+
         $packs = AvatarPack::active()
+            ->when(
+                ! in_array(AvatarPack::KIND_KNOWLEDGE, $with, true),
+                fn ($q) => $q->where('kind', '!=', AvatarPack::KIND_KNOWLEDGE)
+            )
             ->with(['product.versions'])
             ->get()
             ->filter(fn (AvatarPack $p) => $p->product?->is_active)

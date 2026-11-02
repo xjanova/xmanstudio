@@ -55,7 +55,7 @@
                     {{-- ตัวนี้ต้องตรงกับ id ใน pack.json เป๊ะ ๆ ไม่งั้นแอปโหลดมาแล้ว
                          จับคู่กับสิ่งที่ซื้อไม่ได้ · ตอนอัปโหลดไฟล์มีด่านเช็คให้อีกชั้น --}}
                     <p class="mt-1 text-xs text-gray-500">
-                        ต้องตรงกับ <code>id</code> ใน <code>pack.json</code> ที่อยู่ในไฟล์ zip · ใช้ได้เฉพาะ a-z 0-9 . _ -
+                        ต้องตรงกับ <code>id</code> ใน <code>pack.json</code> (ชุด) หรือ <code>manifest.json</code> (แพ็กความรู้) ที่อยู่ในไฟล์ zip · ใช้ได้เฉพาะ a-z 0-9 . _ -
                     </p>
                 </div>
 
@@ -81,6 +81,7 @@
                         <option value="character">ตัวละคร — เลขาคนใหม่ทั้งตัว</option>
                         <option value="outfit">ชุดแต่งตัว — ของตัวละครที่มีอยู่</option>
                         <option value="prop">ของประดับ — โมเดล 3D บนเวที</option>
+                        <option value="knowledge">ความรู้ — แพ็กความรู้ให้มายด์ค้นในแชท</option>
                     </select>
                 </div>
 
@@ -106,6 +107,35 @@
                             </option>
                         @endforeach
                     </select>
+                </div>
+
+                {{-- แอปรุ่นที่มีแท็บความรู้เท่านั้นที่เห็นแพ็กชนิดนี้ (?with=knowledge) · เนื้อหาตรวจด้วยโค้ดไม่ได้ --}}
+                <div class="sm:col-span-2 rounded-xl bg-amber-50 border border-amber-200 p-4 text-sm text-amber-900 dark:bg-amber-900/20 dark:border-amber-700 dark:text-amber-200"
+                     x-show="kind === 'knowledge'" x-cloak>
+                    <p class="font-semibold mb-2">แพ็กความรู้ — ต้องมีคนอ่านเนื้อหาก่อนเปิดขายทุกครั้ง</p>
+                    <ul class="list-disc list-inside space-y-1">
+                        <li>เรื่องที่พลาดแล้วคนเจ็บ (ปฐมพยาบาล เอาตัวรอด เครื่องยนต์) ทุกหัวข้อต้องมี <code>ที่มา:</code> และตัวเลข (นาที เบอร์โทร ขนาด) ต้องตรวจกับต้นทางได้</li>
+                        <li>แพ็กเรื่องลงทุน เทรด หรือคริปโต ต้องใส่ <code>"category": "trading"</code> ใน manifest.json เท่านั้น — แอปจึงใส่กฎห้ามชี้ซื้อขาย ห้ามราคาเป้าหมาย และป้าย "ไม่ใช่คำแนะนำการลงทุน" ให้เอง · แพ็กลงทุนที่ใช้หมวดอื่นหลุดกฎทั้งหมด และระบบตรวจเรื่องนี้แทนคนไม่ได้</li>
+                        <li>เนื้อหาต้องเป็นของเราหรือได้สิทธิ์ · ห้ามก๊อปหนังสือหรือเว็บมาทั้งย่อหน้า</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">สรุปสั้น ๆ (ไทย)</label>
+                    <input type="text" name="summary_th" maxlength="255"
+                           value="{{ old('summary_th', $pack->summary_th) }}"
+                           class="w-full rounded-xl border-gray-300 dark:bg-gray-900 dark:border-gray-600"
+                           placeholder="หลงป่า น้ำดื่ม เห็ดป่า งูกัด">
+                    <p class="mt-1 text-xs text-gray-500">บรรทัดเดียวใต้ชื่อในร้านของแอป ว่าในแพ็กมีอะไร · ไม่ใส่ = ไม่แสดง</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">สรุปสั้น ๆ (อังกฤษ)</label>
+                    <input type="text" name="summary_en" maxlength="255"
+                           value="{{ old('summary_en', $pack->summary_en) }}"
+                           class="w-full rounded-xl border-gray-300 dark:bg-gray-900 dark:border-gray-600"
+                           placeholder="Lost, water, wild mushrooms, snakebite">
+                    <p class="mt-1 text-xs text-gray-500">ไม่ใส่ = ใช้สรุปภาษาไทย</p>
                 </div>
 
                 <div class="sm:col-span-2">
@@ -145,10 +175,19 @@
 
     <div class="space-y-6">
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow p-6">
-            <h2 class="font-semibold text-gray-900 dark:text-gray-100 mb-1">ไฟล์ชุด (.zip)</h2>
-            <p class="text-xs text-gray-500 mb-4">
-                ระบบจะอ่าน <code>pack.json</code> ในไฟล์ แล้วเทียบ id กับรหัสชุดให้ก่อนบันทึก
-            </p>
+            @if($pack->isKnowledge())
+                <h2 class="font-semibold text-gray-900 dark:text-gray-100 mb-1">ไฟล์แพ็กความรู้ (.zip)</h2>
+                <p class="text-xs text-gray-500 mb-4">
+                    ระบบอ่าน <code>manifest.json</code> แล้วตรวจทุกข้อที่แอปตรวจก่อนติดตั้ง — id ชนิด หมวด
+                    ไฟล์ที่รับ (<code>.md .markdown .txt</code> และรูป) ขนาด และความยาวของเนื้อหา · ไม่ผ่านข้อไหนไม่บันทึก
+                    · เวอร์ชันใช้ตาม <code>version</code> ใน manifest.json
+                </p>
+            @else
+                <h2 class="font-semibold text-gray-900 dark:text-gray-100 mb-1">ไฟล์ชุด (.zip)</h2>
+                <p class="text-xs text-gray-500 mb-4">
+                    ระบบจะอ่าน <code>pack.json</code> ในไฟล์ แล้วเทียบ id กับรหัสชุดให้ก่อนบันทึก
+                </p>
+            @endif
 
             @if(! $pack->exists)
                 <p class="text-sm text-gray-500">สร้างชุดก่อน แล้วค่อยอัปโหลดไฟล์</p>
@@ -178,8 +217,14 @@
                     @csrf
                     <input type="file" name="file" accept=".zip" required
                            class="w-full text-sm text-gray-600 dark:text-gray-300">
-                    <input type="text" name="version" placeholder="เวอร์ชัน (ไม่ใส่ = ตั้งให้เอง)"
-                           class="w-full rounded-xl border-gray-300 dark:bg-gray-900 dark:border-gray-600 text-sm">
+                    @error('file')
+                        {{-- เหตุผลที่ไม่ผ่านต้องอยู่ข้างปุ่มอัปโหลด ไม่ใช่แค่หัวหน้า --}}
+                        <p class="rounded-xl bg-red-50 border border-red-200 p-3 text-sm text-red-700">{{ $message }}</p>
+                    @enderror
+                    @unless($pack->isKnowledge())
+                        <input type="text" name="version" placeholder="เวอร์ชัน (ไม่ใส่ = ตั้งให้เอง)"
+                               class="w-full rounded-xl border-gray-300 dark:bg-gray-900 dark:border-gray-600 text-sm">
+                    @endunless
                     <button type="submit"
                             class="w-full px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 text-sm font-medium">
                         อัปโหลด

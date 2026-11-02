@@ -11,7 +11,7 @@
         <div>
             <h1 class="text-2xl sm:text-3xl font-bold text-white">ชุดตัวมายด์ (GigGok)</h1>
             <p class="mt-2 text-white/80 text-sm sm:text-base">
-                ชุดแต่งตัว ตัวละครใหม่ และของประดับเวที ที่แอปโหลดไปใช้
+                ชุดแต่งตัว ตัวละครใหม่ ของประดับเวที และแพ็กความรู้ ที่แอปโหลดไปใช้
             </p>
         </div>
         <a href="{{ route('admin.packs.create') }}"
@@ -58,7 +58,7 @@
                             </div>
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
-                            {{ ['character' => 'ตัวละคร', 'outfit' => 'ชุดแต่งตัว', 'prop' => 'ของประดับ'][$pack->kind] ?? $pack->kind }}
+                            {{ ['character' => 'ตัวละคร', 'outfit' => 'ชุดแต่งตัว', 'prop' => 'ของประดับ', 'knowledge' => 'ความรู้'][$pack->kind] ?? $pack->kind }}
                             @if($pack->requires)
                                 <div class="text-xs text-gray-400">ต้องมี {{ $pack->requires }} ก่อน</div>
                             @endif
