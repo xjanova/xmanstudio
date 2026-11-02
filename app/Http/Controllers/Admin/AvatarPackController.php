@@ -7,6 +7,8 @@ use App\Models\AvatarPack;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductVersion;
+use App\Services\KnowledgePackException;
+use App\Services\KnowledgePackValidator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
@@ -75,6 +77,8 @@ class AvatarPackController extends Controller
             'kind' => $data['kind'],
             'requires' => $data['requires'],
             'name_en' => $data['name_en'],
+            'summary_th' => $data['summary_th'],
+            'summary_en' => $data['summary_en'],
             'is_active' => $data['is_active'],
         ]);
 
@@ -84,7 +88,7 @@ class AvatarPackController extends Controller
 
         return redirect()
             ->route('admin.packs.edit', $pack)
-            ->with('success', 'เพิ่มชุดแล้ว — ขั้นต่อไปคืออัปโหลดไฟล์ .zip');
+            ->with('success', ($pack->isKnowledge() ? 'เพิ่มแพ็กความรู้แล้ว' : 'เพิ่มชุดแล้ว') . ' — ขั้นต่อไปคืออัปโหลดไฟล์ .zip');
     }
 
     public function edit(AvatarPack $pack)
@@ -113,6 +117,8 @@ class AvatarPackController extends Controller
             'kind' => $data['kind'],
             'requires' => $data['requires'],
             'name_en' => $data['name_en'],
+            'summary_th' => $data['summary_th'],
+            'summary_en' => $data['summary_en'],
             'is_active' => $data['is_active'],
         ]);
 
@@ -131,6 +137,12 @@ class AvatarPackController extends Controller
      * the app installs by the id in pack.json and reports ownership by the
      * id in the catalogue. A mismatch is invisible to everyone until a
      * customer pays and the app quietly refuses to see what it downloaded.
+     *
+     * A knowledge pack is a different format - manifest.json, not pack.json -
+     * and goes through every check the app makes before installing one, so
+     * nothing the app would refuse can go on sale. Its version is read from
+     * the manifest rather than typed in, so the catalogue cannot disagree
+     * with the file: the app compares the two to offer an update.
      */
     public function uploadFile(Request $request, AvatarPack $pack)
     {
@@ -140,33 +152,65 @@ class AvatarPackController extends Controller
         ]);
 
         $upload = $request->file('file');
-        $insideId = $this->packIdInsideZip($upload->getRealPath());
+        $sha256 = hash_file('sha256', $upload->getRealPath());
 
-        if ($insideId === null) {
-            throw ValidationException::withMessages([
-                'file' => 'ในไฟล์ zip ไม่มี pack.json — แอปจะแตกไฟล์ไม่ออก',
-            ]);
-        }
+        if ($pack->isKnowledge()) {
+            try {
+                $manifest = app(KnowledgePackValidator::class)->validate($upload->getRealPath(), $pack->pack_id);
+            } catch (KnowledgePackException $e) {
+                throw ValidationException::withMessages(['file' => $e->getMessage()]);
+            }
 
-        if ($insideId !== $pack->pack_id) {
-            throw ValidationException::withMessages([
-                'file' => sprintf(
-                    'id ในไฟล์คือ "%s" แต่ชุดนี้ขายในชื่อ "%s" — แอปจะโหลดมาแล้วจำไม่ได้ว่าซื้อแล้ว',
-                    $insideId,
-                    $pack->pack_id
-                ),
-            ]);
+            $version = $manifest['version'];
+
+            // The app offers an update only when the version changes. A different file under a
+            // version already sold would reach new buyers and never reach anyone who installed it.
+            $sameVersion = $pack->product->versions()
+                ->where('version', $version)
+                ->whereNotNull('storage_path')
+                ->first();
+
+            if ($sameVersion && $sameVersion->sha256 !== $sha256) {
+                throw ValidationException::withMessages([
+                    'file' => sprintf(
+                        'เวอร์ชัน %s มีไฟล์อื่นอยู่แล้ว — ถ้าอัปโหลดทับ แอปที่ติดตั้งรุ่นนี้ไปแล้วจะไม่เห็นปุ่มอัปเดต ให้เพิ่มเลข version ใน manifest.json ก่อน',
+                        $version
+                    ),
+                ]);
+            }
+        } else {
+            $insideId = $this->packIdInsideZip($upload->getRealPath());
+
+            if ($insideId === null) {
+                throw ValidationException::withMessages([
+                    'file' => 'ในไฟล์ zip ไม่มี pack.json — แอปจะแตกไฟล์ไม่ออก',
+                ]);
+            }
+
+            if ($insideId !== $pack->pack_id) {
+                throw ValidationException::withMessages([
+                    'file' => sprintf(
+                        'id ในไฟล์คือ "%s" แต่ชุดนี้ขายในชื่อ "%s" — แอปจะโหลดมาแล้วจำไม่ได้ว่าซื้อแล้ว',
+                        $insideId,
+                        $pack->pack_id
+                    ),
+                ]);
+            }
+
+            $version = $request->input('version') ?: $this->nextVersion($pack->product);
         }
 
         $disk = Storage::disk(config('packs.disk', 'local'));
         $path = 'packs/' . $pack->pack_id . '/' . Str::uuid() . '.zip';
         $disk->put($path, file_get_contents($upload->getRealPath()));
 
-        $version = $request->input('version') ?: $this->nextVersion($pack->product);
-
         // Only one version of a pack is ever offered - the app has no version
         // picker - so the previous one is retired rather than left active.
         $pack->product->versions()->update(['is_active' => false]);
+
+        // An upload under a version that already has a file replaces that file;
+        // the old one would otherwise sit on disk with nothing pointing at it.
+        $replaced = $pack->product->versions()->where('version', $version)->value('storage_path');
 
         ProductVersion::updateOrCreate(
             ['product_id' => $pack->product_id, 'version' => $version],
@@ -174,13 +218,19 @@ class AvatarPackController extends Controller
                 'download_filename' => $pack->pack_id . '.zip',
                 'storage_path' => $path,
                 'file_size' => $upload->getSize(),
-                'sha256' => hash_file('sha256', $upload->getRealPath()),
+                'sha256' => $sha256,
                 'is_active' => true,
                 'synced_at' => now(),
             ]
         );
 
-        return back()->with('success', 'อัปโหลดแล้ว เวอร์ชัน ' . $version);
+        if ($replaced && $replaced !== $path) {
+            $disk->delete($replaced);
+        }
+
+        return back()->with('success', $pack->isKnowledge()
+            ? sprintf('อัปโหลดแล้ว เวอร์ชัน %s (จาก manifest.json) · หมวด %s', $version, $manifest['category'])
+            : 'อัปโหลดแล้ว เวอร์ชัน ' . $version);
     }
 
     public function toggle(AvatarPack $pack)
@@ -235,6 +285,8 @@ class AvatarPackController extends Controller
             ],
             'name_th' => 'required|string|max:255',
             'name_en' => 'nullable|string|max:255',
+            'summary_th' => 'nullable|string|max:255',
+            'summary_en' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'kind' => ['required', Rule::in(AvatarPack::KINDS)],
             'requires' => 'nullable|string|max:48',
@@ -253,6 +305,29 @@ class AvatarPackController extends Controller
             throw ValidationException::withMessages([
                 'requires' => 'ชุดต้องการตัวเองไม่ได้',
             ]);
+        }
+
+        $knowledge = $data['kind'] === AvatarPack::KIND_KNOWLEDGE;
+
+        // The app refuses a knowledge pack id starting with "_" (its own file names) or "."
+        if ($knowledge && ! preg_match('/^[a-z0-9]/', $data['pack_id'])) {
+            throw ValidationException::withMessages([
+                'pack_id' => 'รหัสแพ็กความรู้ต้องขึ้นต้นด้วย a-z หรือ 0-9 — แอปไม่รับรหัสที่ขึ้นต้นด้วย . หรือ _',
+            ]);
+        }
+
+        // A knowledge zip and an outfit zip are different formats. Switching across that line with
+        // a file already uploaded puts a file on sale that the app cannot install as the new kind.
+        if ($pack && $pack->isKnowledge() !== $knowledge
+            && $pack->product?->versions()->whereNotNull('storage_path')->exists()) {
+            throw ValidationException::withMessages([
+                'kind' => 'เปลี่ยนชนิดระหว่างแพ็กความรู้กับชุดไม่ได้เมื่ออัปโหลดไฟล์แล้ว — ไฟล์เดิมเป็นคนละรูปแบบ ลูกค้าจะจ่ายเงินแล้วติดตั้งไม่ได้ ให้สร้างรายการใหม่แทน',
+            ]);
+        }
+
+        foreach (['summary_th', 'summary_en'] as $field) {
+            $summary = trim((string) ($data[$field] ?? ''));
+            $data[$field] = $summary === '' ? null : $summary;
         }
 
         return $data;

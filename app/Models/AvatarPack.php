@@ -23,10 +23,18 @@ class AvatarPack extends Model
 
     public const KIND_PROP = 'prop';
 
+    /**
+     * Text for Mind to search on the device: manifest.json + content/*.md,
+     * never code. Its zip is a different format from the other kinds, which
+     * all carry a pack.json - see KnowledgePackValidator.
+     */
+    public const KIND_KNOWLEDGE = 'knowledge';
+
     public const KINDS = [
         self::KIND_CHARACTER,
         self::KIND_OUTFIT,
         self::KIND_PROP,
+        self::KIND_KNOWLEDGE,
     ];
 
     protected $fillable = [
@@ -35,6 +43,8 @@ class AvatarPack extends Model
         'kind',
         'requires',
         'name_en',
+        'summary_th',
+        'summary_en',
         'preview_path',
         'is_active',
     ];
@@ -53,16 +63,27 @@ class AvatarPack extends Model
         return $query->where('is_active', true);
     }
 
+    public function isKnowledge(): bool
+    {
+        return $this->kind === self::KIND_KNOWLEDGE;
+    }
+
     /**
      * The shape the app expects from GET /api/packs.
      *
-     * Size and hash come from the version, not from here: they describe the
-     * file, and the file can be replaced without the listing changing.
+     * Size, hash and version come from the version row, not from here: they
+     * describe the file, and the file can be replaced without the listing
+     * changing. For a knowledge pack that version string was read out of the
+     * zip's own manifest.json at upload, so the catalogue cannot disagree
+     * with the file - the app compares the two to offer an update.
      */
     public function toCatalogueArray(): array
     {
         $product = $this->product;
         $version = $product?->latestVersion();
+        $file = $version?->storage_path ? $version : null;
+        $summaryTh = trim((string) $this->summary_th);
+        $summaryEn = trim((string) $this->summary_en);
 
         return [
             'id' => $this->pack_id,
@@ -76,6 +97,12 @@ class AvatarPack extends Model
             'sizeBytes' => (int) ($version?->file_size ?? 0),
             'preview' => $this->preview_path ? asset($this->preview_path) : null,
             'requires' => $this->requires,
+            // null = no file on sale yet, so nothing to compare an installed pack against
+            'version' => $file?->version,
+            'summary' => $summaryTh === '' && $summaryEn === '' ? null : [
+                'th' => $summaryTh !== '' ? $summaryTh : $summaryEn,
+                'en' => $summaryEn !== '' ? $summaryEn : $summaryTh,
+            ],
         ];
     }
 }
