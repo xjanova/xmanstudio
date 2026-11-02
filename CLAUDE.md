@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-XMAN Studio is a comprehensive business management platform built with **Laravel 11** for selling digital products, managing software licenses, rental packages, and Metal-X YouTube channel content. The site is primarily in **Thai** (th) with English fallback.
+XMAN Studio is a comprehensive business management platform built with **Laravel 12** for selling digital products, managing software licenses, rental packages, and Metal-X YouTube channel content. The site is primarily in **Thai** (th) with English fallback.
 
 ## CRITICAL: Cross-Project Relationship with AIXMAN
 
@@ -26,13 +26,13 @@ XMAN Studio is a comprehensive business management platform built with **Laravel
 
 ## Tech Stack
 
-- **Backend:** PHP 8.2+, Laravel 11
+- **Backend:** PHP 8.2+, Laravel 12
 - **Frontend:** Blade templates, Tailwind CSS v4, Alpine.js v3
 - **Build:** Vite v7 with `laravel-vite-plugin`
 - **Database:** SQLite (dev), MySQL (production)
 - **PDF:** barryvdh/laravel-dompdf
 - **Linting:** Laravel Pint
-- **Testing:** PHPUnit 10
+- **Testing:** PHPUnit 11 (attributes such as `#[Test]`, not `/** @test */` — PHPUnit 12 ignores doc-comment metadata)
 
 ## Key Architecture Decisions
 

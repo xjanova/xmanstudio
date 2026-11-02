@@ -3,11 +3,12 @@
 namespace Tests\Unit\Exceptions;
 
 use App\Exceptions\AIServiceException;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class AIServiceExceptionTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function it_creates_rate_limit_exceeded_exception()
     {
         $exception = AIServiceException::rateLimitExceeded('openai', 120);
@@ -19,7 +20,7 @@ class AIServiceExceptionTest extends TestCase
         $this->assertStringContainsString('openai', strtolower($exception->getMessage()));
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_user_safe_message_for_rate_limit()
     {
         $exception = AIServiceException::rateLimitExceeded('openai', 60);
@@ -30,7 +31,7 @@ class AIServiceExceptionTest extends TestCase
         $this->assertStringNotContainsString('api', strtolower($userMessage)); // Should not expose technical details
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_quota_exceeded_exception()
     {
         $exception = AIServiceException::quotaExceeded('claude');
@@ -40,7 +41,7 @@ class AIServiceExceptionTest extends TestCase
         $this->assertStringContainsString('quota', strtolower($exception->getMessage()));
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_user_safe_message_for_quota_exceeded()
     {
         $exception = AIServiceException::quotaExceeded('openai');
@@ -52,7 +53,7 @@ class AIServiceExceptionTest extends TestCase
         $this->assertNotEmpty($userMessage);
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_invalid_api_key_exception()
     {
         $exception = AIServiceException::invalidApiKey('openai');
@@ -62,7 +63,7 @@ class AIServiceExceptionTest extends TestCase
         $this->assertStringContainsString('api key', strtolower($exception->getMessage()));
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_user_safe_message_for_invalid_api_key()
     {
         $exception = AIServiceException::invalidApiKey('claude');
@@ -73,7 +74,7 @@ class AIServiceExceptionTest extends TestCase
         $this->assertStringNotContainsString('api key', strtolower($userMessage)); // Should not expose configuration details
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_service_unavailable_exception()
     {
         $exception = AIServiceException::serviceUnavailable('openai');
@@ -83,7 +84,7 @@ class AIServiceExceptionTest extends TestCase
         $this->assertStringContainsString('unavailable', strtolower($exception->getMessage()));
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_user_safe_message_for_service_unavailable()
     {
         $exception = AIServiceException::serviceUnavailable('ollama');
@@ -94,7 +95,7 @@ class AIServiceExceptionTest extends TestCase
         $this->assertStringContainsString('try again', strtolower($userMessage));
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_timeout_exception()
     {
         $exception = AIServiceException::timeout('openai', 30);
@@ -105,7 +106,7 @@ class AIServiceExceptionTest extends TestCase
         $this->assertStringContainsString('30', $exception->getMessage());
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_user_safe_message_for_timeout()
     {
         $exception = AIServiceException::timeout('claude', 60);
@@ -116,7 +117,7 @@ class AIServiceExceptionTest extends TestCase
         $this->assertStringNotContainsString('timeout', strtolower($userMessage)); // Should use user-friendly language
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_invalid_response_exception()
     {
         $exception = AIServiceException::invalidResponse('openai', 'Expected JSON, got HTML');
@@ -126,7 +127,7 @@ class AIServiceExceptionTest extends TestCase
         $this->assertStringContainsString('invalid response', strtolower($exception->getMessage()));
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_user_safe_message_for_invalid_response()
     {
         $exception = AIServiceException::invalidResponse('claude', 'Parse error');
@@ -137,7 +138,7 @@ class AIServiceExceptionTest extends TestCase
         $this->assertStringNotContainsString('parse', strtolower($userMessage)); // Should not expose technical details
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_content_policy_violation_exception()
     {
         $exception = AIServiceException::contentPolicyViolation('openai', 'Inappropriate content detected');
@@ -147,7 +148,7 @@ class AIServiceExceptionTest extends TestCase
         $this->assertStringContainsString('content policy', strtolower($exception->getMessage()));
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_user_safe_message_for_content_policy_violation()
     {
         $exception = AIServiceException::contentPolicyViolation('claude', 'Violence detected');
@@ -158,7 +159,7 @@ class AIServiceExceptionTest extends TestCase
         $this->assertStringContainsString('policy', strtolower($userMessage));
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_model_not_found_exception()
     {
         $exception = AIServiceException::modelNotFound('openai', 'gpt-5');
@@ -169,7 +170,7 @@ class AIServiceExceptionTest extends TestCase
         $this->assertStringContainsString('gpt-5', $exception->getMessage());
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_user_safe_message_for_model_not_found()
     {
         $exception = AIServiceException::modelNotFound('ollama', 'llama3:latest');
@@ -180,7 +181,7 @@ class AIServiceExceptionTest extends TestCase
         $this->assertStringNotContainsString('model', strtolower($userMessage)); // Should not expose technical details
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_network_error_exception()
     {
         $exception = AIServiceException::networkError('openai', 'Connection refused');
@@ -190,7 +191,7 @@ class AIServiceExceptionTest extends TestCase
         $this->assertStringContainsString('network', strtolower($exception->getMessage()));
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_user_safe_message_for_network_error()
     {
         $exception = AIServiceException::networkError('claude', 'DNS resolution failed');
@@ -201,7 +202,7 @@ class AIServiceExceptionTest extends TestCase
         $this->assertStringContainsString('try again', strtolower($userMessage));
     }
 
-    /** @test */
+    #[Test]
     public function it_stores_provider_name()
     {
         $exception = AIServiceException::rateLimitExceeded('test-provider');
@@ -209,7 +210,7 @@ class AIServiceExceptionTest extends TestCase
         $this->assertEquals('test-provider', $exception->getProvider());
     }
 
-    /** @test */
+    #[Test]
     public function it_stores_retry_after_for_rate_limit()
     {
         $exception = AIServiceException::rateLimitExceeded('openai', 180);
@@ -217,7 +218,7 @@ class AIServiceExceptionTest extends TestCase
         $this->assertEquals(180, $exception->getRetryAfter());
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_null_retry_after_for_non_rate_limit_exceptions()
     {
         $exception = AIServiceException::invalidApiKey('openai');
@@ -225,7 +226,7 @@ class AIServiceExceptionTest extends TestCase
         $this->assertNull($exception->getRetryAfter());
     }
 
-    /** @test */
+    #[Test]
     public function it_includes_context_in_exception()
     {
         $exception = AIServiceException::timeout('openai', 30);
@@ -237,7 +238,7 @@ class AIServiceExceptionTest extends TestCase
         $this->assertEquals('openai', $context['provider']);
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_generic_ai_service_exception()
     {
         $exception = new AIServiceException('openai', 'Custom error message', 500);
@@ -247,7 +248,7 @@ class AIServiceExceptionTest extends TestCase
         $this->assertEquals('Custom error message', $exception->getMessage());
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_default_user_message_for_generic_exception()
     {
         $exception = new AIServiceException('openai', 'Internal server error', 500);
@@ -258,7 +259,7 @@ class AIServiceExceptionTest extends TestCase
         $this->assertStringContainsString('try again', strtolower($userMessage));
     }
 
-    /** @test */
+    #[Test]
     public function user_messages_do_not_expose_sensitive_information()
     {
         $exceptions = [
@@ -283,7 +284,7 @@ class AIServiceExceptionTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function all_factory_methods_return_ai_service_exception_instance()
     {
         $exceptions = [
@@ -303,7 +304,7 @@ class AIServiceExceptionTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_has_appropriate_http_status_codes()
     {
         $this->assertEquals(429, AIServiceException::rateLimitExceeded('openai')->getCode());

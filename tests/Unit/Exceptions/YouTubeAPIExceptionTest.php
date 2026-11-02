@@ -3,11 +3,12 @@
 namespace Tests\Unit\Exceptions;
 
 use App\Exceptions\YouTubeAPIException;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class YouTubeAPIExceptionTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function it_creates_quota_exceeded_exception()
     {
         $exception = YouTubeAPIException::quotaExceeded();
@@ -17,7 +18,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertStringContainsString('exceeded', strtolower($exception->getMessage()));
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_user_safe_message_for_quota_exceeded()
     {
         $exception = YouTubeAPIException::quotaExceeded();
@@ -29,7 +30,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertStringNotContainsString('quota', strtolower($userMessage)); // Should use user-friendly language
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_rate_limit_exceeded_exception()
     {
         $exception = YouTubeAPIException::rateLimitExceeded(90);
@@ -39,7 +40,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertStringContainsString('rate limit', strtolower($exception->getMessage()));
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_user_safe_message_for_rate_limit()
     {
         $exception = YouTubeAPIException::rateLimitExceeded(60);
@@ -50,7 +51,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertStringContainsString('try again', strtolower($userMessage));
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_video_not_found_exception()
     {
         $exception = YouTubeAPIException::videoNotFound('dQw4w9WgXcQ');
@@ -60,7 +61,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertStringContainsString('dQw4w9WgXcQ', $exception->getMessage());
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_user_safe_message_for_video_not_found()
     {
         $exception = YouTubeAPIException::videoNotFound('abc123');
@@ -71,7 +72,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertStringContainsString('not found', strtolower($userMessage));
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_comments_disabled_exception()
     {
         $exception = YouTubeAPIException::commentsDisabled('dQw4w9WgXcQ');
@@ -81,7 +82,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertStringContainsString('disabled', strtolower($exception->getMessage()));
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_user_safe_message_for_comments_disabled()
     {
         $exception = YouTubeAPIException::commentsDisabled('abc123');
@@ -92,7 +93,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertStringContainsString('disabled', strtolower($userMessage));
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_invalid_api_key_exception()
     {
         $exception = YouTubeAPIException::invalidApiKey();
@@ -101,7 +102,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertStringContainsString('api key', strtolower($exception->getMessage()));
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_user_safe_message_for_invalid_api_key()
     {
         $exception = YouTubeAPIException::invalidApiKey();
@@ -112,7 +113,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertStringNotContainsString('api key', strtolower($userMessage)); // Should not expose configuration details
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_unauthorized_exception()
     {
         $exception = YouTubeAPIException::unauthorized();
@@ -121,7 +122,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertStringContainsString('unauthorized', strtolower($exception->getMessage()));
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_user_safe_message_for_unauthorized()
     {
         $exception = YouTubeAPIException::unauthorized();
@@ -132,7 +133,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertStringContainsString('authenticate', strtolower($userMessage));
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_forbidden_exception()
     {
         $exception = YouTubeAPIException::forbidden('Cannot access private video');
@@ -141,7 +142,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertStringContainsString('forbidden', strtolower($exception->getMessage()));
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_user_safe_message_for_forbidden()
     {
         $exception = YouTubeAPIException::forbidden('Access denied');
@@ -152,7 +153,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertStringNotContainsString('access denied', strtolower($userMessage)); // Should use user-friendly language
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_service_unavailable_exception()
     {
         $exception = YouTubeAPIException::serviceUnavailable();
@@ -161,7 +162,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertStringContainsString('unavailable', strtolower($exception->getMessage()));
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_user_safe_message_for_service_unavailable()
     {
         $exception = YouTubeAPIException::serviceUnavailable();
@@ -172,7 +173,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertStringContainsString('try again', strtolower($userMessage));
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_timeout_exception()
     {
         $exception = YouTubeAPIException::timeout(45);
@@ -182,7 +183,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertStringContainsString('45', $exception->getMessage());
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_user_safe_message_for_timeout()
     {
         $exception = YouTubeAPIException::timeout(30);
@@ -193,7 +194,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertStringNotContainsString('timeout', strtolower($userMessage)); // Should use user-friendly language
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_invalid_request_exception()
     {
         $exception = YouTubeAPIException::invalidRequest('Missing required parameter: part');
@@ -202,7 +203,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertStringContainsString('invalid request', strtolower($exception->getMessage()));
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_user_safe_message_for_invalid_request()
     {
         $exception = YouTubeAPIException::invalidRequest('Bad parameter');
@@ -213,7 +214,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertStringNotContainsString('parameter', strtolower($userMessage)); // Should not expose technical details
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_network_error_exception()
     {
         $exception = YouTubeAPIException::networkError('Connection timeout');
@@ -222,7 +223,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertStringContainsString('network', strtolower($exception->getMessage()));
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_user_safe_message_for_network_error()
     {
         $exception = YouTubeAPIException::networkError('DNS failed');
@@ -233,7 +234,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertStringContainsString('try again', strtolower($userMessage));
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_channel_not_found_exception()
     {
         $exception = YouTubeAPIException::channelNotFound('UC_x5XG1OV2P6uZZ5FSM9Ttw');
@@ -243,7 +244,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertStringContainsString('UC_x5XG1OV2P6uZZ5FSM9Ttw', $exception->getMessage());
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_user_safe_message_for_channel_not_found()
     {
         $exception = YouTubeAPIException::channelNotFound('UCabc123');
@@ -254,7 +255,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertStringContainsString('not found', strtolower($userMessage));
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_playlist_not_found_exception()
     {
         $exception = YouTubeAPIException::playlistNotFound('PLrAXtmErZgOeiKm4sgNOknGvNjby9efdf');
@@ -263,7 +264,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertStringContainsString('playlist', strtolower($exception->getMessage()));
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_user_safe_message_for_playlist_not_found()
     {
         $exception = YouTubeAPIException::playlistNotFound('PLabc123');
@@ -274,7 +275,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertStringContainsString('not found', strtolower($userMessage));
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_comment_not_found_exception()
     {
         $exception = YouTubeAPIException::commentNotFound('UgxKREWxIgDkGvCoufZ4AaABAg');
@@ -283,7 +284,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertStringContainsString('comment', strtolower($exception->getMessage()));
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_user_safe_message_for_comment_not_found()
     {
         $exception = YouTubeAPIException::commentNotFound('Ugxabc123');
@@ -294,7 +295,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertStringContainsString('not found', strtolower($userMessage));
     }
 
-    /** @test */
+    #[Test]
     public function it_stores_retry_after_for_rate_limit()
     {
         $exception = YouTubeAPIException::rateLimitExceeded(120);
@@ -302,7 +303,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertEquals(120, $exception->getRetryAfter());
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_null_retry_after_for_non_rate_limit_exceptions()
     {
         $exception = YouTubeAPIException::videoNotFound('abc123');
@@ -310,7 +311,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertNull($exception->getRetryAfter());
     }
 
-    /** @test */
+    #[Test]
     public function it_includes_context_in_exception()
     {
         $exception = YouTubeAPIException::videoNotFound('dQw4w9WgXcQ');
@@ -322,7 +323,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertEquals('dQw4w9WgXcQ', $context['video_id']);
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_generic_youtube_api_exception()
     {
         $exception = new YouTubeAPIException('Custom error message', 500);
@@ -331,7 +332,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertEquals('Custom error message', $exception->getMessage());
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_default_user_message_for_generic_exception()
     {
         $exception = new YouTubeAPIException('Internal error', 500);
@@ -342,7 +343,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertStringContainsString('try again', strtolower($userMessage));
     }
 
-    /** @test */
+    #[Test]
     public function user_messages_do_not_expose_sensitive_information()
     {
         $exceptions = [
@@ -367,7 +368,7 @@ class YouTubeAPIExceptionTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function all_factory_methods_return_youtube_api_exception_instance()
     {
         $exceptions = [
@@ -392,7 +393,7 @@ class YouTubeAPIExceptionTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_has_appropriate_http_status_codes()
     {
         $this->assertEquals(429, YouTubeAPIException::quotaExceeded()->getCode());
@@ -411,7 +412,7 @@ class YouTubeAPIExceptionTest extends TestCase
         $this->assertEquals(404, YouTubeAPIException::commentNotFound('abc')->getCode());
     }
 
-    /** @test */
+    #[Test]
     public function it_stores_resource_ids_in_context()
     {
         $videoException = YouTubeAPIException::videoNotFound('video123');

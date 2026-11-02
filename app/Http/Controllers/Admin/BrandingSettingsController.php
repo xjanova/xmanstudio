@@ -24,10 +24,11 @@ class BrandingSettingsController extends Controller
 
     public function update(Request $request)
     {
+        // Laravel 12's `image` rule leaves SVG out unless asked; the logo and favicon have always taken it
         $validator = Validator::make($request->all(), [
-            'logo' => 'nullable|image|mimes:png,jpg,jpeg,svg,webp|max:2048',
-            'logo_dark' => 'nullable|image|mimes:png,jpg,jpeg,svg,webp|max:2048',
-            'favicon' => 'nullable|image|mimes:png,jpg,jpeg,ico,svg|max:512',
+            'logo' => 'nullable|image:allow_svg|mimes:png,jpg,jpeg,svg,webp|max:2048',
+            'logo_dark' => 'nullable|image:allow_svg|mimes:png,jpg,jpeg,svg,webp|max:2048',
+            'favicon' => 'nullable|image:allow_svg|mimes:png,jpg,jpeg,ico,svg|max:512',
         ], [
             'logo.image' => 'ไฟล์โลโก้ต้องเป็นรูปภาพเท่านั้น',
             'logo.mimes' => 'โลโก้ต้องเป็นไฟล์ประเภท: png, jpg, jpeg, svg, webp',

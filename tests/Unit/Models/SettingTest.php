@@ -6,6 +6,7 @@ use App\Models\Setting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class SettingTest extends TestCase
@@ -24,7 +25,7 @@ class SettingTest extends TestCase
         parent::tearDown();
     }
 
-    /** @test */
+    #[Test]
     public function it_encrypts_sensitive_api_keys_when_storing()
     {
         $apiKey = 'sk-1234567890abcdef';
@@ -38,7 +39,7 @@ class SettingTest extends TestCase
         $this->assertStringContainsString('eyJpdiI6', $setting->value); // Laravel encrypted format starts with JSON
     }
 
-    /** @test */
+    #[Test]
     public function it_decrypts_sensitive_keys_when_retrieving()
     {
         $apiKey = 'sk-test-api-key-12345';
@@ -49,7 +50,7 @@ class SettingTest extends TestCase
         $this->assertEquals($apiKey, $retrieved);
     }
 
-    /** @test */
+    #[Test]
     public function it_encrypts_all_sensitive_keys()
     {
         $sensitiveKeys = [
@@ -76,7 +77,7 @@ class SettingTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_encrypt_non_sensitive_keys()
     {
         $normalValue = 'just a normal setting value';
@@ -89,7 +90,7 @@ class SettingTest extends TestCase
         $this->assertEquals($normalValue, $setting->value);
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_empty_sensitive_values()
     {
         Setting::setValue('ai_openai_key', '');
@@ -102,7 +103,7 @@ class SettingTest extends TestCase
         $this->assertEquals('', $retrieved);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_default_value_when_setting_not_found()
     {
         $default = 'default-value';
@@ -112,7 +113,7 @@ class SettingTest extends TestCase
         $this->assertEquals($default, $value);
     }
 
-    /** @test */
+    #[Test]
     public function it_casts_boolean_values_correctly()
     {
         Setting::setValue('feature_enabled', 'true', 'boolean');
@@ -128,7 +129,7 @@ class SettingTest extends TestCase
         $this->assertFalse(Setting::getValue('feature_zero'));
     }
 
-    /** @test */
+    #[Test]
     public function it_casts_integer_values_correctly()
     {
         Setting::setValue('max_items', '100', 'integer');
@@ -139,7 +140,7 @@ class SettingTest extends TestCase
         $this->assertEquals(100, $value);
     }
 
-    /** @test */
+    #[Test]
     public function it_casts_json_values_correctly()
     {
         $jsonData = ['key1' => 'value1', 'key2' => 'value2', 'nested' => ['key3' => 'value3']];
@@ -151,7 +152,7 @@ class SettingTest extends TestCase
         $this->assertEquals($jsonData, $retrieved);
     }
 
-    /** @test */
+    #[Test]
     public function it_updates_existing_settings()
     {
         Setting::setValue('app_version', '1.0.0');
@@ -165,7 +166,7 @@ class SettingTest extends TestCase
         $this->assertEquals(1, $count);
     }
 
-    /** @test */
+    #[Test]
     public function it_caches_setting_values()
     {
         Setting::setValue('cached_value', 'test-value');
@@ -183,7 +184,7 @@ class SettingTest extends TestCase
         $this->assertEquals('test-value', $value2);
     }
 
-    /** @test */
+    #[Test]
     public function it_clears_cache_when_updating_value()
     {
         Setting::setValue('dynamic_value', 'original');
@@ -193,7 +194,7 @@ class SettingTest extends TestCase
         $this->assertEquals('updated', Setting::getValue('dynamic_value'));
     }
 
-    /** @test */
+    #[Test]
     public function it_supports_backward_compatible_get_method()
     {
         Setting::setValue('test_key', 'test_value');
@@ -203,7 +204,7 @@ class SettingTest extends TestCase
         $this->assertEquals('test_value', $value);
     }
 
-    /** @test */
+    #[Test]
     public function it_supports_backward_compatible_set_method()
     {
         Setting::set('legacy_key', 'legacy_value');
@@ -213,7 +214,7 @@ class SettingTest extends TestCase
         $this->assertEquals('legacy_value', $value);
     }
 
-    /** @test */
+    #[Test]
     public function it_retrieves_settings_by_group()
     {
         Setting::setValue('ai_provider', 'openai', 'string', 'ai');
@@ -229,7 +230,7 @@ class SettingTest extends TestCase
         $this->assertEquals('openai', $aiSettings['ai_provider']);
     }
 
-    /** @test */
+    #[Test]
     public function it_stores_setting_metadata()
     {
         Setting::setValue(
@@ -249,7 +250,7 @@ class SettingTest extends TestCase
         $this->assertFalse($setting->is_public);
     }
 
-    /** @test */
+    #[Test]
     public function it_marks_public_settings()
     {
         Setting::setValue('site_title', 'My Site', 'string', 'general', null, true);
@@ -259,7 +260,7 @@ class SettingTest extends TestCase
         $this->assertTrue($setting->is_public);
     }
 
-    /** @test */
+    #[Test]
     public function it_has_line_notify_token_helpers()
     {
         $token = 'line-notify-token-12345';
@@ -274,7 +275,7 @@ class SettingTest extends TestCase
         $this->assertNotEquals($token, $stored->value);
     }
 
-    /** @test */
+    #[Test]
     public function it_checks_notification_status()
     {
         // Default should be true
@@ -287,7 +288,7 @@ class SettingTest extends TestCase
         $this->assertTrue(Setting::isNotificationEnabled());
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_decryption_failures_gracefully()
     {
         // Manually insert a "corrupted" encrypted value
@@ -306,7 +307,7 @@ class SettingTest extends TestCase
         $this->assertEquals('not-a-valid-encrypted-string', $value);
     }
 
-    /** @test */
+    #[Test]
     public function it_encrypts_and_decrypts_special_characters()
     {
         $specialKey = 'sk-!@#$%^&*()_+-=[]{}|;:,.<>?/~`';
@@ -317,7 +318,7 @@ class SettingTest extends TestCase
         $this->assertEquals($specialKey, $retrieved);
     }
 
-    /** @test */
+    #[Test]
     public function it_encrypts_and_decrypts_unicode_characters()
     {
         $unicodeKey = 'key-with-unicode-สวัสดี-你好-مرحبا';
@@ -328,7 +329,7 @@ class SettingTest extends TestCase
         $this->assertEquals($unicodeKey, $retrieved);
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_very_long_encrypted_values()
     {
         $longKey = str_repeat('a', 1000);
@@ -339,7 +340,7 @@ class SettingTest extends TestCase
         $this->assertEquals($longKey, $retrieved);
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_double_encrypt_on_multiple_saves()
     {
         $apiKey = 'sk-original-key';
@@ -361,7 +362,7 @@ class SettingTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function it_encrypts_json_values_for_sensitive_keys()
     {
         // Note: In current implementation, json values are encoded first, then encrypted
@@ -373,7 +374,7 @@ class SettingTest extends TestCase
         $this->assertEquals(json_encode($jsonData), $retrieved);
     }
 
-    /** @test */
+    #[Test]
     public function it_preserves_null_values_for_non_existent_settings()
     {
         $value = Setting::getValue('does_not_exist');
@@ -381,7 +382,7 @@ class SettingTest extends TestCase
         $this->assertNull($value);
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_different_types_for_same_key_on_update()
     {
         Setting::setValue('dynamic_setting', '100', 'integer');
@@ -391,7 +392,7 @@ class SettingTest extends TestCase
         $this->assertEquals('text', Setting::getValue('dynamic_setting'));
     }
 
-    /** @test */
+    #[Test]
     public function encrypted_keys_list_includes_all_sensitive_data()
     {
         $reflection = new \ReflectionClass(Setting::class);
@@ -412,7 +413,7 @@ class SettingTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_whitespace_in_sensitive_values()
     {
         $keyWithSpaces = '  sk-test-key-with-spaces  ';

@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\TestResponse;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -109,7 +110,7 @@ class PaymentSlipPrivacyTest extends TestCase
         ];
     }
 
-    /** @dataProvider productCheckouts */
+    #[DataProvider('productCheckouts')]
     public function test_a_product_checkout_slip_is_kept_off_the_web_root(string $route, string $folder, bool $jsonText): void
     {
         $buyer = $this->customer();
@@ -216,7 +217,7 @@ class PaymentSlipPrivacyTest extends TestCase
         ];
     }
 
-    /** @dataProvider storedValues */
+    #[DataProvider('storedValues')]
     public function test_a_stored_value_reads_as_a_path_inside_the_slips_folder_or_not_at_all(?string $stored, ?string $expected): void
     {
         $this->assertSame($expected, PaymentSlips::normalize($stored));

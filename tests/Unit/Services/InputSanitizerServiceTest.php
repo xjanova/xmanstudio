@@ -3,6 +3,7 @@
 namespace Tests\Unit\Services;
 
 use App\Services\InputSanitizerService;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 class InputSanitizerServiceTest extends TestCase
@@ -15,7 +16,7 @@ class InputSanitizerServiceTest extends TestCase
         $this->sanitizer = new InputSanitizerService;
     }
 
-    /** @test */
+    #[Test]
     public function it_removes_prompt_injection_patterns()
     {
         $inputs = [
@@ -34,7 +35,7 @@ class InputSanitizerServiceTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_removes_jailbreak_attempts()
     {
         $inputs = [
@@ -50,7 +51,7 @@ class InputSanitizerServiceTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_removes_script_tags()
     {
         $input = '<script>alert("XSS")</script>Hello World';
@@ -59,7 +60,7 @@ class InputSanitizerServiceTest extends TestCase
         $this->assertStringNotContainsString('</script>', $sanitized);
     }
 
-    /** @test */
+    #[Test]
     public function it_removes_javascript_protocols()
     {
         $input = 'Check this out: javascript:alert("XSS")';
@@ -67,7 +68,7 @@ class InputSanitizerServiceTest extends TestCase
         $this->assertStringNotContainsStringIgnoringCase('javascript:', $sanitized);
     }
 
-    /** @test */
+    #[Test]
     public function it_removes_event_handlers()
     {
         $inputs = [
@@ -84,7 +85,7 @@ class InputSanitizerServiceTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_removes_sql_injection_patterns()
     {
         $inputs = [
@@ -98,7 +99,7 @@ class InputSanitizerServiceTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_limits_input_length()
     {
         $longInput = str_repeat('a', 10000);
@@ -106,7 +107,7 @@ class InputSanitizerServiceTest extends TestCase
         $this->assertLessThanOrEqual(5000, strlen($sanitized));
     }
 
-    /** @test */
+    #[Test]
     public function it_removes_null_bytes_and_control_characters()
     {
         $input = "Hello\x00World\x01Test\x1F";
@@ -115,7 +116,7 @@ class InputSanitizerServiceTest extends TestCase
         $this->assertStringNotContainsString("\x01", $sanitized);
     }
 
-    /** @test */
+    #[Test]
     public function it_normalizes_whitespace()
     {
         $input = "Hello    World\n\n\nTest    Space";
@@ -124,7 +125,7 @@ class InputSanitizerServiceTest extends TestCase
         $this->assertStringNotContainsString("\n\n\n", $sanitized);
     }
 
-    /** @test */
+    #[Test]
     public function it_escapes_triple_backticks()
     {
         $input = 'Some code: ```python\nprint("hello")\n```';
@@ -133,7 +134,7 @@ class InputSanitizerServiceTest extends TestCase
         $this->assertStringContainsString("'''", $sanitized);
     }
 
-    /** @test */
+    #[Test]
     public function it_preserves_safe_content()
     {
         $safeInputs = [
@@ -155,7 +156,7 @@ class InputSanitizerServiceTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_sanitizes_html_content()
     {
         $html = '<div onclick="alert(1)">Hello <script>alert("XSS")</script> World</div>';
@@ -167,7 +168,7 @@ class InputSanitizerServiceTest extends TestCase
         $this->assertStringContainsString('World', $sanitized);
     }
 
-    /** @test */
+    #[Test]
     public function it_sanitizes_urls()
     {
         // Valid URLs
@@ -195,7 +196,7 @@ class InputSanitizerServiceTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_blocks_localhost_urls()
     {
         $localhostUrls = [
@@ -210,7 +211,7 @@ class InputSanitizerServiceTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_localhost_when_enabled()
     {
         $sanitizer = new InputSanitizerService;
@@ -225,7 +226,7 @@ class InputSanitizerServiceTest extends TestCase
         $this->assertNull($sanitizer2->sanitizeUrl($url));
     }
 
-    /** @test */
+    #[Test]
     public function it_sanitizes_file_names()
     {
         $tests = [
@@ -242,7 +243,7 @@ class InputSanitizerServiceTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_sanitizes_email_addresses()
     {
         // Valid emails
@@ -269,7 +270,7 @@ class InputSanitizerServiceTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_sanitizes_json()
     {
         // Valid JSON
@@ -284,7 +285,7 @@ class InputSanitizerServiceTest extends TestCase
         $this->assertNull($sanitized);
     }
 
-    /** @test */
+    #[Test]
     public function it_detects_suspicious_content()
     {
         $suspiciousInputs = [
@@ -302,7 +303,7 @@ class InputSanitizerServiceTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_flag_safe_content_as_suspicious()
     {
         $safeInputs = [
@@ -317,7 +318,7 @@ class InputSanitizerServiceTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_sanitizes_arrays_recursively()
     {
         $data = [
@@ -335,7 +336,7 @@ class InputSanitizerServiceTest extends TestCase
         $this->assertStringNotContainsStringIgnoringCase('ignore', $sanitized['nested']['also_malicious']);
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_empty_and_null_inputs_gracefully()
     {
         $this->assertEquals('', $this->sanitizer->sanitizeForPrompt(''));
@@ -343,7 +344,7 @@ class InputSanitizerServiceTest extends TestCase
         $this->assertNull($this->sanitizer->sanitizeEmail(''));
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_unicode_content_properly()
     {
         $unicodeInputs = [

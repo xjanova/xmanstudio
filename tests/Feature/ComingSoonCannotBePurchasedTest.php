@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -70,7 +71,7 @@ class ComingSoonCannotBePurchasedTest extends TestCase
         ];
     }
 
-    /** @dataProvider appCheckouts */
+    #[DataProvider('appCheckouts')]
     public function test_an_apps_own_checkout_refuses_a_coming_soon_product(string $slug, string $checkout, string $method, string $backTo): void
     {
         $this->product($slug, comingSoon: true);

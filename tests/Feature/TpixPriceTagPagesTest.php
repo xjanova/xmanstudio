@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Concerns\FakesTpixChain;
 use Tests\TestCase;
 
@@ -78,13 +79,13 @@ class TpixPriceTagPagesTest extends TestCase
         ];
     }
 
-    /** @dataProvider pricedPages */
+    #[DataProvider('pricedPages')]
     public function test_a_priced_page_shows_the_tpix_price(string $path): void
     {
         $this->get($path)->assertOk()->assertSee('data-tpix-price', false)->assertSee('TPIX');
     }
 
-    /** @dataProvider pricedPages */
+    #[DataProvider('pricedPages')]
     public function test_a_priced_page_still_renders_without_a_tpix_price(string $path): void
     {
         $this->rpcDown = true;
@@ -111,7 +112,7 @@ class TpixPriceTagPagesTest extends TestCase
         ];
     }
 
-    /** @dataProvider otherPricedPages */
+    #[DataProvider('otherPricedPages')]
     public function test_a_page_priced_from_other_data_renders_with_tpix_on(string $path): void
     {
         $this->assertLessThan(500, $this->get($path)->getStatusCode());

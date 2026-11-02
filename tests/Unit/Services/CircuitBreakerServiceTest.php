@@ -5,6 +5,7 @@ namespace Tests\Unit\Services;
 use App\Services\CircuitBreakerService;
 use Exception;
 use Illuminate\Support\Facades\Cache;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class CircuitBreakerServiceTest extends TestCase
@@ -22,7 +23,7 @@ class CircuitBreakerServiceTest extends TestCase
         parent::tearDown();
     }
 
-    /** @test */
+    #[Test]
     public function it_starts_in_closed_state()
     {
         $breaker = new CircuitBreakerService('test-service');
@@ -30,7 +31,7 @@ class CircuitBreakerServiceTest extends TestCase
         $this->assertTrue($breaker->isAvailable());
     }
 
-    /** @test */
+    #[Test]
     public function it_executes_callable_successfully_when_closed()
     {
         $breaker = new CircuitBreakerService('test-service');
@@ -42,7 +43,7 @@ class CircuitBreakerServiceTest extends TestCase
         $this->assertEquals('success', $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_records_failures()
     {
         $breaker = new CircuitBreakerService('test-service', 3, 60);
@@ -61,7 +62,7 @@ class CircuitBreakerServiceTest extends TestCase
         $this->assertEquals(CircuitBreakerService::STATE_CLOSED, $stats['state']);
     }
 
-    /** @test */
+    #[Test]
     public function it_opens_circuit_after_threshold_failures()
     {
         $breaker = new CircuitBreakerService('test-service', 3, 60, 10);
@@ -82,7 +83,7 @@ class CircuitBreakerServiceTest extends TestCase
         $this->assertFalse($breaker->isAvailable());
     }
 
-    /** @test */
+    #[Test]
     public function it_fails_fast_when_circuit_is_open()
     {
         $breaker = new CircuitBreakerService('test-service', 2, 60, 10);
@@ -107,7 +108,7 @@ class CircuitBreakerServiceTest extends TestCase
         });
     }
 
-    /** @test */
+    #[Test]
     public function it_uses_fallback_when_circuit_is_open()
     {
         $breaker = new CircuitBreakerService('test-service', 2, 60, 10);
@@ -136,7 +137,7 @@ class CircuitBreakerServiceTest extends TestCase
         $this->assertEquals('fallback', $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_transitions_to_half_open_after_recovery_time()
     {
         $breaker = new CircuitBreakerService('test-service', 2, 60, 2); // 2 second recovery
@@ -167,7 +168,7 @@ class CircuitBreakerServiceTest extends TestCase
         $this->assertEquals(CircuitBreakerService::STATE_HALF_OPEN, $breaker->getState());
     }
 
-    /** @test */
+    #[Test]
     public function it_closes_circuit_on_successful_execution_in_half_open_state()
     {
         $breaker = new CircuitBreakerService('test-service', 2, 60, 1); // 1 second recovery
@@ -196,7 +197,7 @@ class CircuitBreakerServiceTest extends TestCase
         $this->assertEquals(CircuitBreakerService::STATE_CLOSED, $breaker->getState());
     }
 
-    /** @test */
+    #[Test]
     public function it_reopens_circuit_on_failure_in_half_open_state()
     {
         $breaker = new CircuitBreakerService('test-service', 2, 60, 1);
@@ -228,7 +229,7 @@ class CircuitBreakerServiceTest extends TestCase
         $this->assertEquals(CircuitBreakerService::STATE_OPEN, $breaker->getState());
     }
 
-    /** @test */
+    #[Test]
     public function it_clears_old_failures_outside_time_window()
     {
         $breaker = new CircuitBreakerService('test-service', 3, 2, 10); // 2 second window
@@ -256,7 +257,7 @@ class CircuitBreakerServiceTest extends TestCase
         $this->assertEquals(CircuitBreakerService::STATE_CLOSED, $breaker->getState());
     }
 
-    /** @test */
+    #[Test]
     public function it_resets_manually()
     {
         $breaker = new CircuitBreakerService('test-service', 2, 60, 100);
@@ -281,7 +282,7 @@ class CircuitBreakerServiceTest extends TestCase
         $this->assertTrue($breaker->isAvailable());
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_accurate_statistics()
     {
         $breaker = new CircuitBreakerService('test-service', 5, 60, 300);
@@ -303,7 +304,7 @@ class CircuitBreakerServiceTest extends TestCase
         $this->assertEquals(300, $stats['recovery_time']);
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_multiple_services_independently()
     {
         $breaker1 = new CircuitBreakerService('service-1', 2, 60, 10);
@@ -333,7 +334,7 @@ class CircuitBreakerServiceTest extends TestCase
         $this->assertEquals('service-2 works', $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_breaker_with_config()
     {
         // Set config values
@@ -351,7 +352,7 @@ class CircuitBreakerServiceTest extends TestCase
         $this->assertEquals(600, $stats['recovery_time']);
     }
 
-    /** @test */
+    #[Test]
     public function it_uses_default_config_when_not_set()
     {
         $breaker = CircuitBreakerService::for('test-service');
@@ -363,7 +364,7 @@ class CircuitBreakerServiceTest extends TestCase
         $this->assertEquals(300, $stats['recovery_time']);
     }
 
-    /** @test */
+    #[Test]
     public function it_counts_consecutive_failures_correctly()
     {
         $breaker = new CircuitBreakerService('test-service', 5, 60, 10);
@@ -391,7 +392,7 @@ class CircuitBreakerServiceTest extends TestCase
         $this->assertEquals(0, $stats['recent_failures']);
     }
 
-    /** @test */
+    #[Test]
     public function it_executes_fallback_on_primary_failure_when_closed()
     {
         $breaker = new CircuitBreakerService('test-service', 10, 60, 10);
@@ -408,7 +409,7 @@ class CircuitBreakerServiceTest extends TestCase
         $this->assertEquals('fallback executed', $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_exception_when_no_fallback_provided_and_circuit_open()
     {
         $breaker = new CircuitBreakerService('test-service', 1, 60, 10);
@@ -429,7 +430,7 @@ class CircuitBreakerServiceTest extends TestCase
         });
     }
 
-    /** @test */
+    #[Test]
     public function it_tracks_seconds_until_retry_accurately()
     {
         $breaker = new CircuitBreakerService('test-service', 1, 60, 10); // 10 second recovery

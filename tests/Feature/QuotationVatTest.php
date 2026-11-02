@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Support\Quotation\VatMode;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -74,9 +75,7 @@ class QuotationVatTest extends TestCase
         $this->assertSame(0.0, VatMode::withholding(190000, 0));
     }
 
-    /**
-     * @dataProvider bahtTextCases
-     */
+    #[DataProvider('bahtTextCases')]
     public function test_it_writes_baht_in_words(float $amount, string $expected): void
     {
         $this->assertSame($expected, VatMode::bahtText($amount));

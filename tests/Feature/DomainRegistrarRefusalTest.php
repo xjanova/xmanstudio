@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Services\DomainRegistrarService;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -25,7 +26,7 @@ use Tests\TestCase;
  */
 class DomainRegistrarRefusalTest extends TestCase
 {
-    /** @dataProvider paymentRefusals */
+    #[DataProvider('paymentRefusals')]
     public function test_a_money_refusal_is_recognised(int $status, array $body): void
     {
         $this->assertTrue(
@@ -47,7 +48,7 @@ class DomainRegistrarRefusalTest extends TestCase
         ];
     }
 
-    /** @dataProvider domainRefusals */
+    #[DataProvider('domainRefusals')]
     public function test_a_domain_refusal_is_not_mistaken_for_one(int $status, array $body): void
     {
         $this->assertFalse(

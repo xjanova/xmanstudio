@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -130,7 +131,7 @@ class WinXToolsDiskBenchmarkTest extends TestCase
         ];
     }
 
-    /** @dataProvider ordinaryModelNames */
+    #[DataProvider('ordinaryModelNames')]
     public function test_ordinary_model_names_are_accepted_and_keyed_on_letters_and_digits(string $model, string $key): void
     {
         $id = $this->postJson(self::URL, $this->upload(['drive.model' => $model]))->assertOk()->json('data.id');
@@ -155,7 +156,7 @@ class WinXToolsDiskBenchmarkTest extends TestCase
         ];
     }
 
-    /** @dataProvider badModelNames */
+    #[DataProvider('badModelNames')]
     public function test_a_model_name_outside_the_allowed_characters_is_refused(mixed $model): void
     {
         $this->postJson(self::URL, $this->upload(['drive.model' => $model]))
@@ -200,7 +201,7 @@ class WinXToolsDiskBenchmarkTest extends TestCase
         ];
     }
 
-    /** @dataProvider badValues */
+    #[DataProvider('badValues')]
     public function test_numbers_out_of_range_and_unknown_values_are_refused(string $path, mixed $value): void
     {
         $this->postJson(self::URL, $this->upload([$path => $value]))
@@ -258,7 +259,7 @@ class WinXToolsDiskBenchmarkTest extends TestCase
         ];
     }
 
-    /** @dataProvider badSurfaces */
+    #[DataProvider('badSurfaces')]
     public function test_a_surface_is_exactly_twenty_points_or_null(mixed $surface): void
     {
         $this->postJson(self::URL, $this->upload(['surface' => $surface]))
