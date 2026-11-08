@@ -58,11 +58,15 @@
             <h3 class="text-lg font-bold text-gray-900 dark:text-white">เขียนอัตโนมัติ</h3>
             <label class="flex items-start gap-3">
                 <input type="checkbox" name="auto" value="1" @checked($settings['auto']) class="mt-1 rounded">
-                <span class="text-sm text-gray-700 dark:text-gray-200"><b>เปิดเขียนบทความอัตโนมัติ</b><br><span class="text-gray-500">วันละ 2 รอบ เวลา 08:00 และ 17:00 (เวลาไทย)</span></span>
+                <span class="text-sm text-gray-700 dark:text-gray-200"><b>เปิดเขียนบทความอัตโนมัติ</b><br><span class="text-gray-500">วันละ 2 เรื่อง ขึ้นเว็บและเพจตอน 12:00 และ 20:00 (เวลาไทย) ช่วงที่คนอ่านเรื่องไอทีมากที่สุด — เขียนล่วงหน้าราว 1 ชม. ครึ่ง</span></span>
             </label>
             <label class="flex items-start gap-3">
                 <input type="checkbox" name="publish" value="1" @checked($settings['publish']) class="mt-1 rounded">
-                <span class="text-sm text-gray-700 dark:text-gray-200"><b>เผยแพร่ทันที</b><br><span class="text-gray-500">ถ้าปิด บทความจะเป็นฉบับร่างให้ตรวจก่อน แล้วกดเผยแพร่เอง</span></span>
+                <span class="text-sm text-gray-700 dark:text-gray-200"><b>เผยแพร่อัตโนมัติ</b><br><span class="text-gray-500">ถ้าปิด บทความจะเป็นฉบับร่างให้ตรวจก่อน แล้วกดเผยแพร่เอง</span></span>
+            </label>
+            <label class="flex items-start gap-3">
+                <input type="checkbox" name="images" value="1" @checked($settings['images']) class="mt-1 rounded">
+                <span class="text-sm text-gray-700 dark:text-gray-200"><b>วาดภาพปกและภาพประกอบ</b><br><span class="text-gray-500">ใช้คีย์ OpenAI ตัวเดียวกับที่เขียนบทความ รุ่นถูกสุด (gpt-image-1-mini คุณภาพ low) เรื่องละ 3 ภาพ ภาพละไม่ถึง 1 บาท@unless($settings['has_key']) — <b class="text-red-600">ยังไม่มีคีย์ OpenAI จึงยังวาดไม่ได้</b>@endunless</span></span>
             </label>
             <label class="block text-sm text-gray-700 dark:text-gray-200">
                 จำนวนบทความต่อรอบ (1–5)

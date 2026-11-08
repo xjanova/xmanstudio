@@ -15,6 +15,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ArticlesTest extends TestCase
@@ -211,6 +212,114 @@ class ArticlesTest extends TestCase
         $this->assertFalse($results[0]['ok']);
         $this->assertStringContainsString('สั้นเกินไป', $results[0]['error']);
         $this->assertSame(0, Article::count());
+    }
+
+    /** A writer answer with a cover subject, two figure placeholders, a third one and one left mid-paragraph. */
+    private function illustratedAnswer(): string
+    {
+        $body = str_repeat('ย่อหน้าความรู้เรื่องความปลอดภัย SSH สำหรับธุรกิจไทย อธิบายละเอียดใช้งานได้จริง ', 60);
+
+        return "TITLE: ปิดช่องโหว่ SSH ก่อนโดนเจาะ\nSLUG: ssh-hardening-guide\nEXCERPT: เช็กลิสต์ตั้งค่า SSH ให้ปลอดภัย\nCATEGORY: security\nFOCUS: ssh ปลอดภัย\nTAGS: SSH, Linux\nIMAGE: A glowing padlock guarding a server rack\n---\n"
+            . "## ทำไมต้องสนใจ\n\n[[IMG: A hacker silhouette knocking on a server door | ภาพผู้บุกรุกเคาะประตูเซิร์ฟเวอร์]]\n\n{$body}\n\n"
+            . "## ตั้งค่าทีละขั้น\n\n[[IMG: A checklist beside a terminal window | เช็กลิสต์ข้างหน้าต่างเทอร์มินัล]]\n\nทำตามนี้ [[IMG: stray | หลุด]] แล้วจะปลอดภัย {$body}\n\n"
+            . "## สรุป\n\n[[IMG: One too many pictures | ภาพที่เกินโควตา]]\n\nจบ";
+    }
+
+    private function fakeWebp(): string
+    {
+        return 'RIFF' . pack('V', 200) . 'WEBP' . str_repeat("\0", 200);
+    }
+
+    public function test_articles_get_a_cover_and_figures_drawn_on_the_same_openai_key(): void
+    {
+        Storage::fake('public');
+        Setting::setValue('ai_provider', 'openai');
+        Setting::setValue('openai_api_key', 'sk-test');
+
+        $answer = $this->illustratedAnswer();
+        $webp = base64_encode($this->fakeWebp());
+        Http::fake([
+            'api.openai.com/v1/images/*' => Http::response(['data' => [['b64_json' => $webp]]]),
+            'api.openai.com/*' => Http::response(['choices' => [['message' => ['content' => $answer]]]]),
+        ]);
+
+        $results = app(ArticleWriter::class)->run(1, true, 'SSH ปลอดภัย');
+
+        $this->assertTrue($results[0]['ok'], $results[0]['error'] ?? '');
+        $a = $results[0]['article'];
+        $this->assertStringStartsWith('articles/ssh-hardening-guide/cover-', $a->cover_image);
+        $this->assertSame(2, substr_count($a->body_markdown, '!['), 'two figures, the third is over the limit');
+        $this->assertStringNotContainsString('[[IMG', $a->body_markdown);
+        $this->assertStringNotContainsString('[[IMG', $a->body);
+        $this->assertStringContainsString('ภาพผู้บุกรุกเคาะประตูเซิร์ฟเวอร์', $a->body);
+        $this->assertCount(3, Storage::disk('public')->allFiles('articles/ssh-hardening-guide'));
+
+        // The same key, the cheapest model and quality, and never text in the picture.
+        Http::assertSent(fn ($r) => str_contains($r->url(), '/v1/images/generations')
+            && $r->hasHeader('Authorization', 'Bearer sk-test')
+            && $r['model'] === 'gpt-image-1-mini' && $r['quality'] === 'low'
+            && str_contains($r['prompt'], 'No text'));
+
+        // Deleting the article takes its pictures with it.
+        $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->delete(route('admin.articles.destroy', $a->id));
+        $this->assertSame([], Storage::disk('public')->allFiles('articles/ssh-hardening-guide'));
+    }
+
+    public function test_an_article_still_goes_out_when_its_pictures_cannot_be_drawn(): void
+    {
+        Storage::fake('public');
+        Setting::setValue('ai_provider', 'openai');
+        Setting::setValue('openai_api_key', 'sk-test');
+
+        $answer = $this->illustratedAnswer();
+        $png = base64_encode("\x89PNG\r\n\x1a\n" . str_repeat("\0", 200));
+        $images = 0;
+        Http::fake([
+            'api.openai.com/v1/images/*' => function () use (&$images, $png) {
+                // First a billing refusal, then something that is not a WebP.
+                return ++$images === 1
+                    ? Http::response(['error' => ['message' => 'Billing hard limit has been reached']], 400)
+                    : Http::response(['data' => [['b64_json' => $png]]]);
+            },
+            'api.openai.com/*' => Http::response(['choices' => [['message' => ['content' => $answer]]]]),
+        ]);
+
+        $results = app(ArticleWriter::class)->run(1, true, 'SSH ปลอดภัย');
+
+        $this->assertTrue($results[0]['ok'], $results[0]['error'] ?? '');
+        $a = $results[0]['article'];
+        $this->assertNull($a->cover_image);
+        $this->assertStringNotContainsString('[[IMG', $a->body_markdown);
+        $this->assertStringNotContainsString('![', $a->body_markdown);
+        $this->assertSame([], Storage::disk('public')->allFiles());
+        $this->assertStringContainsString('/blog/ssh-hardening-guide/cover.png', $a->coverUrl()); // drawn title card instead
+    }
+
+    public function test_a_scheduled_article_waits_for_its_reading_hour(): void
+    {
+        Setting::setValue('ai_provider', 'openai');
+        Setting::setValue('openai_api_key', 'sk-test');
+        Setting::setValue('articles_images_enabled', '0', 'boolean', 'articles');
+
+        $answer = $this->illustratedAnswer();
+        Http::fake(['api.openai.com/*' => Http::response(['choices' => [['message' => ['content' => $answer]]]])]);
+
+        $this->travelTo(now('Asia/Bangkok')->setTime(10, 30));
+        $this->artisan('articles:generate', ['--topic' => 'SSH ปลอดภัย', '--publish-at' => '12:00'])->assertSuccessful();
+
+        $a = Article::firstOrFail();
+        $this->assertSame('12:00', $a->published_at->timezone('Asia/Bangkok')->format('H:i'));
+        $this->assertFalse($a->isLive());
+        $this->assertStringNotContainsString('[[IMG', $a->body_markdown, 'pictures off: placeholders are still removed');
+        Http::assertNotSent(fn ($r) => str_contains($r->url(), '/v1/images/'));
+        $this->get('/blog')->assertDontSee($a->title);
+        $this->get('/blog/' . $a->slug)->assertNotFound();
+
+        $this->travelTo(now('Asia/Bangkok')->setTime(12, 1));
+        $this->get('/blog/' . $a->slug)->assertOk();
+
+        $this->artisan('articles:generate', ['--publish-at' => '25:00'])->assertExitCode(2);
     }
 
     public function test_admin_can_open_the_articles_screen(): void
