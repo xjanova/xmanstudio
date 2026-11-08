@@ -1247,6 +1247,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::put('/facebook-page', [FacebookPageController::class, 'update'])->name('facebook-page.update');
     Route::post('/facebook-page/test', [FacebookPageController::class, 'test'])->name('facebook-page.test');
     Route::delete('/facebook-page/token', [FacebookPageController::class, 'forget'])->name('facebook-page.forget');
+    Route::get('/facebook-page/connect', [FacebookPageController::class, 'connect'])->name('facebook-page.connect');
+    Route::get('/facebook-page/callback', [FacebookPageController::class, 'callback'])->name('facebook-page.callback');
     Route::post('/articles/{article}/facebook', [FacebookPageController::class, 'postArticle'])->name('articles.facebook');
 
     // Custom Code Settings (Tracking & Verification)

@@ -32,7 +32,14 @@ never expires; only the page token is stored here, encrypted (`Setting::$encrypt
 
 Connect or reconnect:
 
-- Admin → ตั้งค่า → **Facebook เพจ** (`/admin/facebook-page`): paste a User Token (Graph API
+- Admin → ตั้งค่า → **Facebook เพจ** → **เชื่อมเพจด้วย Facebook** (the easy way): `/admin/facebook-page/connect`
+  sends the admin to XmanApp's login dialog with the three scopes and a single-use `state` kept in
+  the session; `/admin/facebook-page/callback` checks the state, trades the code for a user token
+  (secret in the POST body), and hands it to `connect()` — long-lived exchange, `/me/accounts`, a
+  page token that never expires. Needs the app id + secret saved first, and **once**, in XmanApp →
+  Facebook Login → Settings → Valid OAuth Redirect URIs: `https://xman4289.com/admin/facebook-page/callback`
+  (plus `xman4289.com` in Settings → Basic → App domains). A cancelled dialog changes nothing.
+- Or paste a User Token (Graph API
   Explorer, app XmanApp, scopes `pages_show_list`, `pages_read_engagement`, `pages_manage_posts`) or
   a Page Token.
 - Server: `... | php artisan facebook:page-token --page=106036940932060` (token on stdin — never as an

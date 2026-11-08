@@ -280,6 +280,89 @@ class FacebookPageAutoPostTest extends TestCase
         $this->assertNotSame(self::PERMANENT_PAGE_TOKEN, Setting::where('key', FacebookPageService::KEY_PAGE_TOKEN)->value('value'));
     }
 
+    public function test_the_connect_button_makes_a_permanent_page_token_through_the_facebook_dialog(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        // No app id / secret yet: the button explains instead of sending the admin to a broken dialog.
+        $this->actingAs($admin)->get(route('admin.facebook-page.connect'))
+            ->assertRedirect(route('admin.facebook-page.index'))
+            ->assertSessionHas('error', fn ($m) => str_contains($m, 'App ID'));
+
+        Setting::setValue(FacebookPageService::KEY_PAGE_ID, self::PAGE, 'string', 'facebook');
+        Setting::setValue(FacebookPageService::KEY_APP_ID, '664172615253513', 'string', 'facebook');
+        Setting::setValue(FacebookPageService::KEY_APP_SECRET, 'app-secret-for-tests', 'string', 'facebook');
+
+        $go = $this->actingAs($admin)->get(route('admin.facebook-page.connect'));
+        $dialog = (string) $go->headers->get('Location');
+        $this->assertStringStartsWith('https://www.facebook.com/v22.0/dialog/oauth?', $dialog);
+        parse_str((string) parse_url($dialog, PHP_URL_QUERY), $q);
+        $this->assertSame('664172615253513', $q['client_id']);
+        $this->assertSame(route('admin.facebook-page.callback'), $q['redirect_uri']);
+        $this->assertSame('pages_show_list,pages_read_engagement,pages_manage_posts', $q['scope']);
+        $this->assertStringNotContainsString('app-secret-for-tests', $dialog);
+        $state = $q['state'];
+
+        Http::fake(function (Request $r) {
+            $auth = $r->header('Authorization')[0] ?? '';
+            $path = parse_url($r->url(), PHP_URL_PATH);
+
+            return match (true) {
+                $path === '/v22.0/oauth/access_token' && $r->method() === 'POST' => ($r['code'] ?? null) === 'the-code'
+                    ? Http::response(['access_token' => self::USER_TOKEN])
+                    : Http::response(['error' => ['message' => 'bad code', 'code' => 100]], 400),
+                $path === '/v22.0/oauth/access_token' => Http::response(['access_token' => self::LONG_USER_TOKEN]),
+                $path === '/v22.0/me' => Http::response(['id' => '9001', 'name' => 'Owner']),
+                $path === '/v22.0/me/accounts' => Http::response(['data' => [[
+                    'id' => self::PAGE, 'name' => 'XmanEnterprise', 'tasks' => ['MANAGE', 'CREATE_CONTENT'],
+                    'access_token' => $auth === 'Bearer ' . self::LONG_USER_TOKEN ? self::PERMANENT_PAGE_TOKEN : 'short-lived-page-token',
+                ]]]),
+                $path === '/v22.0/debug_token' => Http::response(['data' => [
+                    'type' => 'PAGE', 'is_valid' => true, 'expires_at' => 0,
+                    'scopes' => ['pages_show_list', 'pages_read_engagement', 'pages_manage_posts'],
+                ]]),
+                default => Http::response(['error' => ['message' => 'unexpected ' . $path]], 400),
+            };
+        });
+
+        // A forged or stale state is refused before anything is sent to Facebook.
+        $this->actingAs($admin)->get(route('admin.facebook-page.callback', ['code' => 'the-code', 'state' => 'forged']))
+            ->assertSessionHas('error', fn ($m) => str_contains($m, 'กดปุ่มเชื่อมเพจใหม่'));
+        Http::assertNothingSent();
+
+        $this->actingAs($admin)->withSession(['facebook_page_oauth_state' => $state])
+            ->get(route('admin.facebook-page.callback', ['code' => 'the-code', 'state' => $state]))
+            ->assertRedirect(route('admin.facebook-page.index'))
+            ->assertSessionHas('success', fn ($m) => str_contains($m, 'XmanEnterprise') && str_contains($m, 'ไม่มีวันหมดอายุ'));
+
+        $this->assertSame(self::PERMANENT_PAGE_TOKEN, Setting::getValue(FacebookPageService::KEY_PAGE_TOKEN));
+        // The code exchange carries the secret in the body, never the URL.
+        Http::assertSent(fn (Request $r) => $r->method() === 'POST' && str_ends_with(parse_url($r->url(), PHP_URL_PATH), '/oauth/access_token')
+            && ! str_contains($r->url(), 'app-secret-for-tests') && $r['client_secret'] === 'app-secret-for-tests');
+
+        // The state is single use.
+        $this->actingAs($admin)->get(route('admin.facebook-page.callback', ['code' => 'the-code', 'state' => $state]))
+            ->assertSessionHas('error');
+    }
+
+    public function test_cancelling_the_facebook_dialog_says_so_and_changes_nothing(): void
+    {
+        $this->connectPage();
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)->withSession(['facebook_page_oauth_state' => 'abc'])
+            ->get(route('admin.facebook-page.callback', ['error' => 'access_denied', 'error_reason' => 'user_denied', 'state' => 'abc']))
+            ->assertSessionHas('error', fn ($m) => str_contains($m, 'ยกเลิก'));
+
+        Http::assertNothingSent();
+        $this->assertSame(self::PAGE_TOKEN, Setting::getValue(FacebookPageService::KEY_PAGE_TOKEN));
+
+        // Members never reach it.
+        $member = User::factory()->create(['role' => 'user']);
+        $this->actingAs($member)->get(route('admin.facebook-page.connect'))->assertForbidden();
+        $this->assertSame(self::PAGE_TOKEN, Setting::getValue(FacebookPageService::KEY_PAGE_TOKEN));
+    }
+
     public function test_an_account_that_cannot_create_content_is_refused_with_the_reason(): void
     {
         Setting::setValue(FacebookPageService::KEY_PAGE_ID, self::PAGE, 'string', 'facebook');
