@@ -115,7 +115,8 @@ class Article extends Model
     public function coverUrl(): string
     {
         if (! $this->cover_image) {
-            return route('articles.cover', $this->slug);
+            // ?v= changes when the drawing does: Cloudflare and Facebook keep the old picture for a day.
+            return route('articles.cover', $this->slug) . '?v=2';
         }
 
         if (str_starts_with($this->cover_image, 'http')) {

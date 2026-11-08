@@ -23,7 +23,7 @@ class OgImageController extends Controller
 
         // v6: ก่อนหน้านี้วาดไทยโดยไม่ shape สระกับวรรณยุกต์ทับกัน รูปเก่าที่แคชไว้ต้องไม่ถูกเสิร์ฟต่อ
         // v7: โลโก้สำหรับพื้นหลังมืด (ตัวอักษรเดิมเป็นสีดำ จมหายในพื้นกรมท่า)
-        $cacheKey = 'og_image_v7_' . md5($title . $subtitle);
+        $cacheKey = 'og_image_v8_' . md5($title . $subtitle);
 
         $imageData = Cache::remember($cacheKey, 3600, function () use ($title, $subtitle) {
             return $this->createImage($title, $subtitle);
@@ -43,7 +43,7 @@ class OgImageController extends Controller
     {
         $article = Article::where('slug', $slug)->firstOrFail();
 
-        $cacheKey = 'og_image_v7_article_' . $article->id . '_' . md5($article->title . $article->category);
+        $cacheKey = 'og_image_v8_article_' . $article->id . '_' . md5($article->title . $article->category);
 
         $imageData = Cache::remember($cacheKey, 86400, function () use ($article) {
             return $this->createImage($article->title, 'บทความ · ' . $article->categoryLabel());
@@ -206,19 +206,31 @@ class OgImageController extends Controller
             $drawnTitle = ThaiShaper::shape($title);
             $drawnSubtitle = ThaiShaper::shape($subtitle);
 
-            // Title - centered
+            // Title - centered, at most two lines; a long article title used to run off both edges.
+            // Shrink until it fits in two lines (a Thai run without spaces cannot be wrapped).
+            $maxWidth = $width - 120;
             $titleSize = $logoPlaced ? 42 : 48;
-            $bbox = imagettfbbox($titleSize, 0, $fontBold, $drawnTitle);
-            $titleWidth = abs($bbox[2] - $bbox[0]);
-            $titleX = (int) (($width - $titleWidth) / 2);
-            imagettftext($img, $titleSize, 0, $titleX, $textStartY, $white, $fontBold, $drawnTitle);
+            $lines = $this->wrapText($drawnTitle, $fontBold, $titleSize, $maxWidth);
+            while ($titleSize > 26 && (count($lines) > 2 || $this->widest($lines, $fontBold, $titleSize) > $maxWidth)) {
+                $titleSize -= 2;
+                $lines = $this->wrapText($drawnTitle, $fontBold, $titleSize, $maxWidth);
+            }
+            $lines = array_slice($lines, 0, 2);
+            $lineHeight = (int) round($titleSize * 1.4);
+            $y = $textStartY;
+            foreach ($lines as $i => $line) {
+                $bbox = imagettfbbox($titleSize, 0, $fontBold, $line);
+                $titleX = (int) (($width - abs($bbox[2] - $bbox[0])) / 2);
+                $y = $textStartY + $i * $lineHeight;
+                imagettftext($img, $titleSize, 0, max(20, $titleX), $y, $white, $fontBold, $line);
+            }
 
-            // Subtitle - centered
+            // Subtitle - centered, under the last title line
             $subtitleSize = 22;
             $bbox = imagettfbbox($subtitleSize, 0, $fontRegular, $drawnSubtitle);
             $subWidth = abs($bbox[2] - $bbox[0]);
             $subX = (int) (($width - $subWidth) / 2);
-            imagettftext($img, $subtitleSize, 0, $subX, $textStartY + 50, $lightGray, $fontRegular, $drawnSubtitle);
+            imagettftext($img, $subtitleSize, 0, $subX, $y + 50, $lightGray, $fontRegular, $drawnSubtitle);
         } catch (\Throwable $e) {
             // Fallback: GD built-in fonts (ASCII only)
             if (! $logoPlaced) {
@@ -349,6 +361,17 @@ class OgImageController extends Controller
                 imagesetpixel($img, $x + $size - $i + $t, $y + $i, $color);
             }
         }
+    }
+
+    private function widest(array $lines, string $font, int $size): int
+    {
+        $max = 0;
+        foreach ($lines as $line) {
+            $bbox = imagettfbbox($size, 0, $font, $line);
+            $max = max($max, abs($bbox[2] - $bbox[0]));
+        }
+
+        return $max;
     }
 
     private function wrapText(string $text, string $font, int $size, int $maxWidth): array

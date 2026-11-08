@@ -27,6 +27,9 @@ class SitemapController extends Controller
     /** Pages that are public but not worth an index entry (forms, sign-in, the cart). */
     private const SKIP_ROUTE = '/^(login|register|password\.|verification\.|logout|cart|checkout|two-factor|setup|og-image|sitemap|robots|articles\.feed)/';
 
+    /** The same by path, for the sign-in, account and lookup pages that other products name their own way. */
+    private const SKIP_PATH = '#/(login|register|signup|dashboard|reset-device|track|tracking)(/|$)#';
+
     public function index(): Response
     {
         if (! SeoSetting::getInstance()->sitemap_enabled) {
@@ -61,7 +64,7 @@ class SitemapController extends Controller
         $add(url('/'), now()->startOfDay(), 'daily', '1.0');
 
         foreach (app(SiteMap::class)->crawlable() as $path => $name) {
-            if ($path === '/' || $path === '' || preg_match(self::SKIP_ROUTE, $name)) {
+            if ($path === '/' || $path === '' || preg_match(self::SKIP_ROUTE, $name) || preg_match(self::SKIP_PATH, '/' . ltrim($path, '/'))) {
                 continue;
             }
             $priority = in_array($name, ['products.index', 'services.index', 'campaign.dgx-spark', 'articles.index'], true) ? '0.9' : '0.6';

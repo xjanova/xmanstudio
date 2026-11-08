@@ -123,7 +123,11 @@ class ArticlesTest extends TestCase
         $this->get('/sitemap.xml')->assertOk()
             ->assertHeader('Content-Type', 'application/xml; charset=UTF-8')
             ->assertSee(route('articles.show', $a->slug), false)
-            ->assertSee(route('articles.index'), false);
+            ->assertSee(route('articles.index'), false)
+            ->assertDontSee('/login</loc>', false)
+            ->assertDontSee('/register</loc>', false)
+            ->assertDontSee('/xdreamer/signup</loc>', false)
+            ->assertDontSee('/xdreamer/dashboard</loc>', false);
 
         $this->get('/robots.txt')->assertOk()->assertSee('Sitemap: ' . route('sitemap'), false);
     }
