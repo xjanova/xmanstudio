@@ -11,6 +11,7 @@ use App\Services\FacebookPageService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 /**
@@ -25,6 +26,9 @@ use Illuminate\View\View;
  */
 class FacebookPageController extends Controller
 {
+    /** The login dialog's state, one per attempt, checked when Facebook sends the admin back. */
+    private const STATE_KEY = 'facebook_page_oauth_state';
+
     public function __construct(private readonly FacebookPageService $facebook) {}
 
     public function index(): View
@@ -44,6 +48,8 @@ class FacebookPageController extends Controller
             'appId' => $this->facebook->appId(),
             'hasToken' => $this->facebook->hasPageToken(),
             'hasAppSecret' => $this->facebook->hasAppSecret(),
+            'canLogin' => $this->facebook->canLogin(),
+            'callbackUrl' => route('admin.facebook-page.callback'),
             'autopost' => $this->facebook->autopostEnabled(),
             'expiresAt' => $this->facebook->tokenExpiresAt(),
             'connectedAt' => Setting::getValue(FacebookPageService::KEY_CONNECTED_AT),
@@ -102,6 +108,55 @@ class FacebookPageController extends Controller
             . ($result['expires_at'] ? 'token หมดอายุ ' . $result['expires_at']->timezone('Asia/Bangkok')->format('d/m/Y H:i') : 'token ไม่มีวันหมดอายุ') . ')');
 
         return $result['warnings'] === [] ? $redirect : $redirect->with('error', implode(' · ', $result['warnings']));
+    }
+
+    /** GET /admin/facebook-page/connect — off to the Facebook login dialog for XmanApp. */
+    public function connect(Request $request): RedirectResponse
+    {
+        if (! $this->facebook->canLogin()) {
+            return redirect()->route('admin.facebook-page.index')
+                ->with('error', 'ใส่ App ID และ App Secret ของ XmanApp ในช่องตั้งค่าด้านล่างก่อน แล้วค่อยกดเชื่อมเพจ');
+        }
+
+        $state = Str::random(40);
+        $request->session()->put(self::STATE_KEY, $state);
+
+        return redirect()->away($this->facebook->loginUrl(route('admin.facebook-page.callback'), $state));
+    }
+
+    /** GET /admin/facebook-page/callback — Facebook sends the admin back here with ?code&state. */
+    public function callback(Request $request): RedirectResponse
+    {
+        $expected = (string) $request->session()->pull(self::STATE_KEY, '');
+        $back = redirect()->route('admin.facebook-page.index');
+
+        if ($request->filled('error')) {
+            // error_reason=user_denied when the admin pressed cancel.
+            return $back->with('error', $request->query('error_reason') === 'user_denied'
+                ? 'ยกเลิกการอนุญาตใน Facebook — ยังไม่ได้เชื่อมเพจ'
+                : 'Facebook ไม่อนุญาต: ' . Str::limit((string) $request->query('error_description', $request->query('error')), 200));
+        }
+
+        $state = (string) $request->query('state', '');
+        if ($expected === '' || $state === '' || ! hash_equals($expected, $state)) {
+            return $back->with('error', 'ลิงก์กลับจาก Facebook หมดอายุหรือไม่ได้เริ่มจากหน้านี้ — กดปุ่มเชื่อมเพจใหม่อีกครั้ง');
+        }
+
+        $code = (string) $request->query('code', '');
+        if ($code === '') {
+            return $back->with('error', 'Facebook ไม่ส่งรหัสยืนยันกลับมา — กดปุ่มเชื่อมเพจใหม่อีกครั้ง');
+        }
+
+        try {
+            $result = $this->facebook->connectWithCode($code, route('admin.facebook-page.callback'));
+        } catch (FacebookPageException $e) {
+            return $back->with('error', 'เชื่อมเพจไม่สำเร็จ: ' . $e->getMessage());
+        }
+
+        $back->with('success', 'เชื่อมเพจ "' . $result['page_name'] . '" แล้ว · '
+            . ($result['expires_at'] ? 'token หมดอายุ ' . $result['expires_at']->timezone('Asia/Bangkok')->format('d/m/Y H:i') : 'token ไม่มีวันหมดอายุ'));
+
+        return $result['warnings'] === [] ? $back : $back->with('error', implode(' · ', $result['warnings']));
     }
 
     public function test(): RedirectResponse

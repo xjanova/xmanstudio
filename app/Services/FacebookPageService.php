@@ -161,6 +161,60 @@ class FacebookPageService
         }
     }
 
+    // ------------------------------------------------------------------------------ "Connect with Facebook"
+
+    /** What the page asks for when an admin connects with the Facebook login dialog. */
+    public const LOGIN_SCOPES = ['pages_show_list', 'pages_read_engagement', 'pages_manage_posts'];
+
+    /** Both are needed to trade the dialog's code for a token. */
+    public function canLogin(): bool
+    {
+        return $this->appId() !== '' && $this->hasAppSecret();
+    }
+
+    /** The Facebook login dialog for XmanApp, coming back to $redirectUri with ?code&state. */
+    public function loginUrl(string $redirectUri, string $state): string
+    {
+        return 'https://www.facebook.com/' . self::GRAPH_VERSION . '/dialog/oauth?' . http_build_query([
+            'client_id' => $this->appId(),
+            'redirect_uri' => $redirectUri,
+            'state' => $state,
+            'scope' => implode(',', self::LOGIN_SCOPES),
+            'response_type' => 'code',
+            // Ask again for a permission the admin unticked last time, instead of silently lacking it.
+            'auth_type' => 'rerequest',
+        ]);
+    }
+
+    /**
+     * The dialog came back with a code: trade it for the admin's user token (never kept), then
+     * connect() turns that into the page's own token that does not expire.
+     *
+     * @return array{page_id: string, page_name: string, kind: string, expires_at: ?Carbon, warnings: list<string>}
+     *
+     * @throws FacebookPageException
+     */
+    public function connectWithCode(string $code, string $redirectUri): array
+    {
+        if (! $this->canLogin()) {
+            throw new FacebookPageException('ยังไม่ได้ใส่ App ID / App Secret ของ XmanApp');
+        }
+
+        // The secret goes in the POST body: a query string would end up in exception messages.
+        $userToken = (string) ($this->call(fn () => Http::asForm()->timeout(15)->post($this->url('oauth/access_token'), [
+            'client_id' => $this->appId(),
+            'client_secret' => $this->appSecret(),
+            'redirect_uri' => $redirectUri,
+            'code' => $code,
+        ]))->json('access_token') ?? '');
+
+        if ($userToken === '') {
+            throw new FacebookPageException('Facebook ไม่ส่ง token กลับมาหลังกดอนุญาต — ลองกดเชื่อมใหม่อีกครั้ง');
+        }
+
+        return $this->connect($userToken);
+    }
+
     // ------------------------------------------------------------------------------ connecting
 
     /**

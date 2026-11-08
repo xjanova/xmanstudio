@@ -33,6 +33,26 @@
         </div>
     @endif
 
+    {{-- One click: Facebook login dialog → the page's own token, no copying from Graph API Explorer --}}
+    <div class="{{ $card }} border-blue-300 dark:border-blue-700">
+        <div class="flex flex-col md:flex-row md:items-center gap-4 justify-between">
+            <div>
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $hasToken ? 'เชื่อมเพจใหม่ / ต่ออายุ token' : 'สร้าง token ของเพจ' }}</h2>
+                <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">กดปุ่ม แล้วล็อกอิน Facebook ด้วยบัญชีที่ดูแลเพจ XmanEnterprise กดอนุญาตแอป XmanApp และติ๊กเลือกเพจ — ระบบจะสร้าง Page Token แบบไม่หมดอายุแล้วเก็บให้เอง ไม่ต้องคัดลอกอะไร</p>
+            </div>
+            @if($canLogin)
+                <a href="{{ route('admin.facebook-page.connect') }}" class="shrink-0 inline-flex items-center justify-center gap-2 rounded-xl bg-[#1877F2] px-5 py-3 text-sm font-semibold text-white hover:bg-[#166FE5]">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99A10 10 0 0 0 22 12Z"/></svg>
+                    เชื่อมเพจด้วย Facebook
+                </a>
+            @else
+                <span class="shrink-0 rounded-xl bg-gray-100 dark:bg-gray-700 px-4 py-3 text-sm text-gray-600 dark:text-gray-300">ใส่ App ID และ App Secret ด้านล่างก่อน</span>
+            @endif
+        </div>
+        <p class="{{ $hint }} mt-3">ครั้งแรกต้องเพิ่มลิงก์นี้ใน XmanApp: developers.facebook.com → XmanApp → Facebook Login → การตั้งค่า → Valid OAuth Redirect URIs
+            <code class="select-all break-all rounded bg-gray-100 dark:bg-gray-900 px-1.5 py-0.5">{{ $callbackUrl }}</code></p>
+    </div>
+
     {{-- Status --}}
     <div class="{{ $card }}">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">สถานะ</h2>
@@ -120,7 +140,7 @@
 
     {{-- How to --}}
     <div class="{{ $card }} text-sm text-gray-700 dark:text-gray-300 space-y-2">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">วิธีได้ token ใหม่ (เมื่อ token หมดอายุหรือถูกเพิกถอน)</h2>
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">อีกทาง: วาง token เอง (ถ้าปุ่มเชื่อมเพจด้านบนใช้ไม่ได้)</h2>
         <ol class="list-decimal pl-5 space-y-1">
             <li>เปิด <a href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener" class="text-blue-600 dark:text-blue-400 hover:underline">Graph API Explorer</a> ด้วยบัญชีที่เป็นผู้ดูแลเพจ XmanEnterprise</li>
             <li>ช่อง Meta App เลือก <b>XmanApp</b> · User or Page เลือก <b>User Token</b></li>
