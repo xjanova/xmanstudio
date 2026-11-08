@@ -272,6 +272,10 @@ class FacebookPageService
             }
         }
 
+        if ($kind === 'page') {
+            $pageToken = $this->permanentPageToken($pageToken, $pageId, $warnings);
+        }
+
         $expiresAt = null;
         $info = $this->inspect($pageToken);
         if ($info === null) {
@@ -281,7 +285,7 @@ class FacebookPageService
             $expiresAt = $info['expires_at'];
             if ($expiresAt !== null) {
                 $warnings[] = 'Page token นี้จะหมดอายุ ' . $expiresAt->timezone('Asia/Bangkok')->format('d/m/Y H:i')
-                    . ' — ใส่ App ID / App Secret แล้ววาง User Token ใหม่ ระบบจะแลกเป็นตัวที่ไม่มีวันหมดอายุให้';
+                    . ' — ใส่ App ID / App Secret ของแอปที่ออก token แล้ววาง token ใหม่ ระบบจะแลกเป็นตัวที่ไม่มีวันหมดอายุให้';
             }
         }
 
@@ -390,7 +394,7 @@ class FacebookPageService
     private function exchangeForLongLived(string $userToken, array &$warnings): ?string
     {
         if ($this->appId() === '' || ! $this->hasAppSecret()) {
-            $warnings[] = 'ยังไม่ได้ใส่ App ID / App Secret จึงแลก User Token เป็นแบบอายุยาวไม่ได้ — Page Token ที่ได้อาจหมดอายุภายในไม่กี่ชั่วโมง';
+            $warnings[] = 'ยังไม่ได้ใส่ App ID / App Secret จึงแลก token เป็นแบบอายุยาวไม่ได้ — Page Token ที่ได้อาจหมดอายุภายในไม่กี่ชั่วโมง';
 
             return null;
         }
@@ -403,12 +407,38 @@ class FacebookPageService
                 'fb_exchange_token' => $userToken,
             ]))->json('access_token') ?? '');
         } catch (FacebookPageException $e) {
-            $warnings[] = 'แลก User Token เป็นแบบอายุยาวไม่สำเร็จ: ' . $e->getMessage();
+            $warnings[] = 'แลก token เป็นแบบอายุยาวไม่สำเร็จ: ' . $e->getMessage();
 
             return null;
         }
 
         return $token !== '' ? $token : null;
+    }
+
+    /**
+     * A page token pasted straight from Graph API Explorer lives about an hour. Facebook trades it
+     * (fb_exchange_token, same as a user token) for one that never expires — kept only when it
+     * still answers as the same page. On any failure the pasted token is kept, with a warning.
+     *
+     * @param  list<string>  $warnings
+     */
+    private function permanentPageToken(string $pageToken, string $pageId, array &$warnings): string
+    {
+        $exchanged = $this->exchangeForLongLived($pageToken, $warnings);
+        if ($exchanged === null || $exchanged === $pageToken) {
+            return $pageToken;
+        }
+
+        try {
+            $me = $this->call(fn () => Http::timeout(15)->withToken($exchanged)
+                ->get($this->url('me'), ['fields' => 'id']))->json();
+        } catch (FacebookPageException $e) {
+            $warnings[] = 'แลก Page Token เป็นแบบไม่หมดอายุแล้ว แต่ตรวจตัวใหม่ไม่ผ่าน จึงใช้ตัวที่วางมา: ' . $e->getMessage();
+
+            return $pageToken;
+        }
+
+        return (string) ($me['id'] ?? '') === $pageId ? $exchanged : $pageToken;
     }
 
     /**
