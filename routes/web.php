@@ -90,6 +90,7 @@ use App\Http\Controllers\AiCreditCheckoutController;
 use App\Http\Controllers\AiprayController;
 use App\Http\Controllers\AntiXController;
 use App\Http\Controllers\AntiXMobileController;
+use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Auth\XdreamerSsoController;
 use App\Http\Controllers\AutoTradeXController;
@@ -136,6 +137,7 @@ use App\Http\Controllers\ReverseXController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SetupController;
 use App\Http\Controllers\SharedWorkflowController;
+use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\SmsCheckerController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\SupportTicketController;
@@ -258,12 +260,15 @@ Route::post('/dgx-spark/order', [DgxSparkCampaignController::class, 'order'])
     ->name('campaign.dgx-spark.order');
 
 // Knowledge base (docs/ARTICLES.md): IT articles written from Google Trends and our catalogue.
-Route::get('/blog', [\App\Http\Controllers\ArticleController::class, 'index'])->name('articles.index');
-Route::get('/blog/feed.xml', [\App\Http\Controllers\ArticleController::class, 'feed'])->name('articles.feed');
-Route::get('/blog/{slug}', [\App\Http\Controllers\ArticleController::class, 'show'])
+Route::get('/blog', [ArticleController::class, 'index'])->name('articles.index');
+Route::get('/blog/feed.xml', [ArticleController::class, 'feed'])->name('articles.feed');
+Route::get('/blog/{slug}', [ArticleController::class, 'show'])
     ->where('slug', '[a-z0-9-]+')
     ->name('articles.show');
-Route::post('/blog/{slug}/rate', [\App\Http\Controllers\ArticleController::class, 'rate'])
+Route::get('/blog/{slug}/cover.png', [OgImageController::class, 'article'])
+    ->where('slug', '[a-z0-9-]+')
+    ->name('articles.cover');
+Route::post('/blog/{slug}/rate', [ArticleController::class, 'rate'])
     ->where('slug', '[a-z0-9-]+')
     ->middleware('throttle:20,1,article-rate')
     ->name('articles.rate');
@@ -655,29 +660,24 @@ Route::view('/code-academy', 'code-academy')->name('code-academy');
 Route::view('/terms', 'legal.terms')->name('terms');
 Route::view('/privacy', 'legal.privacy')->name('privacy');
 
-// Sitemap.xml (SEO)
-Route::get('/sitemap.xml', function () {
-    $sitemapPath = public_path('sitemap.xml');
+// Sitemap.xml (SEO) — built from the live site: pages, products, services, articles.
+// A file at public_html/sitemap.xml would be served by the web server instead; none may exist.
+Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 
-    if (! file_exists($sitemapPath)) {
-        abort(404);
-    }
-
-    return response()->file($sitemapPath, [
-        'Content-Type' => 'application/xml',
-    ]);
-})->name('sitemap');
-
-// Robots.txt (SEO)
+// Robots.txt (SEO) — the admin's text (/admin/seo), always ending with where the sitemap is.
+// A file at public_html/robots.txt would be served instead and hide this; none may exist.
 Route::get('/robots.txt', function () {
     $setting = SeoSetting::getInstance();
 
-    if (! $setting->robots_txt_enabled || empty($setting->robots_txt_content)) {
-        return response('User-agent: *' . "\n" . 'Allow: /', 200)
-            ->header('Content-Type', 'text/plain; charset=UTF-8');
+    $body = ($setting->robots_txt_enabled && ! empty($setting->robots_txt_content))
+        ? str_replace("\r\n", "\n", trim($setting->robots_txt_content))
+        : "User-agent: *\nAllow: /\nDisallow: /admin/\nDisallow: /api/";
+
+    if ($setting->sitemap_enabled && ! preg_match('/^\s*sitemap\s*:/mi', $body)) {
+        $body .= "\n\nSitemap: " . route('sitemap');
     }
 
-    return response($setting->robots_txt_content, 200)
+    return response($body . "\n", 200)
         ->header('Content-Type', 'text/plain; charset=UTF-8');
 })->name('robots');
 
@@ -1469,6 +1469,18 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/seo', [SeoController::class, 'index'])->name('seo.index');
     Route::put('/seo', [SeoController::class, 'update'])->name('seo.update');
     Route::get('/seo/generate-sitemap', [SeoController::class, 'generateSitemap'])->name('seo.generate-sitemap');
+
+    // Knowledge base articles (/blog) — the AI writer and its settings (docs/ARTICLES.md)
+    Route::get('/articles', [App\Http\Controllers\Admin\ArticleController::class, 'index'])->name('articles.index');
+    Route::get('/articles/create', [App\Http\Controllers\Admin\ArticleController::class, 'create'])->name('articles.create');
+    Route::post('/articles', [App\Http\Controllers\Admin\ArticleController::class, 'store'])->name('articles.store');
+    Route::get('/articles/{article:id}/edit', [App\Http\Controllers\Admin\ArticleController::class, 'edit'])->whereNumber('article')->name('articles.edit');
+    Route::put('/articles/{article:id}', [App\Http\Controllers\Admin\ArticleController::class, 'update'])->whereNumber('article')->name('articles.update');
+    Route::delete('/articles/{article:id}', [App\Http\Controllers\Admin\ArticleController::class, 'destroy'])->whereNumber('article')->name('articles.destroy');
+    Route::put('/articles-settings', [App\Http\Controllers\Admin\ArticleController::class, 'settings'])->name('articles.settings');
+    Route::post('/articles-generate', [App\Http\Controllers\Admin\ArticleController::class, 'generate'])
+        ->middleware('throttle:6,10,admin-article-generate')
+        ->name('articles.generate');
 
     // AI Crawl Control
     Route::get('/ai-crawl', [AiCrawlController::class, 'index'])->name('ai-crawl.index');

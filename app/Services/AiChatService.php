@@ -30,6 +30,27 @@ class AiChatService
 
     protected InputSanitizerService $sanitizer;
 
+    /** Seconds to wait for the provider; a long article takes far longer than a chat reply. */
+    protected int $httpTimeout = 60;
+
+    /**
+     * A copy of this service for one long job (the article writer): its own output budget and
+     * timeout, so the shared instance the chat widget uses keeps its short replies.
+     */
+    public function forLongOutput(int $maxTokens, int $timeoutSeconds = 240): static
+    {
+        $copy = clone $this;
+        $copy->maxTokens = $maxTokens;
+        $copy->httpTimeout = $timeoutSeconds;
+
+        return $copy;
+    }
+
+    public function providerName(): string
+    {
+        return $this->provider . ':' . $this->model;
+    }
+
     public function __construct(InputSanitizerService $sanitizer)
     {
         $this->sanitizer = $sanitizer;
@@ -227,7 +248,7 @@ class AiChatService
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->apiKey,
             'Content-Type' => 'application/json',
-        ])->timeout(60)->post('https://api.openai.com/v1/chat/completions', array_merge([
+        ])->timeout($this->httpTimeout)->post('https://api.openai.com/v1/chat/completions', array_merge([
             'model' => $this->model,
             'messages' => $apiMessages,
         ], OpenAiCompat::tuningParams($this->model, $this->maxTokens, $this->temperature)));
@@ -270,7 +291,7 @@ class AiChatService
             'x-api-key' => $this->apiKey,
             'Content-Type' => 'application/json',
             'anthropic-version' => '2023-06-01',
-        ])->timeout(60)->post('https://api.anthropic.com/v1/messages', $payload);
+        ])->timeout($this->httpTimeout)->post('https://api.anthropic.com/v1/messages', $payload);
 
         if (! $response->successful()) {
             throw $this->classifyHttpError($response, 'Claude');
@@ -312,7 +333,7 @@ class AiChatService
 
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
-        ])->timeout(60)->post(
+        ])->timeout($this->httpTimeout)->post(
             "https://generativelanguage.googleapis.com/v1beta/models/{$this->model}:generateContent?key={$this->apiKey}",
             $payload
         );
@@ -347,7 +368,7 @@ class AiChatService
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->apiKey,
             'Content-Type' => 'application/json',
-        ])->timeout(60)->post('https://api.groq.com/openai/v1/chat/completions', [
+        ])->timeout($this->httpTimeout)->post('https://api.groq.com/openai/v1/chat/completions', [
             'model' => $this->model,
             'messages' => $apiMessages,
             'temperature' => $this->temperature,

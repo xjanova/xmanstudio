@@ -21,7 +21,8 @@ return new class extends Migration
             $table->string('slug', 191)->unique();
             $table->string('title', 200);
             $table->string('excerpt', 320)->nullable();           // meta description + card text
-            $table->longText('body');                               // sanitised HTML
+            $table->longText('body');                               // sanitised HTML, rendered from body_markdown
+            $table->longText('body_markdown')->nullable();          // what the writer / admin edits
             $table->string('category', 40)->default('it');          // Article::CATEGORIES
             $table->json('tags')->nullable();
             $table->string('focus_keyword', 120)->nullable();

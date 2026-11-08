@@ -39,6 +39,27 @@
 @endif
 
 @section('content')
+{{-- Product schema: the price and stock come from the same numbers the page shows; no ratings
+     (there are no real reviews to count), and no NVIDIA brand claim beyond the product's name. --}}
+<script type="application/ld+json">{!! json_encode(array_filter([
+    '@context' => 'https://schema.org',
+    '@type' => 'Product',
+    'name' => 'NVIDIA DGX Spark 128 GB + CluadeX และ BrainX Cloud ตลอดชีพ',
+    'description' => 'ชุดซูเปอร์คอมพิวเตอร์ AI บนโต๊ะ NVIDIA DGX Spark (128 GB unified memory, 4 TB NVMe) พร้อม License CluadeX และ BrainX Cloud แบบตลอดชีพ ติดตั้งและตั้งค่าให้ โดย XMAN Studio',
+    'image' => $ogImage ? [$ogImage] : null,
+    'sku' => 'XMAN-DGX-SPARK-BUNDLE',
+    'brand' => ['@type' => 'Brand', 'name' => 'XMAN Studio'],
+    'url' => route('campaign.dgx-spark'),
+    'offers' => [
+        '@type' => 'Offer',
+        'url' => route('campaign.dgx-spark'),
+        'priceCurrency' => 'THB',
+        'price' => number_format((float) $totals['total'], 2, '.', ''),
+        'availability' => $remaining > 0 ? 'https://schema.org/LimitedAvailability' : 'https://schema.org/SoldOut',
+        'itemCondition' => 'https://schema.org/NewCondition',
+        'seller' => ['@type' => 'Organization', 'name' => 'XMAN Studio', 'url' => url('/')],
+    ],
+]), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) !!}</script>
 <div class="dgx">
 
     {{-- ═══════════════════════════ HERO ═══════════════════════════ --}}

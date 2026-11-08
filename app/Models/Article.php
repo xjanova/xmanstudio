@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use App\Events\ArticlePublished;
+use App\Http\Controllers\SitemapController;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -16,7 +18,7 @@ use Illuminate\Support\Facades\Storage;
  * @property ?string $excerpt
  * @property string $body
  * @property string $status
- * @property ?\Illuminate\Support\Carbon $published_at
+ * @property ?Carbon $published_at
  */
 class Article extends Model
 {
@@ -39,7 +41,7 @@ class Article extends Model
     ];
 
     protected $fillable = [
-        'slug', 'title', 'excerpt', 'body', 'category', 'tags', 'focus_keyword', 'cover_image',
+        'slug', 'title', 'excerpt', 'body', 'body_markdown', 'category', 'tags', 'focus_keyword', 'cover_image',
         'status', 'published_at', 'source', 'source_topic', 'related', 'ai_model',
         'word_count', 'reading_minutes', 'facebook_post_id', 'facebook_posted_at',
     ];
@@ -60,14 +62,23 @@ class Article extends Model
     {
         // Fire ArticlePublished exactly once per publication: on the save that turns the
         // status to "published" (created as published, or a draft switched over).
-        static::saved(function (Article $article) {
-            $becamePublished = $article->status === self::STATUS_PUBLISHED
-                && ($article->wasRecentlyCreated || $article->wasChanged('status'));
-
-            if ($becamePublished) {
+        // (Not one "saved" listener: wasRecentlyCreated stays true for the life of the instance,
+        // so every later save of a just-created article would fire again.)
+        static::created(function (Article $article) {
+            if ($article->status === self::STATUS_PUBLISHED) {
                 ArticlePublished::dispatch($article);
             }
         });
+
+        static::updated(function (Article $article) {
+            if ($article->status === self::STATUS_PUBLISHED && $article->wasChanged('status')) {
+                ArticlePublished::dispatch($article);
+            }
+        });
+
+        static::saved(fn () => SitemapController::forget());
+
+        static::deleted(fn () => SitemapController::forget());
     }
 
     public function ratings(): HasMany
@@ -100,11 +111,11 @@ class Article extends Model
         return route('articles.show', $this->slug);
     }
 
-    /** Absolute URL of the cover, or null when the article has none. */
-    public function coverUrl(): ?string
+    /** Absolute URL of the cover: the uploaded picture, else one drawn from the title. */
+    public function coverUrl(): string
     {
         if (! $this->cover_image) {
-            return null;
+            return route('articles.cover', $this->slug);
         }
 
         if (str_starts_with($this->cover_image, 'http')) {

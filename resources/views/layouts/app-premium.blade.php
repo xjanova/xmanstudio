@@ -410,6 +410,7 @@
                         <li><a href="{{ config('app.product_site_url') }}" class="text-indigo-300/60 hover:text-indigo-200 transition-colors"><x-bi th="ผลิตภัณฑ์" en="Products" /></a></li>
                         <li><a href="{{ config('app.xgameshub_url') }}" class="text-indigo-300/60 hover:text-indigo-200 transition-colors"><x-bi th="เกม" en="XgamesHub" /></a></li>
                         <li><a href="/portfolio" class="text-indigo-300/60 hover:text-indigo-200 transition-colors"><x-bi th="ผลงาน" en="Portfolio" /></a></li>
+                        <li><a href="{{ route('articles.index') }}" class="text-indigo-300/60 hover:text-indigo-200 transition-colors"><x-bi th="บทความไอที" en="Blog" /></a></li>
                     </ul>
 
                     <h4 class="text-lg font-semibold text-white mb-4 mt-6"><x-bi th="กฎหมาย" en="Legal" /></h4>

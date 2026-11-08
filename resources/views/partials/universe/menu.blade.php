@@ -80,6 +80,7 @@
         @endauth
         <a href="{{ route('cart.index') }}" class="xu-dock">ตะกร้า <small>Cart</small></a>
         <a href="{{ route('portfolio') }}" class="xu-dock">ผลงาน <small>Portfolio</small></a>
+        <a href="{{ route('articles.index') }}" class="xu-dock">บทความ <small>Blog</small></a>
         <a href="{{ route('about') }}" class="xu-dock">เกี่ยวกับเรา <small>About</small></a>
         <a href="{{ $classicUrl }}" class="xu-dock xu-dock--ghost" data-xu-classic>หน้าเว็บแบบปกติ <small>Classic view</small></a>
     </nav>
