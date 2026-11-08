@@ -128,6 +128,27 @@ class ArticlesTest extends TestCase
         $this->get('/robots.txt')->assertOk()->assertSee('Sitemap: ' . route('sitemap'), false);
     }
 
+    public function test_old_wordpress_urls_are_gone_for_good(): void
+    {
+        foreach ([
+            '/ecommerce/shop?orderby=date&rating_filter=5',
+            '/ecommerce/product-category/camera-drone',
+            '/ecommerce',
+            '/sitemap_index.xml',
+            '/post-sitemap.xml',
+            '/page-sitemap.xml',
+            '/product_cat-sitemap2.xml',
+            '/wp-json/wp/v2/posts',
+        ] as $url) {
+            $this->get($url)->assertStatus(410);
+        }
+
+        // Our own routes are untouched.
+        $this->get('/sitemap.xml')->assertOk();
+        $this->get('/blog/feed.xml')->assertOk();
+        $this->get('/ecommerce-guide')->assertNotFound();
+    }
+
     public function test_the_writer_picks_a_trending_topic_and_publishes_an_article(): void
     {
         Setting::setValue('ai_provider', 'openai');

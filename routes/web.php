@@ -681,6 +681,16 @@ Route::get('/robots.txt', function () {
         ->header('Content-Type', 'text/plain; charset=UTF-8');
 })->name('robots');
 
+// The WordPress site that used to live on this domain left thousands of URLs in Google's memory
+// (a demo shop under /ecommerce/ with every filter combination, Yoast sitemaps). Search Console
+// counted ~4,900 of them against us in 2026-11. 410 Gone tells Google to drop them for good,
+// much sooner than a 404. Never matches a route of ours — keep it that way.
+Route::get('/{legacy}', fn () => response("410 Gone\n", 410)
+    ->header('Content-Type', 'text/plain; charset=UTF-8')
+    ->header('X-Robots-Tag', 'noindex'))
+    ->where('legacy', '(?:ecommerce(?:/.*)?|wp-json(?:/.*)?|xmlrpc\.php|sitemap_index\.xml|[a-z_]+-sitemap[0-9]*\.xml)')
+    ->name('legacy-wordpress-gone');
+
 // LLMs.txt (AI Crawl Control)
 Route::get('/llms.txt', function () {
     $setting = AiCrawlSetting::getInstance();
