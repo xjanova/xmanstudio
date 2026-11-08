@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Article;
+use App\Services\Articles\ArticleImages;
 use App\Services\Articles\ArticleWriter;
 use Illuminate\Console\Command;
 
@@ -14,7 +15,7 @@ class IllustrateArticles extends Command
 {
     protected $signature = 'articles:illustrate
         {slug? : One article}
-        {--missing : Every article that has no drawn cover yet}
+        {--missing : Every article without a cover or with fewer than two pictures}
         {--force : Draw again even when the article already has pictures}';
 
     protected $description = 'Draw a cover and illustrations for knowledge-base articles';
@@ -29,7 +30,7 @@ class IllustrateArticles extends Command
 
         $articles = $this->argument('slug')
             ? Article::where('slug', $this->argument('slug'))->get()
-            : Article::whereNull('cover_image')->orderBy('id')->get();
+            : Article::orderBy('id')->get();
 
         if ($articles->isEmpty()) {
             $this->warn('No article to illustrate.');
@@ -39,14 +40,15 @@ class IllustrateArticles extends Command
 
         $failed = 0;
         foreach ($articles as $article) {
-            if (! $this->option('force') && $article->cover_image && str_contains((string) $article->body_markdown, '![')) {
-                $this->line('· ' . $article->slug . ' already has pictures (--force to redo)');
+            $figures = preg_match_all('/^!\[/mu', (string) $article->body_markdown);
+            if (! $this->option('force') && $article->cover_image && $figures >= ArticleImages::MIN_INLINE) {
+                $this->line('· ' . $article->slug . ' already has a cover and ' . $figures . ' pictures (--force to redo)');
 
                 continue;
             }
 
             try {
-                $r = $writer->illustrateExisting($article);
+                $r = $writer->illustrateExisting($article, (bool) $this->option('force'));
                 $this->info('✓ ' . $article->slug . ': ' . $r['drawn'] . ' drawn' . ($r['failed'] ? ', ' . $r['failed'] . ' failed (see the log)' : ''));
             } catch (\Throwable $e) {
                 $failed++;
