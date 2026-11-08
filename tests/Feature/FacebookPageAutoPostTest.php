@@ -280,6 +280,69 @@ class FacebookPageAutoPostTest extends TestCase
         $this->assertNotSame(self::PERMANENT_PAGE_TOKEN, Setting::where('key', FacebookPageService::KEY_PAGE_TOKEN)->value('value'));
     }
 
+    public function test_a_pasted_short_lived_page_token_is_traded_for_one_that_never_expires(): void
+    {
+        Setting::setValue(FacebookPageService::KEY_PAGE_ID, self::PAGE, 'string', 'facebook');
+        Setting::setValue(FacebookPageService::KEY_APP_ID, '664172615253513', 'string', 'facebook');
+        Setting::setValue(FacebookPageService::KEY_APP_SECRET, 'app-secret-for-tests', 'string', 'facebook');
+
+        Http::fake(function (Request $r) {
+            $auth = $r->header('Authorization')[0] ?? '';
+            $path = parse_url($r->url(), PHP_URL_PATH);
+
+            return match (true) {
+                // Both the pasted and the traded token answer as the page itself.
+                $path === '/v22.0/me' => Http::response(['id' => self::PAGE, 'name' => 'XmanEnterprise']),
+                $path === '/v22.0/oauth/access_token' => ($r['fb_exchange_token'] ?? null) === self::PAGE_TOKEN
+                    ? Http::response(['access_token' => self::PERMANENT_PAGE_TOKEN])
+                    : Http::response(['error' => ['message' => 'bad token', 'code' => 190]], 400),
+                $path === '/v22.0/debug_token' => Http::response(['data' => [
+                    'type' => 'PAGE', 'is_valid' => true,
+                    'expires_at' => ($r['input_token'] ?? null) === self::PERMANENT_PAGE_TOKEN ? 0 : now()->addHour()->timestamp,
+                    'scopes' => ['pages_show_list', 'pages_read_engagement', 'pages_manage_posts'],
+                ]]),
+                default => Http::response(['error' => ['message' => 'unexpected ' . $path]], 400),
+            };
+        });
+
+        $result = app(FacebookPageService::class)->connect(self::PAGE_TOKEN);
+
+        $this->assertSame('page', $result['kind']);
+        $this->assertNull($result['expires_at']);
+        $this->assertSame([], $result['warnings']);
+        $this->assertSame(self::PERMANENT_PAGE_TOKEN, Setting::getValue(FacebookPageService::KEY_PAGE_TOKEN));
+    }
+
+    public function test_a_page_token_that_cannot_be_traded_is_kept_with_a_warning(): void
+    {
+        Setting::setValue(FacebookPageService::KEY_PAGE_ID, self::PAGE, 'string', 'facebook');
+        Setting::setValue(FacebookPageService::KEY_APP_ID, '664172615253513', 'string', 'facebook');
+        Setting::setValue(FacebookPageService::KEY_APP_SECRET, 'app-secret-for-tests', 'string', 'facebook');
+        $expires = now()->addHour()->startOfMinute();
+
+        Http::fake(function (Request $r) use ($expires) {
+            $path = parse_url($r->url(), PHP_URL_PATH);
+
+            return match (true) {
+                $path === '/v22.0/me' => Http::response(['id' => self::PAGE, 'name' => 'XmanEnterprise']),
+                // A token from another app cannot be traded with this app's secret.
+                $path === '/v22.0/oauth/access_token' => Http::response(['error' => ['message' => 'Error validating application', 'code' => 101]], 400),
+                $path === '/v22.0/debug_token' => Http::response(['data' => [
+                    'type' => 'PAGE', 'is_valid' => true, 'expires_at' => $expires->timestamp,
+                    'scopes' => ['pages_show_list', 'pages_read_engagement', 'pages_manage_posts'],
+                ]]),
+                default => Http::response(['error' => ['message' => 'unexpected ' . $path]], 400),
+            };
+        });
+
+        $result = app(FacebookPageService::class)->connect(self::PAGE_TOKEN);
+
+        $this->assertSame(self::PAGE_TOKEN, Setting::getValue(FacebookPageService::KEY_PAGE_TOKEN));
+        $this->assertTrue($result['expires_at']->eq($expires));
+        $this->assertNotEmpty(array_filter($result['warnings'], fn ($w) => str_contains($w, 'แลก token เป็นแบบอายุยาวไม่สำเร็จ')));
+        $this->assertNotEmpty(array_filter($result['warnings'], fn ($w) => str_contains($w, 'จะหมดอายุ')));
+    }
+
     public function test_an_account_that_cannot_create_content_is_refused_with_the_reason(): void
     {
         Setting::setValue(FacebookPageService::KEY_PAGE_ID, self::PAGE, 'string', 'facebook');
