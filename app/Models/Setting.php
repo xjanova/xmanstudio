@@ -62,6 +62,10 @@ class Setting extends Model
         // Domain registrar: this token can spend money — it places orders
         // against our card and can transfer domains out of our account.
         'hostinger_api_token',
+        // Company Facebook page: the page token posts as the page, the app secret can mint and
+        // inspect tokens for the whole XmanApp (the same Meta app the fortune pages use).
+        'facebook_page_access_token',
+        'facebook_app_secret',
     ];
 
     /** @return array<int,string> keys stored encrypted — also what alert redaction hunts for */

@@ -30,6 +30,7 @@ use App\Http\Controllers\Admin\DgxSparkCampaignController as AdminDgxSparkCampai
 use App\Http\Controllers\Admin\DomainSettingController;
 use App\Http\Controllers\Admin\DonationController;
 use App\Http\Controllers\Admin\EmailSettingController;
+use App\Http\Controllers\Admin\FacebookPageController;
 use App\Http\Controllers\Admin\GpuxMineController;
 use App\Http\Controllers\Admin\GpuxMineReversalController;
 use App\Http\Controllers\Admin\GuideScreenshotController;
@@ -1230,6 +1231,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::put('/line-settings', [LineSettingsController::class, 'update'])->name('line-settings.update');
     Route::post('/line-settings/test-messaging', [LineSettingsController::class, 'testMessaging'])->name('line-settings.test-messaging');
     Route::post('/line-settings/test-notify', [LineSettingsController::class, 'testNotify'])->name('line-settings.test-notify');
+
+    // Company Facebook page — new knowledge-base articles are shared there (FacebookPageController)
+    Route::get('/facebook-page', [FacebookPageController::class, 'index'])->name('facebook-page.index');
+    Route::put('/facebook-page', [FacebookPageController::class, 'update'])->name('facebook-page.update');
+    Route::post('/facebook-page/test', [FacebookPageController::class, 'test'])->name('facebook-page.test');
+    Route::delete('/facebook-page/token', [FacebookPageController::class, 'forget'])->name('facebook-page.forget');
+    Route::post('/articles/{article}/facebook', [FacebookPageController::class, 'postArticle'])->name('articles.facebook');
 
     // Custom Code Settings (Tracking & Verification)
     Route::get('/custom-code', [CustomCodeController::class, 'index'])->name('custom-code.index');
