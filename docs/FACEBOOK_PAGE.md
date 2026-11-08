@@ -27,14 +27,16 @@ never expires; only the page token is stored here, encrypted (`Setting::$encrypt
 |---|---|
 | `facebook_page_id`, `facebook_page_name` | the page |
 | `facebook_page_access_token` | encrypted, write-only in the UI |
-| `facebook_app_id`, `facebook_app_secret` (encrypted) | optional: lets a pasted short-lived user token be traded for a permanent page token, and lets "test" read the token's lifetime and scopes |
+| `facebook_app_id`, `facebook_app_secret` (encrypted) | optional but recommended: a pasted short-lived token — user **or page** — is traded (`fb_exchange_token`) for a page token that never expires, and "test" reads the token's lifetime and scopes |
 | `facebook_autopost_articles` | the on/off switch (default on) |
 
 Connect or reconnect:
 
 - Admin → ตั้งค่า → **Facebook เพจ** (`/admin/facebook-page`): paste a User Token (Graph API
   Explorer, app XmanApp, scopes `pages_show_list`, `pages_read_engagement`, `pages_manage_posts`) or
-  a Page Token.
+  a Page Token. A page token straight from Explorer lives about an hour; with the app id/secret saved
+  it is traded for one that never expires (kept only if it still answers as the same page; a token
+  from a different app cannot be traded and is kept with a warning showing when it expires).
 - Server: `... | php artisan facebook:page-token --page=106036940932060` (token on stdin — never as an
   argument, `ps` would show it), or `--file=`. `php artisan facebook:page-token --check` tests it.
 
