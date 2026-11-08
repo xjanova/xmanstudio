@@ -11,6 +11,7 @@ use App\Support\ArticleHtml;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
 
@@ -189,7 +190,7 @@ PROMPT;
 5. ขายอย่างแนบเนียน: หลังจากให้ความรู้ครบแล้ว ใส่ส่วนหนึ่งช่วงท้าย (ก่อนคำถามที่พบบ่อย) ที่เล่าว่าถ้าอยากลงมือทำจริง สินค้า/บริการด้านล่างช่วยได้อย่างไร อ้างได้เฉพาะข้อเท็จจริงที่ให้ไว้ และใส่ลิงก์ Markdown ไปยังลิงก์ที่ให้ไว้เท่านั้น
 6. ลิงก์: ใช้ได้เฉพาะลิงก์ที่ให้ไว้ในรายการนี้ ห้ามแต่ง URL เอง ห้ามลิงก์ไปเว็บอื่น
 7. ห้ามใช้ HTML ห้ามใส่หัวข้อ # (H1) ในเนื้อหา เพราะหน้าเว็บแสดงชื่อเรื่องให้แล้ว
-8. ภาพประกอบ: ใส่ตำแหน่งภาพ 2 จุด (ใต้หัวข้อ ## ที่ภาพช่วยให้เข้าใจ ไม่ใช่ติดกัน) เป็นบรรทัดเดี่ยวรูปแบบนี้เป๊ะ
+8. ภาพประกอบ: ใส่ตำแหน่งภาพ 2–3 จุด (อย่างน้อย 2 จุด ใต้หัวข้อ ## คนละหัวข้อที่ภาพช่วยให้เข้าใจ) เป็นบรรทัดเดี่ยวรูปแบบนี้เป๊ะ
    [[IMG: English description of what the picture shows, concrete objects and scene | คำอธิบายภาพภาษาไทยสั้นๆ สำหรับ alt]]
    คำบรรยายภาพเป็นภาษาอังกฤษเท่านั้น บอกสิ่งที่เห็นในภาพให้ชัด ห้ามมีตัวหนังสือ โลโก้ หรือบุคคลจริงในภาพ
 
@@ -221,7 +222,16 @@ PROMPT;
         }
 
         $slug = self::uniqueSlug($parsed['slug'] ?: $plan['topic']);
-        $pictures = $this->images->illustrate($parsed['markdown'], $parsed['image'] ?: null, $slug);
+        $title = $parsed['title'] ?: $plan['topic'];
+
+        // The writer is asked for at least two pictures but does not always place them: top up.
+        $markdown = $parsed['markdown'];
+        $cover = $parsed['image'] ?: null;
+        if (ArticleImages::enabled()) {
+            [$markdown, $planned] = $this->planFigures($markdown, $title, $parsed['excerpt'], $cover === null);
+            $cover ??= $planned;
+        }
+        $pictures = $this->images->illustrate($markdown, $cover, $slug);
 
         $html = ArticleHtml::fromMarkdown($pictures['markdown']);
         $words = ArticleHtml::wordCount($html);
@@ -230,7 +240,7 @@ PROMPT;
 
         return Article::create([
             'slug' => $slug,
-            'title' => Str::limit($parsed['title'] ?: $plan['topic'], 200, ''),
+            'title' => Str::limit($title, 200, ''),
             'excerpt' => Str::limit($parsed['excerpt'] ?: Str::limit($text, 150), 300, ''),
             'body' => $html,
             'body_markdown' => $pictures['markdown'],
@@ -255,33 +265,29 @@ PROMPT;
      *
      * @return array{drawn:int, failed:int}
      */
-    public function illustrateExisting(Article $article): array
+    public function illustrateExisting(Article $article, bool $redo = false): array
     {
         if (! ArticleImages::enabled()) {
             throw new RuntimeException('ปิดการวาดภาพไว้ หรือยังไม่มีคีย์ OpenAI (แอดมิน → ตั้งค่า AI)');
         }
 
         $markdown = (string) $article->body_markdown;
-        preg_match_all('/^##\s+(.+)$/mu', $markdown, $m);
-        $headings = array_values(array_filter($m[1], fn ($h) => ! str_contains($h, 'คำถามที่พบบ่อย')));
+        $old = [];
+        if ($redo) {
+            // Take our own pictures out; their files go once the new ones are in.
+            $markdown = preg_replace_callback(ArticleImages::OWN_PICTURE, function ($m) use (&$old) {
+                $old[] = $m[1];
 
-        $system = "You plan pictures for a Thai IT article. Reply with JSON only:\n"
-            . '{"cover":"English description of one cover scene, concrete objects, no text","figures":[{"heading":"one heading copied exactly from the list","subject":"English description of what the picture shows","alt":"คำอธิบายภาพภาษาไทยสั้นๆ"}]}' . "\n"
-            . 'At most ' . ArticleImages::MAX_INLINE . ' figures, under different headings that a picture would help explain. Never text, logos or real people in a picture.';
-        $user = 'Title: ' . $article->title . "\nSummary: " . $article->excerpt . "\nHeadings:\n- " . implode("\n- ", $headings);
-
-        $plan = self::extractJson((string) ($this->ai->forLongOutput(2000, 120)->chat([['role' => 'user', 'content' => $user]], $system)['message'] ?? ''));
-
-        foreach (array_slice((array) ($plan['figures'] ?? []), 0, ArticleImages::MAX_INLINE) as $f) {
-            if (! is_array($f) || empty($f['heading']) || empty($f['subject']) || ! in_array($f['heading'], $headings, true)) {
-                continue;
+                return '';
+            }, $markdown) ?? $markdown;
+            if ($article->cover_image && ! str_starts_with($article->cover_image, 'http')) {
+                $old[] = $article->cover_image;
             }
-            $line = '[[IMG: ' . str_replace(['|', ']]'], ' ', (string) $f['subject']) . ' | ' . str_replace(['|', ']]'], ' ', (string) ($f['alt'] ?? $article->title)) . ']]';
-            // Under the heading, before its first paragraph.
-            $markdown = preg_replace('/^(##\s+' . preg_quote($f['heading'], '/') . ')[ \t]*$/mu', "$1\n\n" . str_replace(['\\', '$'], ['\\\\', '\\$'], $line), $markdown, 1) ?? $markdown;
         }
 
-        $pictures = $this->images->illustrate($markdown, is_string($plan['cover'] ?? null) ? $plan['cover'] : $article->title, $article->slug);
+        $wantCover = $redo || ! $article->cover_image;
+        [$markdown, $cover] = $this->planFigures($markdown, $article->title, (string) $article->excerpt, $wantCover);
+        $pictures = $this->images->illustrate($markdown, $wantCover ? ($cover ?? $article->title) : null, $article->slug);
 
         $article->update(array_filter([
             'body_markdown' => $pictures['markdown'],
@@ -289,7 +295,72 @@ PROMPT;
             'cover_image' => $pictures['cover'] ?? $article->cover_image,
         ], fn ($v) => $v !== null));
 
+        // The cover stays when a new one could not be drawn.
+        Storage::disk('public')->delete(array_values(array_diff($old, [$article->cover_image])));
+
         return ['drawn' => $pictures['drawn'], 'failed' => $pictures['failed']];
+    }
+
+    /**
+     * Make sure the article has at least ArticleImages::MIN_INLINE picture spots: placeholders are put
+     * under headings that have no picture yet. One short AI call describes the pictures (and the cover
+     * when $wantCover); headings it misses get a plain subject from the heading itself, so the minimum
+     * holds even when that call fails.
+     *
+     * @return array{0:string, 1:?string} the Markdown with placeholders, and a cover subject (or null)
+     */
+    private function planFigures(string $markdown, string $title, string $excerpt, bool $wantCover): array
+    {
+        $have = preg_match_all(ArticleImages::PLACEHOLDER, $markdown) + preg_match_all('/^!\[/mu', $markdown);
+        $need = max(0, ArticleImages::MIN_INLINE - $have);
+
+        // Headings a picture may go under: not the FAQ, and not one that already has a picture.
+        $free = [];
+        foreach (preg_split('/^(?=##\s)/mu', $markdown) ?: [] as $section) {
+            if (preg_match('/^##\s+(.+?)[ \t]*$/mu', $section, $h) && ! str_contains($h[1], 'คำถามที่พบบ่อย')
+                && ! str_contains($section, '[[IMG:') && ! preg_match('/^!\[/mu', $section)) {
+                $free[] = $h[1];
+            }
+        }
+        $need = min($need, count($free));
+
+        if ($need === 0 && ! $wantCover) {
+            return [$markdown, null];
+        }
+
+        $plan = [];
+        try {
+            $system = "You plan pictures for a Thai IT article. Reply with JSON only:\n"
+                . '{"cover":"English description of one cover scene, concrete objects, no text","figures":[{"heading":"one heading copied exactly from the list","subject":"English description of what the picture shows","alt":"คำอธิบายภาพภาษาไทยสั้นๆ"}]}' . "\n"
+                . 'Exactly ' . $need . ' figures, each under a different heading that a picture would help explain. Never text, logos or real people in a picture.';
+            $user = 'Title: ' . $title . "\nSummary: " . $excerpt . "\nHeadings:\n- " . implode("\n- ", $free);
+            $plan = self::extractJson((string) ($this->ai->forLongOutput(2000, 120)->chat([['role' => 'user', 'content' => $user]], $system)['message'] ?? ''));
+        } catch (\Throwable $e) {
+            Log::warning('Articles: picture planning failed, using the headings: ' . $e->getMessage());
+        }
+
+        $figures = [];
+        foreach ((array) ($plan['figures'] ?? []) as $f) {
+            if (count($figures) < $need && is_array($f) && ! empty($f['subject']) && in_array($f['heading'] ?? null, $free, true) && ! isset($figures[$f['heading']])) {
+                $figures[$f['heading']] = [(string) $f['subject'], (string) ($f['alt'] ?? $f['heading'])];
+            }
+        }
+        foreach ($free as $heading) {
+            if (count($figures) >= $need) {
+                break;
+            }
+            $figures[$heading] ??= ['An illustration that explains "' . $heading . '" for an article titled "' . $title . '"', $heading];
+        }
+
+        foreach ($figures as $heading => [$subject, $alt]) {
+            $line = '[[IMG: ' . str_replace(['|', '[', ']', "\n"], ' ', $subject) . ' | ' . str_replace(['|', '[', ']', "\n"], ' ', $alt) . ']]';
+            // Under the heading, before its first paragraph.
+            $markdown = preg_replace('/^(##\s+' . preg_quote($heading, '/') . ')[ \t]*$/mu', "$1\n\n" . str_replace(['\\', '$'], ['\\\\', '\\$'], $line), $markdown, 1) ?? $markdown;
+        }
+
+        $cover = $wantCover && is_string($plan['cover'] ?? null) && trim($plan['cover']) !== '' ? $plan['cover'] : null;
+
+        return [$markdown, $cover];
     }
 
     /**

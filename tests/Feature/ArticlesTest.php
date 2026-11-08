@@ -222,7 +222,17 @@ class ArticlesTest extends TestCase
         return "TITLE: ปิดช่องโหว่ SSH ก่อนโดนเจาะ\nSLUG: ssh-hardening-guide\nEXCERPT: เช็กลิสต์ตั้งค่า SSH ให้ปลอดภัย\nCATEGORY: security\nFOCUS: ssh ปลอดภัย\nTAGS: SSH, Linux\nIMAGE: A glowing padlock guarding a server rack\n---\n"
             . "## ทำไมต้องสนใจ\n\n[[IMG: A hacker silhouette knocking on a server door | ภาพผู้บุกรุกเคาะประตูเซิร์ฟเวอร์]]\n\n{$body}\n\n"
             . "## ตั้งค่าทีละขั้น\n\n[[IMG: A checklist beside a terminal window | เช็กลิสต์ข้างหน้าต่างเทอร์มินัล]]\n\nทำตามนี้ [[IMG: stray | หลุด]] แล้วจะปลอดภัย {$body}\n\n"
-            . "## สรุป\n\n[[IMG: One too many pictures | ภาพที่เกินโควตา]]\n\nจบ";
+            . "## สรุป\n\n[[IMG: A calm admin sipping coffee next to a locked server | ผู้ดูแลระบบสบายใจ]]\n\nจบ"
+            . "\n\n## เพิ่มเติม\n\n[[IMG: One too many pictures | ภาพที่เกินโควตา]]\n\nอ่านต่อ";
+    }
+
+    /** A writer answer with no picture placeholders at all, and no cover subject. */
+    private function bareAnswer(): string
+    {
+        $body = str_repeat('ย่อหน้าความรู้เรื่องความปลอดภัย SSH สำหรับธุรกิจไทย อธิบายละเอียดใช้งานได้จริง ', 60);
+
+        return "TITLE: ปิดช่องโหว่ SSH ก่อนโดนเจาะ\nSLUG: ssh-hardening-guide\nEXCERPT: เช็กลิสต์ตั้งค่า SSH ให้ปลอดภัย\nCATEGORY: security\nFOCUS: ssh ปลอดภัย\nTAGS: SSH, Linux\n---\n"
+            . "## ทำไมต้องสนใจ\n\n{$body}\n\n## ตั้งค่าทีละขั้น\n\n{$body}\n\n## คำถามที่พบบ่อย\n\n### ต้องทำบ่อยไหม\n\nปีละครั้ง";
     }
 
     private function fakeWebp(): string
@@ -248,11 +258,11 @@ class ArticlesTest extends TestCase
         $this->assertTrue($results[0]['ok'], $results[0]['error'] ?? '');
         $a = $results[0]['article'];
         $this->assertStringStartsWith('articles/ssh-hardening-guide/cover-', $a->cover_image);
-        $this->assertSame(2, substr_count($a->body_markdown, '!['), 'two figures, the third is over the limit');
+        $this->assertSame(3, substr_count($a->body_markdown, '!['), 'three figures, the fourth is over the limit');
         $this->assertStringNotContainsString('[[IMG', $a->body_markdown);
         $this->assertStringNotContainsString('[[IMG', $a->body);
         $this->assertStringContainsString('ภาพผู้บุกรุกเคาะประตูเซิร์ฟเวอร์', $a->body);
-        $this->assertCount(3, Storage::disk('public')->allFiles('articles/ssh-hardening-guide'));
+        $this->assertCount(4, Storage::disk('public')->allFiles('articles/ssh-hardening-guide'));
 
         // The same key, the cheapest model and quality, and never text in the picture.
         Http::assertSent(fn ($r) => str_contains($r->url(), '/v1/images/generations')
@@ -264,6 +274,70 @@ class ArticlesTest extends TestCase
         $this->actingAs(User::factory()->create(['role' => 'admin']))
             ->delete(route('admin.articles.destroy', $a->id));
         $this->assertSame([], Storage::disk('public')->allFiles('articles/ssh-hardening-guide'));
+    }
+
+    public function test_every_article_gets_at_least_two_figures_even_when_the_writer_placed_none(): void
+    {
+        Storage::fake('public');
+        Setting::setValue('ai_provider', 'openai');
+        Setting::setValue('openai_api_key', 'sk-test');
+
+        $answers = [
+            $this->bareAnswer(),
+            // The planner names one real heading and one that does not exist; the other is filled from the heading.
+            '{"cover":"A glowing padlock over a server rack","figures":[{"heading":"ตั้งค่าทีละขั้น","subject":"A checklist beside a terminal","alt":"เช็กลิสต์ข้างเทอร์มินัล"},{"heading":"ไม่มีหัวข้อนี้","subject":"x","alt":"x"}]}',
+        ];
+        $webp = base64_encode($this->fakeWebp());
+        Http::fake([
+            'api.openai.com/v1/images/*' => Http::response(['data' => [['b64_json' => $webp]]]),
+            'api.openai.com/*' => function () use (&$answers) {
+                return Http::response(['choices' => [['message' => ['content' => array_shift($answers)]]]]);
+            },
+        ]);
+
+        $results = app(ArticleWriter::class)->run(1, true, 'SSH ปลอดภัย');
+
+        $this->assertTrue($results[0]['ok'], $results[0]['error'] ?? '');
+        $a = $results[0]['article'];
+        $this->assertNotNull($a->cover_image, 'the cover subject came from the planner');
+        $this->assertSame(2, substr_count($a->body_markdown, '!['));
+        $this->assertStringContainsString('เช็กลิสต์ข้างเทอร์มินัล', $a->body);
+        $this->assertStringContainsString('![ทำไมต้องสนใจ]', $a->body_markdown);
+        $this->assertStringNotContainsString('![', explode('## คำถามที่พบบ่อย', $a->body_markdown)[1], 'never in the FAQ');
+        $this->assertCount(3, Storage::disk('public')->allFiles('articles/ssh-hardening-guide'));
+    }
+
+    public function test_illustrate_tops_up_old_articles_and_force_replaces_their_pictures(): void
+    {
+        Storage::fake('public');
+        Setting::setValue('ai_provider', 'openai');
+        Setting::setValue('openai_api_key', 'sk-test');
+
+        $webp = base64_encode($this->fakeWebp());
+        Http::fake([
+            'api.openai.com/v1/images/*' => Http::response(['data' => [['b64_json' => $webp]]]),
+            'api.openai.com/*' => Http::response(['choices' => [['message' => ['content' => '{"cover":"A padlock","figures":[]}']]]]),
+        ]);
+
+        $a = $this->article(); // no pictures: headings เริ่มต้น, ขั้นตอน, สรุป
+        $this->artisan('articles:illustrate', ['slug' => $a->slug])->assertSuccessful();
+
+        $a->refresh();
+        $this->assertNotNull($a->cover_image);
+        $this->assertSame(2, substr_count($a->body_markdown, '!['));
+        $first = Storage::disk('public')->allFiles('articles/test-article');
+        $this->assertCount(3, $first);
+
+        // Already has a cover and two pictures: left alone.
+        $this->artisan('articles:illustrate', ['slug' => $a->slug])->expectsOutputToContain('already has')->assertSuccessful();
+
+        // --force draws again and the old files go.
+        $this->artisan('articles:illustrate', ['slug' => $a->slug, '--force' => true])->assertSuccessful();
+        $a->refresh();
+        $this->assertSame(2, substr_count($a->body_markdown, '!['));
+        $now = Storage::disk('public')->allFiles('articles/test-article');
+        $this->assertCount(3, $now);
+        $this->assertSame([], array_intersect($first, $now));
     }
 
     public function test_an_article_still_goes_out_when_its_pictures_cannot_be_drawn(): void

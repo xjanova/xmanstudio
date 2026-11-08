@@ -66,7 +66,7 @@
             </label>
             <label class="flex items-start gap-3">
                 <input type="checkbox" name="images" value="1" @checked($settings['images']) class="mt-1 rounded">
-                <span class="text-sm text-gray-700 dark:text-gray-200"><b>วาดภาพปกและภาพประกอบ</b><br><span class="text-gray-500">ใช้คีย์ OpenAI ตัวเดียวกับที่เขียนบทความ รุ่นถูกสุด (gpt-image-1-mini คุณภาพ low) เรื่องละ 3 ภาพ ภาพละไม่ถึง 1 บาท@unless($settings['has_key']) — <b class="text-red-600">ยังไม่มีคีย์ OpenAI จึงยังวาดไม่ได้</b>@endunless</span></span>
+                <span class="text-sm text-gray-700 dark:text-gray-200"><b>วาดภาพปกและภาพประกอบ</b><br><span class="text-gray-500">ใช้คีย์ OpenAI ตัวเดียวกับที่เขียนบทความ รุ่นถูกสุด (gpt-image-1-mini คุณภาพ low) ทุกเรื่องได้ภาพปก + ภาพประกอบอย่างน้อย 2 ภาพ (ไม่เกิน 3) ภาพละไม่ถึง 1 บาท@unless($settings['has_key']) — <b class="text-red-600">ยังไม่มีคีย์ OpenAI จึงยังวาดไม่ได้</b>@endunless</span></span>
             </label>
             <label class="block text-sm text-gray-700 dark:text-gray-200">
                 จำนวนบทความต่อรอบ (1–5)

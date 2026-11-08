@@ -12,7 +12,7 @@ and they link only to things we really sell. Readers rate each article with 1–
 | Article model, categories, `ArticlePublished` once per publication | `app/Models/Article.php`, `app/Events/ArticlePublished.php` |
 | Markdown → safe HTML (raw HTML stripped, `javascript:` links dropped, h2/h3 ids, external links `nofollow`) | `app/Support/ArticleHtml.php` |
 | Public pages: list, article, stars, RSS | `app/Http/Controllers/ArticleController.php`, `resources/views/articles/` |
-| Pictures: a cover and up to two figures drawn with OpenAI's image API | `app/Services/Articles/ArticleImages.php`, `articles:illustrate` |
+| Pictures: a cover and at least two (at most three) figures drawn with OpenAI's image API | `app/Services/Articles/ArticleImages.php`, `articles:illustrate` |
 | Title card when an article has no cover | `OgImageController::article` → `/blog/{slug}/cover.png` |
 | Topic sources (Google Trends TH daily RSS + Google News TH Technology RSS) | `app/Services/Articles/TopicSources.php` |
 | What we sell, with real prices, for the writer to link | `app/Services/Articles/Catalogue.php` |
@@ -33,7 +33,7 @@ and they link only to things we really sell. Readers rate each article with 1–
    (`TITLE / SLUG / EXCERPT / CATEGORY / FOCUS / TAGS / IMAGE`), `---`, then Markdown. The prompt asks for:
    teach first, open with a real situation, a conversational tone, a checklist the reader can act on,
    no invented numbers or facts, a FAQ section, one soft "how we can help" section near the end,
-   links only from the catalogue it was given, no H1, and two `[[IMG: English subject | Thai alt]]`
+   links only from the catalogue it was given, no H1, and 2–3 `[[IMG: English subject | Thai alt]]`
    placeholders on their own lines under `##` headings.
 4. **Pictures.** See below. Never blocks the article.
 5. **Checks.** An answer under `ArticleWriter::MIN_TEXT_CHARS` characters of text is refused, not
@@ -45,10 +45,14 @@ and they link only to things we really sell. Readers rate each article with 1–
 
 `ArticleImages` draws on the **same OpenAI key** that writes the articles (`openai_api_key`, or
 `ai_openai_key`), with the cheapest model and quality: `gpt-image-1-mini`, `low`, 1536×1024 WebP —
-about 400 output image tokens, well under ฿1 a picture (cover + 2 figures per article).
+about 400 output image tokens, well under ฿1 a picture (a cover + 2–3 figures per article).
 
 - One house style for every picture (navy, purple/cyan neon, flat 3D) and **no text in pictures**:
   image models misspell, and Thai comes out as noise. The Thai goes into the `alt`.
+- **At least two figures, always.** When the writer placed fewer than `ArticleImages::MIN_INLINE`
+  placeholders, `ArticleWriter::planFigures()` asks the AI once for subjects under headings that have
+  no picture yet (never the FAQ), and fills any it misses from the heading itself, so the minimum holds
+  even when that call fails. Only a picture that cannot be drawn leaves an article below two.
 - Files: `storage/app/public/articles/{slug}/cover-xxxxxx.webp`, `figure-1-…`, `figure-2-…`.
   Deleting an article in admin deletes the folder.
 - Only a real WebP of sane size is stored. A refusal (billing, safety, model access) is logged with
@@ -56,8 +60,9 @@ about 400 output image tokens, well under ฿1 a picture (cover + 2 figures per 
   to the title card. Any `[[IMG:` text the writer left mid-paragraph is removed too.
 - Settings: `articles_images_enabled` (admin checkbox, default on), `articles_image_model`,
   `articles_image_quality` (low / medium / high).
-- Older articles: `php artisan articles:illustrate {slug}` or `--missing` (one AI call picks the
-  subjects under the article's own headings, then draws); `--force` draws again.
+- Older articles: `php artisan articles:illustrate {slug}` or `--missing` (any article without a cover
+  or with fewer than two pictures) tops them up the same way; `--force` draws everything again and
+  deletes the old files once the new ones are in (a cover that cannot be redrawn is kept).
 
 ## Schedule and settings
 

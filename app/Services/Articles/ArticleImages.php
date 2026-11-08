@@ -25,7 +25,10 @@ class ArticleImages
 
     public const DEFAULT_QUALITY = 'low';
 
-    public const MAX_INLINE = 2;
+    /** Every article gets at least this many figures (ArticleWriter tops up what the writer left). */
+    public const MIN_INLINE = 2;
+
+    public const MAX_INLINE = 3;
 
     /** A picture the model returns larger than this is not what we asked for. */
     private const MAX_BYTES = 6 * 1024 * 1024;
@@ -38,6 +41,9 @@ class ArticleImages
 
     /** A placeholder the writer leaves in the Markdown where an illustration belongs. */
     public const PLACEHOLDER = '/^[ \t]*\[\[IMG:\s*(.+?)\s*\|\s*(.+?)\s*\]\][ \t]*$/mu';
+
+    /** A picture line this class wrote; group 1 is its path on the public disk. */
+    public const OWN_PICTURE = '/^!\[[^\]]*\]\((?:https?:\/\/[^\/)\s]+)?\/storage\/(articles\/[^)\s]+\.webp)\)[ \t]*$/mu';
 
     public static function enabled(): bool
     {
