@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Jobs\GenerateArticlesJob;
 use App\Models\Article;
 use App\Models\Setting;
+use App\Services\Articles\ArticleImages;
 use App\Services\Articles\ArticleWriter;
 use App\Support\ArticleHtml;
 use Illuminate\Http\Request;
@@ -41,6 +42,8 @@ class ArticleController extends Controller
             'auto' => ArticleWriter::autoEnabled(),
             'publish' => ArticleWriter::autoPublish(),
             'per_run' => ArticleWriter::perRun(),
+            'images' => (bool) Setting::getValue('articles_images_enabled', true),
+            'has_key' => ArticleImages::hasKey(),
         ];
 
         $lastRun = Cache::get(GenerateArticlesJob::LAST_RUN_KEY);
@@ -57,6 +60,7 @@ class ArticleController extends Controller
         Setting::setValue('articles_auto_enabled', $request->boolean('auto') ? '1' : '0', 'boolean', 'articles');
         Setting::setValue('articles_auto_publish', $request->boolean('publish') ? '1' : '0', 'boolean', 'articles');
         Setting::setValue('articles_per_run', (string) $data['per_run'], 'integer', 'articles');
+        Setting::setValue('articles_images_enabled', $request->boolean('images') ? '1' : '0', 'boolean', 'articles');
 
         return back()->with('success', 'บันทึกการตั้งค่าบทความอัตโนมัติแล้ว');
     }
@@ -112,6 +116,8 @@ class ArticleController extends Controller
         if ($article->cover_image && ! str_starts_with($article->cover_image, 'http')) {
             Storage::disk('public')->delete($article->cover_image);
         }
+        // The pictures drawn for it (ArticleImages) live in their own folder.
+        Storage::disk('public')->deleteDirectory('articles/' . Str::slug($article->slug));
         $article->delete();
 
         return redirect()->route('admin.articles.index')->with('success', 'ลบบทความ "' . $article->title . '" แล้ว');

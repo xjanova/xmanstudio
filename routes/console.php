@@ -362,17 +362,21 @@ Schedule::command('ai-chat:index --if-stale')
         Log::error('[AI chat] site index failed');
     });
 
-// บทความ /blog: เขียนจาก Google Trends ข่าวเทคโนโลยี และสินค้าของเรา วันละสองรอบ (เช้า/เย็น เวลาไทย)
+// บทความ /blog: เขียนจาก Google Trends ข่าวเทคโนโลยี และสินค้าของเรา วันละสองรอบ
+// เขียนล่วงหน้า 90 นาที แล้วตั้งให้ขึ้นตอนคนไทยอ่านเรื่องไอทีมากที่สุด: พักเที่ยง 12:00 และหัวค่ำ 20:00
+// (Facebook เพจก็โพสต์ตามเวลานั้น เพราะรอจนถึง published_at)
 // ปิดได้ที่ แอดมิน → บทความ (--scheduled เคารพสวิตช์นั้น) · จำนวนต่อรอบตั้งได้ ค่าเริ่มต้น 1 เรื่อง
-// ช้าเพราะรอ AI เขียนยาว จึงรันเบื้องหลัง และกันรอบซ้อน — ดู docs/ARTICLES.md
-Schedule::command('articles:generate --scheduled')
-    ->twiceDaily(8, 17)
-    ->timezone('Asia/Bangkok')
-    ->withoutOverlapping(60)
-    ->runInBackground()
-    ->onFailure(function () {
-        Log::error('[Articles] scheduled article writing failed — see storage/logs and /admin/articles');
-    });
+// ช้าเพราะรอ AI เขียนยาวและวาดภาพ จึงรันเบื้องหลัง และกันรอบซ้อน — ดู docs/ARTICLES.md
+foreach (['10:30' => '12:00', '18:30' => '20:00'] as $writeAt => $liveAt) {
+    Schedule::command('articles:generate --scheduled --publish-at=' . $liveAt)
+        ->dailyAt($writeAt)
+        ->timezone('Asia/Bangkok')
+        ->withoutOverlapping(60)
+        ->runInBackground()
+        ->onFailure(function () use ($liveAt) {
+            Log::error('[Articles] scheduled article writing for ' . $liveAt . ' failed — see storage/logs and /admin/articles');
+        });
+}
 
 // ความปลอดภัย: ลบประวัติการเข้าสู่ระบบที่เก่าเกินกำหนด และเก็บกวาดบล็อกที่หมดอายุ
 // ตีสามทุกวัน — ประวัติการล็อกอินคือข้อมูลส่วนบุคคล เก็บไว้เท่าที่ต้องใช้สอบสวน

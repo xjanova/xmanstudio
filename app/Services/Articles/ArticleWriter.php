@@ -8,6 +8,7 @@ use App\Models\ArticleTopic;
 use App\Models\Setting;
 use App\Services\AiChatService;
 use App\Support\ArticleHtml;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
@@ -31,6 +32,7 @@ class ArticleWriter
         private AiChatService $ai,
         private TopicSources $sources,
         private Catalogue $catalogue,
+        private ArticleImages $images,
     ) {}
 
     public static function autoEnabled(): bool
@@ -51,9 +53,12 @@ class ArticleWriter
     /**
      * Pick and write $count articles. Returns what happened to each, for the command / admin.
      *
+     * $publishAt: when the articles go live (they are written ahead of the hour readers come);
+     * null or a time already past = now.
+     *
      * @return array<int, array{ok:bool, topic:string, article?:Article, error?:string}>
      */
-    public function run(int $count, ?bool $publish = null, ?string $forcedTopic = null): array
+    public function run(int $count, ?bool $publish = null, ?string $forcedTopic = null, ?CarbonInterface $publishAt = null): array
     {
         if (! $this->ai->isConfigured()) {
             throw new RuntimeException('ยังไม่ได้ตั้งค่า AI (แอดมิน → ตั้งค่า AI) จึงเขียนบทความไม่ได้');
@@ -69,7 +74,7 @@ class ArticleWriter
         $results = [];
         foreach ($plans as $plan) {
             try {
-                $article = $this->write($plan, $items, $publish);
+                $article = $this->write($plan, $items, $publish, $publishAt);
                 $this->remember($plan, 'written', null, $article->id);
                 $results[] = ['ok' => true, 'topic' => $plan['topic'], 'article' => $article];
             } catch (\Throwable $e) {
@@ -158,7 +163,7 @@ PROMPT;
      *
      * @param  array{topic:string, angle:string, category:string, related:array, source:string, source_topic:string}  $plan
      */
-    public function write(array $plan, array $items, bool $publish): Article
+    public function write(array $plan, array $items, bool $publish, ?CarbonInterface $publishAt = null): Article
     {
         $related = array_values(array_intersect_key($items, array_flip($plan['related'])));
         $relatedText = $related
@@ -177,12 +182,16 @@ PROMPT;
 
 หลักการเขียน (สำคัญมาก — Google ให้คะแนนเว็บจากเรื่องนี้):
 1. ให้ความรู้ก่อน: ย่อหน้าแรกตอบคำถามหลักของผู้อ่านทันที แล้วค่อยอธิบายลึก ใช้ตัวอย่างจริงที่คนไทยเจอ
+   ให้อ่านสนุก: เปิดด้วยสถานการณ์ที่ผู้อ่านเจอจริง เล่าเป็นภาษาคนคุยกัน มีเช็กลิสต์หรือขั้นตอนที่ทำตามได้ทันที และสรุป "ถ้าจำได้อย่างเดียว ให้จำข้อนี้" ก่อนเข้าสู่ส่วนท้าย
 2. ถูกต้องและซื่อตรง: ห้ามแต่งตัวเลขสถิติ ผลวิจัย คำพูดของบุคคล ชื่อรุ่น ราคา หรือวันที่ที่ไม่แน่ใจ ถ้าข้อมูลอาจเปลี่ยน ให้บอกผู้อ่านว่าควรตรวจสอบล่าสุด ห้ามคัดลอกข่าวของสำนักอื่น
 3. โครงสร้าง: หัวข้อย่อย ## และ ### ที่สื่อความ, รายการขั้นตอน/ข้อดีข้อเสีย, ตารางเปรียบเทียบเมื่อเหมาะ, ปิดด้วยหัวข้อ "## คำถามที่พบบ่อย" 3–4 ข้อ (### คำถาม แล้วตอบสั้น)
 4. ความยาวประมาณ 1,200–1,800 คำ ภาษาไทยเป็นธรรมชาติ ไม่ยัดคีย์เวิร์ด ไม่ขายของตั้งแต่ต้น
 5. ขายอย่างแนบเนียน: หลังจากให้ความรู้ครบแล้ว ใส่ส่วนหนึ่งช่วงท้าย (ก่อนคำถามที่พบบ่อย) ที่เล่าว่าถ้าอยากลงมือทำจริง สินค้า/บริการด้านล่างช่วยได้อย่างไร อ้างได้เฉพาะข้อเท็จจริงที่ให้ไว้ และใส่ลิงก์ Markdown ไปยังลิงก์ที่ให้ไว้เท่านั้น
 6. ลิงก์: ใช้ได้เฉพาะลิงก์ที่ให้ไว้ในรายการนี้ ห้ามแต่ง URL เอง ห้ามลิงก์ไปเว็บอื่น
 7. ห้ามใช้ HTML ห้ามใส่หัวข้อ # (H1) ในเนื้อหา เพราะหน้าเว็บแสดงชื่อเรื่องให้แล้ว
+8. ภาพประกอบ: ใส่ตำแหน่งภาพ 2 จุด (ใต้หัวข้อ ## ที่ภาพช่วยให้เข้าใจ ไม่ใช่ติดกัน) เป็นบรรทัดเดี่ยวรูปแบบนี้เป๊ะ
+   [[IMG: English description of what the picture shows, concrete objects and scene | คำอธิบายภาพภาษาไทยสั้นๆ สำหรับ alt]]
+   คำบรรยายภาพเป็นภาษาอังกฤษเท่านั้น บอกสิ่งที่เห็นในภาพให้ชัด ห้ามมีตัวหนังสือ โลโก้ หรือบุคคลจริงในภาพ
 
 สินค้า/บริการที่เกี่ยวข้อง (ข้อเท็จจริงเท่านั้น):
 {$relatedText}
@@ -194,6 +203,7 @@ EXCERPT: คำอธิบายสำหรับ Google 120–155 ตัว�
 CATEGORY: หนึ่งใน {$categories}
 FOCUS: คำค้นหลักที่คนไทยพิมพ์ค้นหา
 TAGS: แท็ก 3–6 คำ คั่นด้วยจุลภาค
+IMAGE: English description of a cover picture for this article (one scene, concrete objects, no text)
 ---
 (เนื้อหาบทความ Markdown)
 PROMPT;
@@ -204,26 +214,32 @@ PROMPT;
 
         $parsed = self::parseArticle((string) ($answer['message'] ?? ''));
 
-        $html = ArticleHtml::fromMarkdown($parsed['markdown']);
-        $text = ArticleHtml::text($html);
+        // Length is judged without the picture placeholders, and before any picture is paid for.
+        $text = ArticleHtml::text(ArticleHtml::fromMarkdown(preg_replace(ArticleImages::PLACEHOLDER, '', $parsed['markdown']) ?? $parsed['markdown']));
         if (mb_strlen($text) < self::MIN_TEXT_CHARS) {
             throw new RuntimeException('บทความสั้นเกินไป (' . mb_strlen($text) . ' ตัวอักษร) จึงไม่บันทึก');
         }
 
+        $slug = self::uniqueSlug($parsed['slug'] ?: $plan['topic']);
+        $pictures = $this->images->illustrate($parsed['markdown'], $parsed['image'] ?: null, $slug);
+
+        $html = ArticleHtml::fromMarkdown($pictures['markdown']);
         $words = ArticleHtml::wordCount($html);
         $category = array_key_exists($parsed['category'], Article::CATEGORIES) ? $parsed['category'] : $plan['category'];
+        $goLive = $publishAt && $publishAt->isFuture() ? $publishAt : now();
 
         return Article::create([
-            'slug' => self::uniqueSlug($parsed['slug'] ?: $plan['topic']),
+            'slug' => $slug,
             'title' => Str::limit($parsed['title'] ?: $plan['topic'], 200, ''),
             'excerpt' => Str::limit($parsed['excerpt'] ?: Str::limit($text, 150), 300, ''),
             'body' => $html,
-            'body_markdown' => $parsed['markdown'],
+            'body_markdown' => $pictures['markdown'],
+            'cover_image' => $pictures['cover'],
             'category' => $category,
             'tags' => $parsed['tags'],
             'focus_keyword' => Str::limit($parsed['focus'], 120, '') ?: null,
             'status' => $publish ? Article::STATUS_PUBLISHED : Article::STATUS_DRAFT,
-            'published_at' => $publish ? now() : null,
+            'published_at' => $publish ? $goLive : null,
             'source' => $plan['source'] === 'catalogue' ? 'catalogue' : ($plan['source'] === 'manual' ? 'manual' : 'trend'),
             'source_topic' => $plan['source_topic'],
             'related' => array_map(fn ($i) => ['key' => $i['key'], 'name' => $i['name'], 'url' => $i['url'], 'blurb' => $i['blurb']], $related),
@@ -234,7 +250,50 @@ PROMPT;
     }
 
     /**
-     * @return array{title:string, slug:string, excerpt:string, category:string, focus:string, tags:array, markdown:string}
+     * Give an article written before pictures existed (or without them) a cover and illustrations:
+     * one short AI call picks where pictures help and describes them, then ArticleImages draws.
+     *
+     * @return array{drawn:int, failed:int}
+     */
+    public function illustrateExisting(Article $article): array
+    {
+        if (! ArticleImages::enabled()) {
+            throw new RuntimeException('ปิดการวาดภาพไว้ หรือยังไม่มีคีย์ OpenAI (แอดมิน → ตั้งค่า AI)');
+        }
+
+        $markdown = (string) $article->body_markdown;
+        preg_match_all('/^##\s+(.+)$/mu', $markdown, $m);
+        $headings = array_values(array_filter($m[1], fn ($h) => ! str_contains($h, 'คำถามที่พบบ่อย')));
+
+        $system = "You plan pictures for a Thai IT article. Reply with JSON only:\n"
+            . '{"cover":"English description of one cover scene, concrete objects, no text","figures":[{"heading":"one heading copied exactly from the list","subject":"English description of what the picture shows","alt":"คำอธิบายภาพภาษาไทยสั้นๆ"}]}' . "\n"
+            . 'At most ' . ArticleImages::MAX_INLINE . ' figures, under different headings that a picture would help explain. Never text, logos or real people in a picture.';
+        $user = 'Title: ' . $article->title . "\nSummary: " . $article->excerpt . "\nHeadings:\n- " . implode("\n- ", $headings);
+
+        $plan = self::extractJson((string) ($this->ai->forLongOutput(2000, 120)->chat([['role' => 'user', 'content' => $user]], $system)['message'] ?? ''));
+
+        foreach (array_slice((array) ($plan['figures'] ?? []), 0, ArticleImages::MAX_INLINE) as $f) {
+            if (! is_array($f) || empty($f['heading']) || empty($f['subject']) || ! in_array($f['heading'], $headings, true)) {
+                continue;
+            }
+            $line = '[[IMG: ' . str_replace(['|', ']]'], ' ', (string) $f['subject']) . ' | ' . str_replace(['|', ']]'], ' ', (string) ($f['alt'] ?? $article->title)) . ']]';
+            // Under the heading, before its first paragraph.
+            $markdown = preg_replace('/^(##\s+' . preg_quote($f['heading'], '/') . ')[ \t]*$/mu', "$1\n\n" . str_replace(['\\', '$'], ['\\\\', '\\$'], $line), $markdown, 1) ?? $markdown;
+        }
+
+        $pictures = $this->images->illustrate($markdown, is_string($plan['cover'] ?? null) ? $plan['cover'] : $article->title, $article->slug);
+
+        $article->update(array_filter([
+            'body_markdown' => $pictures['markdown'],
+            'body' => ArticleHtml::fromMarkdown($pictures['markdown']),
+            'cover_image' => $pictures['cover'] ?? $article->cover_image,
+        ], fn ($v) => $v !== null));
+
+        return ['drawn' => $pictures['drawn'], 'failed' => $pictures['failed']];
+    }
+
+    /**
+     * @return array{title:string, slug:string, excerpt:string, category:string, focus:string, tags:array, image:string, markdown:string}
      */
     public static function parseArticle(string $answer): array
     {
@@ -264,6 +323,7 @@ PROMPT;
             'category' => strtolower($field('CATEGORY')),
             'focus' => $field('FOCUS'),
             'tags' => array_slice($tags, 0, 8),
+            'image' => $field('IMAGE'),
             'markdown' => $markdown,
         ];
     }
