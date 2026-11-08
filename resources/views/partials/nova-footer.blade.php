@@ -27,6 +27,7 @@
                     <li><a href="{{ route('quote.index') }}">ขอใบเสนอราคา / Get a quote</a></li>
                     <li><a href="{{ route('contact.show') }}">ติดต่อเรา / Contact us</a></li>
                     <li><a href="{{ route('portfolio') }}">ผลงาน / Portfolio</a></li>
+                    <li><a href="{{ route('articles.index') }}">บทความไอที / Blog</a></li>
                 </ul>
             </div>
 

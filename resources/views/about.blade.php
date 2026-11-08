@@ -1,6 +1,7 @@
 @extends($publicLayout ?? 'layouts.app')
 
 @section('title', 'เกี่ยวกับเรา - XMAN Studio')
+@section('meta_description', 'รู้จัก XMAN Studio ทีมพัฒนาซอฟต์แวร์ไทยที่ทำเว็บ แอป AI Blockchain และระบบธุรกิจมาตั้งแต่ปี 2018 พร้อมซอฟต์แวร์ของเราเองและผลงานที่ใช้งานจริง')
 
 @section('content')
 <!-- Hero Section -->

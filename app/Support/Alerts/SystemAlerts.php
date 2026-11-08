@@ -2,6 +2,7 @@
 
 namespace App\Support\Alerts;
 
+use App\Models\Article;
 use App\Support\AdminAlerts;
 use App\Support\Telegram\BotActions;
 use Illuminate\Support\Str;
@@ -49,6 +50,40 @@ final class SystemAlerts
                     . 'สาเหตุ: ไม่ได้ตั้ง XDREAMER_SSO_SECRET ใน .env (ฝั่ง aixman ชื่อ XMAN_SSO_SECRET ค่าเดียวกัน)',
                 facts: ['ผลกระทบ' => 'ล็อกอิน SSO ทั้งหมด', 'ตัวแปร' => 'XDREAMER_SSO_SECRET'],
                 category: 'system',
+            ), 360);
+        } catch (Throwable) {
+        }
+    }
+
+    /**
+     * A new article was not shared to the company Facebook page. A token problem is one card for
+     * all articles (they all fail the same way until someone reconnects); anything else is one
+     * card per article.
+     */
+    public static function facebookPostFailed(Article $article, string $reason, bool $needsReconnect): void
+    {
+        try {
+            $settings = null;
+            try {
+                $settings = route('admin.facebook-page.index');
+            } catch (Throwable) {
+            }
+
+            AdminAlerts::send(new Alert(
+                key: $needsReconnect ? 'facebook-page-connection' : 'facebook-post-failed:' . $article->getKey(),
+                level: Alert::WARNING,
+                title: $needsReconnect ? 'เพจ Facebook บริษัท: ต้องเชื่อมต่อใหม่' : 'แชร์บทความลงเพจ Facebook ไม่สำเร็จ',
+                body: 'บทความ: ' . Str::limit((string) $article->title, 120) . "\n"
+                    . 'สาเหตุ: ' . Str::limit(Redact::text($reason), 400) . "\n"
+                    . 'โพสต์เองได้ที่หน้าแอดมิน Facebook เพจ หรือคำสั่ง php artisan articles:facebook ' . $article->slug,
+                facts: [
+                    'บทความ' => Str::limit((string) $article->slug, 40),
+                    'สถานะ' => $needsReconnect ? 'ต้องเชื่อมเพจใหม่' : 'ยังไม่ได้โพสต์',
+                ],
+                url: $settings,
+                urlLabel: 'เปิดหน้าตั้งค่า Facebook เพจ',
+                category: 'system',
+                buttons: [[BotActions::muteButton($needsReconnect ? 'facebook-page-connection' : 'facebook-post-failed:' . $article->getKey())]],
             ), 360);
         } catch (Throwable) {
         }

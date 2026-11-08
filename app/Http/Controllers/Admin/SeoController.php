@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\SitemapController;
 use App\Models\SeoSetting;
 use App\Services\ImageService;
 use Illuminate\Http\Request;
@@ -78,7 +79,9 @@ class SeoController extends Controller
     }
 
     /**
-     * Generate and download sitemap.
+     * "Refresh sitemap": /sitemap.xml is built from the live site (SitemapController), so this
+     * only drops its 30-minute cache — and deletes a public_html/sitemap.xml file if one is
+     * there, because the web server would serve that stale file instead of the live one.
      */
     public function generateSitemap()
     {
@@ -87,115 +90,19 @@ class SeoController extends Controller
         if (! $setting->sitemap_enabled) {
             return redirect()
                 ->route('admin.seo.index')
-                ->with('error', 'Sitemap is disabled.');
+                ->with('error', 'Sitemap ปิดอยู่ — เปิดสวิตช์ Sitemap แล้วบันทึกก่อน');
         }
 
-        // Generate sitemap content
-        $sitemap = $this->buildSitemapXml();
+        foreach (['sitemap.xml', 'robots.txt'] as $static) {
+            if (is_file(public_path($static))) {
+                @unlink(public_path($static));
+            }
+        }
 
-        // Save to public directory
-        file_put_contents(public_path('sitemap.xml'), $sitemap);
+        SitemapController::forget();
 
         return redirect()
             ->route('admin.seo.index')
-            ->with('success', 'Sitemap generated successfully at /sitemap.xml');
-    }
-
-    /**
-     * Build sitemap XML content.
-     */
-    private function buildSitemapXml(): string
-    {
-        $urls = $this->getSitemapUrls();
-
-        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
-        $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
-
-        foreach ($urls as $url) {
-            $xml .= '  <url>' . "\n";
-            $xml .= '    <loc>' . htmlspecialchars($url['loc']) . '</loc>' . "\n";
-            $xml .= '    <lastmod>' . $url['lastmod'] . '</lastmod>' . "\n";
-            $xml .= '    <changefreq>' . $url['changefreq'] . '</changefreq>' . "\n";
-            $xml .= '    <priority>' . $url['priority'] . '</priority>' . "\n";
-            $xml .= '  </url>' . "\n";
-        }
-
-        $xml .= '</urlset>';
-
-        return $xml;
-    }
-
-    /**
-     * Get sitemap URLs.
-     */
-    private function getSitemapUrls(): array
-    {
-        $urls = [];
-        $now = now()->toIso8601String();
-
-        // Homepage
-        $urls[] = [
-            'loc' => url('/'),
-            'lastmod' => $now,
-            'changefreq' => 'daily',
-            'priority' => '1.0',
-        ];
-
-        // The main campaign (DGX Spark bundle)
-        $urls[] = [
-            'loc' => route('campaign.dgx-spark'),
-            'lastmod' => $now,
-            'changefreq' => 'daily',
-            'priority' => '0.9',
-        ];
-
-        // Static pages
-        $urls[] = [
-            'loc' => route('products.index'),
-            'lastmod' => $now,
-            'changefreq' => 'weekly',
-            'priority' => '0.9',
-        ];
-
-        $urls[] = [
-            'loc' => route('services.index'),
-            'lastmod' => $now,
-            'changefreq' => 'weekly',
-            'priority' => '0.9',
-        ];
-
-        $urls[] = [
-            'loc' => route('quote.index'),
-            'lastmod' => $now,
-            'changefreq' => 'weekly',
-            'priority' => '0.8',
-        ];
-
-        $urls[] = [
-            'loc' => route('rental.index'),
-            'lastmod' => $now,
-            'changefreq' => 'weekly',
-            'priority' => '0.8',
-        ];
-
-        $urls[] = [
-            'loc' => route('about'),
-            'lastmod' => $now,
-            'changefreq' => 'monthly',
-            'priority' => '0.6',
-        ];
-
-        // Add dynamic products/services if needed
-        // Example:
-        // foreach (Product::all() as $product) {
-        //     $urls[] = [
-        //         'loc' => route('products.show', $product->slug),
-        //         'lastmod' => $product->updated_at->toIso8601String(),
-        //         'changefreq' => 'monthly',
-        //         'priority' => '0.7',
-        //     ];
-        // }
-
-        return $urls;
+            ->with('success', 'อัปเดต sitemap แล้ว — /sitemap.xml สร้างจากหน้าเว็บ สินค้า บริการ และบทความจริงทุกครั้ง');
     }
 }

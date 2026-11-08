@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Article;
 use App\Models\SeoSetting;
 use App\Support\BrandLogo;
 use App\Support\FontFile;
@@ -26,6 +27,26 @@ class OgImageController extends Controller
 
         $imageData = Cache::remember($cacheKey, 3600, function () use ($title, $subtitle) {
             return $this->createImage($title, $subtitle);
+        });
+
+        return response($imageData, 200, [
+            'Content-Type' => 'image/png',
+            'Cache-Control' => 'public, max-age=86400',
+        ]);
+    }
+
+    /**
+     * The cover of a /blog article that has no uploaded picture: its title on the brand
+     * background. Used as the page image, the share image and the Facebook link preview.
+     */
+    public function article(string $slug)
+    {
+        $article = Article::where('slug', $slug)->firstOrFail();
+
+        $cacheKey = 'og_image_v7_article_' . $article->id . '_' . md5($article->title . $article->category);
+
+        $imageData = Cache::remember($cacheKey, 86400, function () use ($article) {
+            return $this->createImage($article->title, 'บทความ · ' . $article->categoryLabel());
         });
 
         return response($imageData, 200, [

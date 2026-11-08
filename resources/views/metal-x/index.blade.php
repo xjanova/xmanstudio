@@ -1,6 +1,7 @@
 @extends($publicLayout ?? 'layouts.app')
 
 @section('title', $channelSettings['channel_name'] . ' - Music Channel')
+@section('meta_description', $channelSettings['channel_name'] . ' ช่องเพลงจาก XMAN Studio: มิวสิกวิดีโอ เพลย์ลิสต์ และผลงานเพลงที่สร้างด้วย AI ดูและฟังได้ที่นี่ พร้อมทีมงานเบื้องหลัง')
 
 @push('styles')
 <style>

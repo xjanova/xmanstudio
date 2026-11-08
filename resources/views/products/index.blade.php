@@ -1,6 +1,7 @@
 @extends($publicLayout ?? 'layouts.app')
 
-@section('title', 'ผลิตภัณฑ์ - XMAN Studio')
+@section('title', 'ซอฟต์แวร์และแอปของ XMAN Studio — BrainX, CluadeX, Anti X, Reverse X และอื่นๆ')
+@section('meta_description', 'รวมซอฟต์แวร์ที่ XMAN Studio พัฒนาเอง: ผู้ช่วยเขียนโค้ด AI, สมองที่สองของ AI, ระบบป้องกันเซิร์ฟเวอร์, เครื่องมือวิเคราะห์ไฟล์ และบอทเทรด ทดลองใช้ ซื้อ License และดาวน์โหลดได้ทันที')
 
 @section('content')
 <div class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
