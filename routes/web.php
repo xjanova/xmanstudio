@@ -257,6 +257,17 @@ Route::post('/dgx-spark/order', [DgxSparkCampaignController::class, 'order'])
     ->middleware(['auth', 'throttle:10,10,dgx-order', 'turnstile:checkout'])
     ->name('campaign.dgx-spark.order');
 
+// Knowledge base (docs/ARTICLES.md): IT articles written from Google Trends and our catalogue.
+Route::get('/blog', [\App\Http\Controllers\ArticleController::class, 'index'])->name('articles.index');
+Route::get('/blog/feed.xml', [\App\Http\Controllers\ArticleController::class, 'feed'])->name('articles.feed');
+Route::get('/blog/{slug}', [\App\Http\Controllers\ArticleController::class, 'show'])
+    ->where('slug', '[a-z0-9-]+')
+    ->name('articles.show');
+Route::post('/blog/{slug}/rate', [\App\Http\Controllers\ArticleController::class, 'rate'])
+    ->where('slug', '[a-z0-9-]+')
+    ->middleware('throttle:20,1,article-rate')
+    ->name('articles.rate');
+
 // Products
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{slug}', [ProductController::class, 'show'])->name('products.show');
