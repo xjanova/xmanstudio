@@ -46,6 +46,7 @@ class LoginAttempt extends Model
         'google' => 'Google',
         'telegram' => 'Telegram',
         'api' => 'แอป (API)',
+        'app' => 'โปรแกรมบนเครื่อง (CluadeX/BrainX)',
         'device' => 'ลิงก์จากแอป',
         '2fa' => 'รหัสยืนยัน 2 ขั้น',
         '2fa-device' => '2 ขั้น · เครื่องที่จดจำไว้',
