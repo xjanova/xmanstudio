@@ -323,6 +323,46 @@ class AppServiceProvider extends ServiceProvider
                 ], 429, $headers));
         });
 
+        // /api/v1/product/{slug}/app-auth/* — account sign-in from the desktop apps (CluadeX, BrainX).
+        // Each route has its own bucket so polling never spends the password budget, and every 429
+        // carries the product API's envelope with error_code RATE_LIMIT_EXCEEDED, which the apps map.
+        $appAuthTooMany = fn (Request $request, array $headers) => response()->json([
+            'success' => false,
+            'message' => 'ลองบ่อยเกินไป รอสัก 1 นาที',
+            'error_code' => 'RATE_LIMIT_EXCEEDED',
+            'data' => null,
+        ], 429, $headers);
+
+        RateLimiter::for('app-auth-health', fn (Request $request) => Limit::perMinute(30)
+            ->by('app-auth-health:' . $request->ip())->response($appAuthTooMany));
+
+        // Per address AND the account tried, as the sign-in form; the IP auto-block (LoginLog) catches
+        // one address spraying many accounts.
+        RateLimiter::for('app-auth-login', function (Request $request) use ($appAuthTooMany) {
+            $login = $request->input('login');
+            $login = is_string($login) ? mb_strtolower(trim($login)) : '';
+
+            return Limit::perMinute(5)
+                ->by('app-auth-login:' . $request->ip() . '|' . sha1($login))
+                ->response($appAuthTooMany);
+        });
+
+        RateLimiter::for('app-auth-device-start', fn (Request $request) => Limit::perMinute(10)
+            ->by('app-auth-device-start:' . $request->ip())->response($appAuthTooMany));
+
+        // Per code and address: two PCs behind one router polling at once do not share one budget
+        RateLimiter::for('app-auth-device-poll', function (Request $request) use ($appAuthTooMany) {
+            $code = $request->input('device_code');
+            $code = is_string($code) ? $code : '';
+
+            return Limit::perMinute(40)
+                ->by('app-auth-device-poll:' . sha1($code) . '|' . $request->ip())
+                ->response($appAuthTooMany);
+        });
+
+        RateLimiter::for('app-auth-free-license', fn (Request $request) => Limit::perMinute(10)
+            ->by('app-auth-free-license:' . $request->ip())->response($appAuthTooMany));
+
         RateLimiter::for('comment-moderation', function ($request) {
             return Limit::perMinute(30)
                 ->by($request->user()?->id ?: $request->ip())

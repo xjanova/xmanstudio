@@ -91,6 +91,7 @@ use App\Http\Controllers\AiCreditCheckoutController;
 use App\Http\Controllers\AiprayController;
 use App\Http\Controllers\AntiXController;
 use App\Http\Controllers\AntiXMobileController;
+use App\Http\Controllers\AppDeviceController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Auth\XdreamerSsoController;
@@ -492,6 +493,17 @@ Route::middleware('auth')->group(function () {
     Route::post('/products/macdock/free-license', [MacDockController::class, 'claimFreeLicense'])
         ->middleware('throttle:10,10,macdock-free-license')
         ->name('macdock.free-license.store');
+});
+
+// เชื่อมโปรแกรมบนเครื่อง (CluadeX, BrainX) กับบัญชี: แอปแสดง QR/โค้ด → มือถือหรือเบราว์เซอร์เปิด /device?code=…
+// ล็อกอิน (Google/LINE/รหัสผ่าน) → กดยืนยัน → แอปที่ถามอยู่ (app-auth/device/poll) ได้ไลเซ่นของบัญชี
+Route::middleware('auth')->group(function () {
+    Route::get('/device', [AppDeviceController::class, 'show'])
+        ->middleware('throttle:30,1,app-device-view')
+        ->name('app-device.show');
+    Route::post('/device', [AppDeviceController::class, 'confirm'])
+        ->middleware('throttle:10,1,app-device-confirm')
+        ->name('app-device.confirm');
 });
 
 // Services

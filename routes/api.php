@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AiprayApiController;
 use App\Http\Controllers\Api\AixmanTpixController;
 use App\Http\Controllers\Api\AntiXPushController;
 use App\Http\Controllers\Api\AppAiController;
+use App\Http\Controllers\Api\AppAuthController;
 use App\Http\Controllers\Api\AutoTradeXLicenseController;
 use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\GameItemRedeemController;
@@ -312,6 +313,21 @@ Route::prefix('v1/product/{productSlug}')->middleware(['throttle:60,1,api-produc
         Route::get('/debug-images/correction', [PuzzleDebugController::class, 'correction']);
         Route::get('/debug-images/export', [PuzzleDebugController::class, 'export']);
         Route::put('/debug-images/{id}/label', [PuzzleDebugController::class, 'updateLabel']);
+    });
+
+    // Account sign-in from the desktop apps (CluadeX, BrainX) — password, device code (QR on /device),
+    // and the FREE key of allowlisted apps. Each route has its own named limiter (AppServiceProvider).
+    Route::prefix('app-auth')->name('api.app-auth.')->group(function () {
+        Route::get('/health', [AppAuthController::class, 'health'])
+            ->middleware('throttle:app-auth-health')->name('health');
+        Route::post('/login', [AppAuthController::class, 'login'])
+            ->middleware('throttle:app-auth-login')->name('login');
+        Route::post('/device/start', [AppAuthController::class, 'deviceStart'])
+            ->middleware('throttle:app-auth-device-start')->name('device.start');
+        Route::post('/device/poll', [AppAuthController::class, 'devicePoll'])
+            ->middleware('throttle:app-auth-device-poll')->name('device.poll');
+        Route::post('/free-license', [AppAuthController::class, 'freeLicense'])
+            ->middleware('throttle:app-auth-free-license')->name('free-license');
     });
 
     // Demo endpoints (rate limited more strictly)
