@@ -12,7 +12,22 @@ class BugReport extends Model
 {
     use HasFactory, SoftDeletes;
 
+    /** Reports sent from a desktop app's "แจ้งปัญหา" window (POST /api/v1/product/{slug}/bug-reports). */
+    public const CHANNEL_APP = 'app';
+
+    /** The statuses an admin can set; the enum in the 2026_02_14 migration. */
+    public const STATUSES = ['new', 'analyzing', 'confirmed', 'fixed', 'wont_fix', 'duplicate', 'closed'];
+
+    /** Ticket letters: no 0/O, 1/I/L, so a ticket read out over the phone is never ambiguous. */
+    private const TICKET_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+
     protected $fillable = [
+        'ticket',
+        'channel',
+        'client_report_id',
+        'product_id',
+        'license_key_id',
+        'log_excerpt',
         'product_name',
         'product_version',
         'report_type',
@@ -69,6 +84,16 @@ class BugReport extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
+    }
+
+    public function licenseKey(): BelongsTo
+    {
+        return $this->belongsTo(LicenseKey::class);
+    }
+
     /**
      * Get the user who analyzed this report
      */
@@ -91,6 +116,44 @@ class BugReport extends Model
     public function attachments(): HasMany
     {
         return $this->hasMany(BugReportAttachment::class);
+    }
+
+    /**
+     * Scope: what the old public GET /api/v1/bug-reports endpoints may show. A report sent from an
+     * app's "แจ้งปัญหา" window carries the user's logs and system details: admins only.
+     */
+    public function scopeVisibleToPublicApi($query)
+    {
+        return $query->whereNull('channel');
+    }
+
+    /**
+     * A fresh ticket like "BR-261109-K7Q4M" (date + 5 letters). Unique column; the caller retries
+     * on the rare collision.
+     */
+    public static function newTicket(): string
+    {
+        $letters = '';
+        for ($i = 0; $i < 5; $i++) {
+            $letters .= self::TICKET_ALPHABET[random_int(0, strlen(self::TICKET_ALPHABET) - 1)];
+        }
+
+        return 'BR-' . now()->format('ymd') . '-' . $letters;
+    }
+
+    /** Thai label for a status, for the admin pages. */
+    public static function statusLabel(?string $status): string
+    {
+        return match ($status) {
+            'new' => 'ใหม่',
+            'analyzing' => 'กำลังตรวจสอบ',
+            'confirmed' => 'ยืนยันว่าเป็นปัญหา',
+            'fixed' => 'แก้แล้ว',
+            'wont_fix' => 'จะไม่แก้',
+            'duplicate' => 'ซ้ำกับรายงานอื่น',
+            'closed' => 'ปิดแล้ว',
+            default => (string) $status,
+        };
     }
 
     /**

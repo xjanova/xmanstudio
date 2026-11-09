@@ -34,8 +34,13 @@
         <div class="lg:col-span-2 space-y-6">
             <!-- Report Info -->
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-100 dark:border-gray-700 p-6">
-                <div class="flex items-start justify-between mb-4">
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ $report->title }}</h2>
+                <div class="flex items-start justify-between mb-4 gap-3">
+                    <div class="min-w-0">
+                        @if($report->ticket)
+                            <p class="text-xs font-mono font-semibold text-indigo-600 dark:text-indigo-400 mb-1 select-all">{{ $report->ticket }}</p>
+                        @endif
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white break-words">{{ $report->title }}</h2>
+                    </div>
                     @switch($report->status)
                         @case('new')
                             <span class="px-3 py-1 text-xs font-medium rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300">New</span>
@@ -47,13 +52,17 @@
                             <span class="px-3 py-1 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">Fixed</span>
                             @break
                         @default
-                            <span class="px-3 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300">{{ $report->status }}</span>
+                            <span class="px-3 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300 whitespace-nowrap">{{ \App\Models\BugReport::statusLabel($report->status) }}</span>
                     @endswitch
                 </div>
                 <div class="prose dark:prose-invert max-w-none text-sm text-gray-700 dark:text-gray-300">
                     {!! nl2br(e($report->description)) !!}
                 </div>
             </div>
+
+            @if($report->channel === \App\Models\BugReport::CHANNEL_APP)
+                @include('admin.bug-reports.partials.app-report', ['report' => $report])
+            @endif
 
             <!-- SMS Misclassification Details -->
             @if($report->report_type === 'misclassification' && $report->metadata)
@@ -110,7 +119,7 @@
             @endif
 
             <!-- Raw Metadata -->
-            @if($report->metadata || $report->additional_info)
+            @if($report->channel !== \App\Models\BugReport::CHANNEL_APP && ($report->metadata || $report->additional_info))
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-100 dark:border-gray-700 p-6">
                     <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-3">Raw Data</h3>
                     @if($report->metadata)
@@ -174,6 +183,36 @@
             <!-- Actions -->
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-100 dark:border-gray-700 p-6 space-y-4">
                 <h3 class="text-sm font-bold text-gray-900 dark:text-white uppercase">Actions</h3>
+
+                <form method="POST" action="{{ route('admin.bug-reports.status', $report) }}" class="space-y-2">
+                    @csrf
+                    <label for="bug-status" class="block text-xs font-semibold text-gray-500 dark:text-gray-400">สถานะ</label>
+                    <select id="bug-status" name="status"
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm">
+                        @foreach(\App\Models\BugReport::STATUSES as $st)
+                            <option value="{{ $st }}" @selected($report->status === $st)>{{ \App\Models\BugReport::statusLabel($st) }}</option>
+                        @endforeach
+                    </select>
+                    <textarea name="note" rows="2" maxlength="2000" placeholder="บันทึกภายในทีม (ไม่บังคับ)"
+                              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"></textarea>
+                    <button type="submit" class="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition">
+                        บันทึกสถานะ
+                    </button>
+                </form>
+
+                @if($report->comments->isNotEmpty())
+                    <div class="space-y-2">
+                        <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">บันทึกของทีม</p>
+                        @foreach($report->comments->sortByDesc('created_at') as $comment)
+                            <div class="rounded-lg bg-gray-50 dark:bg-gray-900/60 p-2.5">
+                                <p class="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-line break-words">{{ $comment->comment }}</p>
+                                <p class="mt-1 text-[11px] text-gray-400">{{ $comment->user?->name ?? 'ระบบ' }} · {{ $comment->created_at?->format('d/m/Y H:i') }}</p>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+
+                <hr class="border-gray-200 dark:border-gray-700">
 
                 @if(!$report->is_analyzed)
                     <form method="POST" action="{{ route('admin.bug-reports.analyze', $report) }}">

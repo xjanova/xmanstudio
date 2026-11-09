@@ -1784,6 +1784,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::delete('/{report}', [AdminBugReportController::class, 'destroy'])->name('destroy');
         Route::post('/{report}/analyze', [AdminBugReportController::class, 'markAnalyzed'])->name('analyze');
         Route::post('/{report}/fix', [AdminBugReportController::class, 'markFixed'])->name('fix');
+        Route::post('/{report}/status', [AdminBugReportController::class, 'updateStatus'])->name('status');
+        Route::get('/{report}/attachments/{attachment}', [AdminBugReportController::class, 'attachment'])->name('attachment');
     });
 
     // ==================== Aipray Training Admin ====================

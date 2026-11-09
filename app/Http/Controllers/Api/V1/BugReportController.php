@@ -156,7 +156,8 @@ class BugReportController extends Controller
      */
     public function show(string $id): JsonResponse
     {
-        $report = BugReport::with(['comments', 'attachments'])->find($id);
+        // a report from an app's "แจ้งปัญหา" window (logs, system details) is for admins only
+        $report = BugReport::with(['comments', 'attachments'])->visibleToPublicApi()->find($id);
 
         if (! $report) {
             return response()->json([
@@ -178,7 +179,7 @@ class BugReportController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = BugReport::query();
+        $query = BugReport::query()->visibleToPublicApi();
 
         // Filters
         if ($request->has('product_name')) {
@@ -269,7 +270,7 @@ class BugReportController extends Controller
     {
         $productName = $request->get('product_name');
 
-        $query = BugReport::query();
+        $query = BugReport::query()->visibleToPublicApi();
         if ($productName) {
             $query->forProduct($productName);
         }
