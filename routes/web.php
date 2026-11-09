@@ -101,6 +101,7 @@ use App\Http\Controllers\BrainXUpdateController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\ChangelogController;
 use App\Http\Controllers\ChanthraStudioWebController;
+use App\Http\Controllers\CluadeXUpdateController;
 use App\Http\Controllers\CluadeXWebController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\Customer\AffiliateController;
@@ -434,6 +435,32 @@ Route::prefix('cluadex')->name('cluadex.')->group(function () {
         ->middleware('throttle:30,1,cluadex-download')
         ->name('download');
 });
+
+// CluadeX desktop updates — the app's Velopack update source is https://xman4289.com/cluadex/download/
+// (trailing slash; owner 2026-11-09: nothing in the app may lead to GitHub). The feed comes from the
+// latest GitHub release with its release notes cleaned; a package is streamed only when that feed lists
+// it (see CluadeXUpdateController). {file} needs a segment, so it never matches /cluadex/download itself
+// (the installer, above), and the feed's fixed name is registered before it. Apps, not browsers: no
+// session and no cookie. A package is ~500 MB full or a few MB as a delta, and the app resumes a broken
+// download with Range requests, so a package gets 60 starts an hour per address.
+Route::prefix('cluadex/download')
+    ->name('cluadex.update.')
+    ->withoutMiddleware([
+        EncryptCookies::class,
+        AddQueuedCookiesToResponse::class,
+        StartSession::class,
+        ShareErrorsFromSession::class,
+        ValidateCsrfToken::class,
+    ])
+    ->group(function () {
+        Route::get('/releases.win.json', [CluadeXUpdateController::class, 'feed'])
+            ->middleware('throttle:60,1,cluadex-update-feed')
+            ->name('feed');
+        Route::get('/{file}', [CluadeXUpdateController::class, 'package'])
+            ->where('file', '[A-Za-z0-9_][A-Za-z0-9._-]{0,199}')
+            ->middleware('throttle:60,60,cluadex-update-package')
+            ->name('package');
+    });
 
 // Chanthra Studio - AI video atelier (Windows desktop)
 Route::prefix('chanthra-studio')->name('chanthra-studio.')->group(function () {
