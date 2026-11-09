@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AixmanTpixController;
 use App\Http\Controllers\Api\AntiXPushController;
 use App\Http\Controllers\Api\AppAiController;
 use App\Http\Controllers\Api\AppAuthController;
+use App\Http\Controllers\Api\AppBugReportController;
 use App\Http\Controllers\Api\AutoTradeXLicenseController;
 use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\GameItemRedeemController;
@@ -314,6 +315,11 @@ Route::prefix('v1/product/{productSlug}')->middleware(['throttle:60,1,api-produc
         Route::get('/debug-images/export', [PuzzleDebugController::class, 'export']);
         Route::put('/debug-images/{id}/label', [PuzzleDebugController::class, 'updateLabel']);
     });
+
+    // "แจ้งปัญหา" from the desktop apps: the user's words plus the diagnostics they agreed to send.
+    // Admin-only to read (/admin/bug-reports); see AppBugReportController.
+    Route::post('/bug-reports', [AppBugReportController::class, 'store'])
+        ->middleware('throttle:app-bug-reports')->name('api.app-bug-reports.store');
 
     // Account sign-in from the desktop apps (CluadeX, BrainX) — password, device code (QR on /device),
     // and the FREE key of allowlisted apps. Each route has its own named limiter (AppServiceProvider).

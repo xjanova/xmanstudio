@@ -363,6 +363,19 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('app-auth-free-license', fn (Request $request) => Limit::perMinute(10)
             ->by('app-auth-free-license:' . $request->ip())->response($appAuthTooMany));
 
+        // POST /api/v1/product/{slug}/bug-reports — "แจ้งปัญหา" from the desktop apps. A person sends one
+        // report now and then; the app's offline queue resends a few at once when the network is back.
+        // Per address (many PCs behind one office router still get room) and per machine per day.
+        RateLimiter::for('app-bug-reports', function (Request $request) use ($appAuthTooMany) {
+            $machine = $request->input('machine_id');
+            $machine = is_string($machine) ? sha1($machine) : 'none';
+
+            return [
+                Limit::perMinute(10)->by('app-bug-reports:' . $request->ip())->response($appAuthTooMany),
+                Limit::perDay(30)->by('app-bug-reports-machine:' . $machine)->response($appAuthTooMany),
+            ];
+        });
+
         RateLimiter::for('comment-moderation', function ($request) {
             return Limit::perMinute(30)
                 ->by($request->user()?->id ?: $request->ip())

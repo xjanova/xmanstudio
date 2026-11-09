@@ -17,7 +17,7 @@
                     </div>
                     <h1 class="text-3xl font-bold text-white">Bug Reports</h1>
                 </div>
-                <p class="text-orange-100 text-lg">รายงาน Bug & SMS Misclassification จาก SmsChecker App</p>
+                <p class="text-orange-100 text-lg">รายงานปัญหาจากแอปทุกตัว — ผู้ใช้กด "แจ้งปัญหา" ในแอป หรือแอปส่งเองอัตโนมัติ</p>
             </div>
             <div class="flex items-center space-x-3">
                 <!-- Auto-Delete Settings Button -->
@@ -35,7 +35,7 @@
     </div>
 
     <!-- Summary Cards -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
         <a href="{{ route('admin.bug-reports.index') }}" class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow border border-gray-100 dark:border-gray-700 hover:shadow-lg transition {{ !request('status') && !request('report_type') ? 'ring-2 ring-blue-500' : '' }}">
             <p class="text-sm text-gray-500 dark:text-gray-400">ทั้งหมด</p>
             <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $counts['all'] }}</p>
@@ -48,6 +48,14 @@
             <p class="text-sm text-gray-500 dark:text-gray-400">SMS Misclassification</p>
             <p class="text-2xl font-bold text-orange-600">{{ $counts['misclassification'] }}</p>
         </a>
+        <a href="{{ route('admin.bug-reports.index', ['channel' => 'app']) }}" class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow border border-gray-100 dark:border-gray-700 hover:shadow-lg transition {{ request('channel') === 'app' ? 'ring-2 ring-indigo-500' : '' }}">
+            <p class="text-sm text-gray-500 dark:text-gray-400">แจ้งจากแอป</p>
+            <p class="text-2xl font-bold text-indigo-600">{{ $counts['app'] }}
+                @if($counts['app_new'] > 0)
+                    <span class="text-xs font-medium text-indigo-500 align-middle">ใหม่ {{ $counts['app_new'] }}</span>
+                @endif
+            </p>
+        </a>
         <a href="{{ route('admin.bug-reports.index', ['status' => 'fixed']) }}" class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow border border-gray-100 dark:border-gray-700 hover:shadow-lg transition {{ request('status') === 'fixed' ? 'ring-2 ring-green-500' : '' }}">
             <p class="text-sm text-gray-500 dark:text-gray-400">Fixed</p>
             <p class="text-2xl font-bold text-green-600">{{ $counts['fixed'] }}</p>
@@ -57,9 +65,12 @@
     <!-- Search & Filters -->
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4 border border-gray-100 dark:border-gray-700">
         <form method="GET" class="flex flex-wrap gap-3 items-end">
+            @if(request('channel') === 'app')
+                <input type="hidden" name="channel" value="app">
+            @endif
             <div class="flex-1 min-w-[200px]">
                 <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">ค้นหา</label>
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="Title, description, device ID..."
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Ticket, หัวข้อ, รายละเอียด, device ID..."
                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500">
             </div>
             <div>
@@ -98,7 +109,7 @@
             <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
                 ค้นหา
             </button>
-            @if(request()->hasAny(['search', 'report_type', 'status', 'product_name']))
+            @if(request()->hasAny(['search', 'report_type', 'status', 'product_name', 'channel']))
                 <a href="{{ route('admin.bug-reports.index') }}" class="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium hover:bg-gray-300 transition">
                     ล้าง
                 </a>
@@ -151,6 +162,9 @@
                             #{{ $report->id }}
                         </td>
                         <td class="px-4 py-3">
+                            @if($report->ticket)
+                                <div class="text-[11px] font-mono text-indigo-600 dark:text-indigo-400">{{ $report->ticket }}</div>
+                            @endif
                             <a href="{{ route('admin.bug-reports.show', $report) }}" class="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline">
                                 {{ Str::limit($report->title, 50) }}
                             </a>

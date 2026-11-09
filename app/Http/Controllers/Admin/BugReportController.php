@@ -4,8 +4,13 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\BugReport;
+use App\Models\BugReportAttachment;
+use App\Models\BugReportComment;
 use App\Models\Setting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class BugReportController extends Controller
 {
@@ -15,7 +20,8 @@ class BugReportController extends Controller
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
+                $q->where('ticket', 'like', "%{$search}%")
+                    ->orWhere('title', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%")
                     ->orWhere('device_id', 'like', "%{$search}%");
             });
@@ -33,6 +39,10 @@ class BugReportController extends Controller
             $query->forProduct($product);
         }
 
+        if ($request->get('channel') === BugReport::CHANNEL_APP) {
+            $query->where('channel', BugReport::CHANNEL_APP);
+        }
+
         $reports = $query->paginate(20)->withQueryString();
 
         $counts = [
@@ -40,6 +50,8 @@ class BugReportController extends Controller
             'new' => BugReport::byStatus('new')->count(),
             'misclassification' => BugReport::ofType('misclassification')->count(),
             'fixed' => BugReport::where('is_fixed', true)->count(),
+            'app' => BugReport::where('channel', BugReport::CHANNEL_APP)->count(),
+            'app_new' => BugReport::where('channel', BugReport::CHANNEL_APP)->byStatus('new')->count(),
         ];
 
         $products = BugReport::distinct()->pluck('product_name')->filter()->sort()->values();
@@ -52,7 +64,7 @@ class BugReportController extends Controller
 
     public function show(BugReport $report)
     {
-        $report->load(['comments', 'attachments']);
+        $report->load(['comments.user', 'attachments', 'user', 'licenseKey', 'product']);
 
         return view('admin.bug-reports.show', compact('report'));
     }
@@ -120,5 +132,67 @@ class BugReportController extends Controller
         );
 
         return back()->with('success', 'Report marked as fixed');
+    }
+
+    /**
+     * Move a report along (new → analyzing → confirmed → fixed / wont_fix / duplicate / closed), with an
+     * optional note kept as an internal comment on the report.
+     */
+    public function updateStatus(Request $request, BugReport $report)
+    {
+        $data = $request->validate([
+            'status' => ['required', Rule::in(BugReport::STATUSES)],
+            'note' => 'nullable|string|max:2000',
+        ]);
+
+        $old = $report->status;
+        $report->status = $data['status'];
+        if (in_array($data['status'], ['analyzing', 'confirmed'], true) && ! $report->is_analyzed) {
+            $report->is_analyzed = true;
+            $report->analyzed_at = now();
+            $report->analyzed_by = auth()->id();
+        }
+        if ($data['status'] === 'fixed' && ! $report->is_fixed) {
+            $report->is_fixed = true;
+            $report->fixed_at = now();
+        }
+        $report->save();
+
+        $note = trim((string) ($data['note'] ?? ''));
+        if ($note !== '' || $old !== $data['status']) {
+            BugReportComment::create([
+                'bug_report_id' => $report->id,
+                'user_id' => auth()->id(),
+                'comment' => trim(sprintf(
+                    '%s%s',
+                    $old !== $data['status'] ? 'สถานะ: ' . BugReport::statusLabel($old) . ' → ' . BugReport::statusLabel($data['status']) . "\n" : '',
+                    $note
+                )),
+                'is_internal' => true,
+            ]);
+        }
+
+        return back()->with('success', 'อัปเดตสถานะเป็น "' . BugReport::statusLabel($data['status']) . '" แล้ว');
+    }
+
+    /**
+     * An attachment of a report (the app's screenshot), from the private disk, to admins only.
+     */
+    public function attachment(BugReport $report, BugReportAttachment $attachment): StreamedResponse
+    {
+        abort_unless($attachment->bug_report_id === $report->id, 404);
+        abort_unless(Storage::disk('local')->exists($attachment->file_path), 404);
+
+        $mime = match (strtolower((string) $attachment->file_type)) {
+            'png' => 'image/png',
+            'jpg', 'jpeg' => 'image/jpeg',
+            default => 'application/octet-stream',
+        };
+
+        return Storage::disk('local')->response($attachment->file_path, $attachment->filename, [
+            'Content-Type' => $mime,
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store',
+        ]);
     }
 }
