@@ -39,7 +39,9 @@ return [
         'anti-x' => ['monthly' => 199, 'yearly' => 1990, 'lifetime' => 9900],
         'autotradex' => ['monthly' => 299, 'yearly' => 1990, 'lifetime' => 19900],
         'brainx' => ['monthly' => 399],
-        'cluadex-ai-coding-assistant' => ['yearly' => 199, 'lifetime' => 1999],
+        // CluadeX Pro — owner 2026-11-12, to match the v2b ad clip (was yearly 199 / lifetime 1,999, no monthly).
+        // Keys already sold keep their term; a yearly key renewed after this pays the new yearly price.
+        'cluadex-ai-coding-assistant' => ['monthly' => 139, 'yearly' => 599, 'lifetime' => 1999],
         // Chanthra Studio — moved here from ChanthraStudioWebController::PRICING (2026-10-12) so the hub prints it too
         'chanthra-studio' => ['monthly' => 399, 'yearly' => 2500, 'lifetime' => 7500],
         // LocalVPN Pro — owner 2026-10-11 (was 399 / 2,500 / 5,000)
@@ -50,6 +52,12 @@ return [
         'smschecker' => ['monthly' => 499, 'yearly' => 4990, 'lifetime' => 29000],
         'tping' => ['monthly' => 399, 'yearly' => 2500, 'lifetime' => 5000],
         'winx-tools' => ['yearly' => 199],
+    ],
+
+    // A rounded US-dollar figure shown beside a THB price ("≈ $4/เดือน"), set by the owner
+    // with the price — change both together. Display only; nothing is charged in USD.
+    'usd_hints' => [
+        'cluadex-ai-coding-assistant' => ['monthly' => 4],
     ],
 
     /*

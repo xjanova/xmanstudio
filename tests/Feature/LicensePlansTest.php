@@ -55,7 +55,8 @@ class LicensePlansTest extends TestCase
         $this->assertSame(['monthly' => 199, 'yearly' => 1990, 'lifetime' => 9900], LicensePlans::for('anti-x'));
         $this->assertSame(['monthly' => 199, 'yearly' => 1990, 'lifetime' => 9900], LicensePlans::for('reverse-x'));
         $this->assertSame(['monthly' => 299, 'yearly' => 1990, 'lifetime' => 19900], LicensePlans::for('autotradex'));
-        $this->assertSame(['yearly' => 199, 'lifetime' => 1999], LicensePlans::for('cluadex-ai-coding-assistant'));
+        // owner 2026-11-12, with the v2b ad clip: a monthly plan, yearly 199 → 599, lifetime unchanged
+        $this->assertSame(['monthly' => 139, 'yearly' => 599, 'lifetime' => 1999], LicensePlans::for('cluadex-ai-coding-assistant'));
         $this->assertSame(['yearly' => 199], LicensePlans::for('winx-tools'));
         $this->assertSame(['monthly' => 399], LicensePlans::for('brainx'));
         $this->assertSame(['monthly' => 199, 'yearly' => 1990, 'lifetime' => 4990], LicensePlans::for('localvpn'));
@@ -68,7 +69,8 @@ class LicensePlansTest extends TestCase
         $this->assertSame(47, LicensePlans::yearlySaving('tping'));      // 2,500 against 12 × 399 = 47.8 %
         $this->assertSame(44, LicensePlans::yearlySaving('autotradex')); // 1,990 against 12 × 299 = 44.5 %
         $this->assertSame(16, LicensePlans::yearlySaving('smschecker')); // 4,990 against 12 × 499 = 16.7 % — the page said 48
-        $this->assertNull(LicensePlans::yearlySaving('cluadex-ai-coding-assistant')); // no monthly plan to compare with
+        $this->assertSame(64, LicensePlans::yearlySaving('cluadex-ai-coding-assistant')); // 599 against 12 × 139 = 64.1 %
+        $this->assertNull(LicensePlans::yearlySaving('winx-tools')); // no monthly plan to compare with
     }
 
     // ── the pricing API ───────────────────────────────────────────────────
@@ -134,9 +136,9 @@ class LicensePlansTest extends TestCase
 
     public function test_the_cart_refuses_a_term_the_table_does_not_sell(): void
     {
-        $cluadex = $this->licensed('cluadex-ai-coding-assistant');
+        $winx = $this->licensed('winx-tools');
 
-        $this->postJson(route('cart.add', $cluadex), ['license_type' => 'monthly'])->assertStatus(422);
+        $this->postJson(route('cart.add', $winx), ['license_type' => 'monthly'])->assertStatus(422);
 
         $this->assertSame(0, CartItem::count());
     }
@@ -237,25 +239,29 @@ class LicensePlansTest extends TestCase
             ->assertJsonPath('data.pricing.plans.lifetime.original_price', 19900);
     }
 
-    public function test_the_cluadex_pages_sell_the_two_plans_the_product_page_sells(): void
+    public function test_the_cluadex_pages_sell_the_three_plans_the_product_page_sells(): void
     {
         $cluadex = $this->licensed('cluadex-ai-coding-assistant');
 
         $html = $this->get('/cluadex/pricing')->assertOk()->getContent();
 
-        $this->assertStringContainsString('฿199', $html);
+        $this->assertStringContainsString('฿139', $html);
+        $this->assertStringContainsString('≈ $4/เดือน', $html);
+        $this->assertStringContainsString('฿599', $html);
         $this->assertStringContainsString('฿1,999', $html);
-        foreach (['฿899', '฿4,999', 'ประหยัด 63%', 'value="monthly"'] as $gone) {
+        // (not '฿199': the old yearly price is also Anti X's, which the site menu lists on every page)
+        foreach (['฿899', '฿4,999'] as $gone) {
             $this->assertStringNotContainsString($gone, $html);
         }
 
         // each plan posts its term to the cart, which charges the table's price
-        $this->assertSame(2, substr_count($html, 'action="' . route('cart.add', $cluadex) . '"'));
-        $this->assertStringContainsString('name="license_type" value="yearly"', $html);
-        $this->assertStringContainsString('name="license_type" value="lifetime"', $html);
+        $this->assertSame(3, substr_count($html, 'action="' . route('cart.add', $cluadex) . '"'));
+        foreach (['monthly', 'yearly', 'lifetime'] as $term) {
+            $this->assertStringContainsString('name="license_type" value="' . $term . '"', $html);
+        }
 
-        $this->post(route('cart.add', $cluadex), ['license_type' => 'yearly'])->assertRedirect();
-        $this->assertEquals(199, (float) CartItem::sole()->price);
+        $this->post(route('cart.add', $cluadex), ['license_type' => 'monthly'])->assertRedirect();
+        $this->assertEquals(139, (float) CartItem::sole()->price);
 
         // the old landing page is the product page now, which quotes the same table
         $this->get('/cluadex')->assertRedirect(route('products.show', 'cluadex-ai-coding-assistant'));
@@ -266,7 +272,8 @@ class LicensePlansTest extends TestCase
         $this->licensed('cluadex-ai-coding-assistant');
 
         $html = $this->get('/products/cluadex-ai-coding-assistant')->assertOk()->getContent();
-        $this->assertStringContainsString('ซื้อ Pro รายปี — ฿199', $html);
+        $this->assertStringContainsString('ซื้อ Pro รายเดือน — ฿139', $html);
+        $this->assertStringContainsString('ซื้อ Pro รายปี — ฿599', $html);
         $this->assertStringContainsString('ซื้อ Pro ตลอดชีพ — ฿1,999', $html);
         // the cart never read a posted price; the forms stop sending one
         $this->assertStringNotContainsString('name="price"', $html);
