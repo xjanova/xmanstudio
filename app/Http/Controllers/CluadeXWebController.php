@@ -22,9 +22,22 @@ class CluadeXWebController extends Controller
     /**
      * The plans the store sells, as the product page (/products/cluadex-ai-coding-assistant)
      * describes them. What each one costs is in config/licenses.php; pricedPlans()
-     * puts the two together. There is no monthly plan: the store sells a year or a lifetime.
+     * puts the two together. The monthly plan came back on 2026-11-12 (owner, with the v2b ad clip).
      */
     private const PLANS = [
+        'monthly' => [
+            'name' => 'Monthly',
+            'name_th' => 'รายเดือน',
+            'duration_days' => 30,
+            'license_type' => 'monthly',
+            'features' => [
+                'ฟีเจอร์ทั้งหมด',
+                '5 AI Providers',
+                '28 Agent Tools',
+                'จ่ายทีละเดือน ไม่ผูกสัญญา',
+                'อัปเดตฟรีตลอดอายุคีย์',
+            ],
+        ],
         'yearly' => [
             'name' => 'Yearly',
             'name_th' => 'รายปี',

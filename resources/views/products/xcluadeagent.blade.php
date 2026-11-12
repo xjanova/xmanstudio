@@ -5,14 +5,16 @@
 @php $csDownload = \App\Models\Product::slugIsComingSoon('cluadex-ai-coding-assistant'); @endphp
 
 @section('title', 'CluadeX — ผู้ช่วยเขียนโค้ด AI บน Windows · มีรุ่นฟรี · Pro ' . collect(\App\Support\LicensePlans::for('cluadex-ai-coding-assistant'))->map(fn ($p, $t) => '฿' . number_format($p) . ($t === 'yearly' ? '/ปี' : ($t === 'monthly' ? '/เดือน' : ' ตลอดชีพ')))->implode(' หรือ ') . ' | XMAN Studio')
-@section('meta_description', 'CluadeX ผู้ช่วยเขียนโค้ด AI บน Windows ที่อ่าน แก้ไฟล์ รันคำสั่ง และใช้ Git ในโปรเจกต์ของคุณ ใช้โมเดล GGUF ในเครื่องหรือ Ollama ได้ฟรี · Pro ต่อ Claude, GPT, Gemini ด้วย API key ของคุณ พร้อม GitHub, Web fetch และ Dev Preview · ถามก่อนลงมือทุกครั้ง · An AI coding agent for Windows.')
+@section('meta_description', 'CluadeX ผู้ช่วยเขียนโค้ด AI บน Windows ที่อ่าน แก้ไฟล์ รันคำสั่ง และใช้ Git ในโปรเจกต์ของคุณ ใช้โมเดล GGUF ในเครื่องหรือ Ollama ได้ฟรี · Pro ต่อ Claude, GPT, Gemini, Grok ด้วย API key ของคุณ พร้อม GitHub, Web fetch และ Dev Preview · ถามก่อนลงมือทุกครั้ง · An AI coding agent for Windows.')
 @section('og_image', asset('images/products/cluadex/v2/og.jpg'))
 
 @section('content')
 @php
     // ราคาทุกแผนมาจาก config/licenses.php 'plans' ที่เดียว (ตะกร้าคิดตามนี้) — ห้ามเขียนตัวเลขราคาลงหน้านี้ตรง ๆ
-    // CluadeX ขายรายปีกับตลอดชีพ ไม่มีรายเดือน — ถ้า config เพิ่ม/ลดแผน การ์ดตามเอง
+    // CluadeX ขายรายเดือน รายปี และตลอดชีพ (เจ้าของ 2026-11-12) — ถ้า config เพิ่ม/ลดแผน การ์ดตามเอง
     $prices = \App\Support\LicensePlans::for('cluadex-ai-coding-assistant');
+    // ตัวเลขดอลลาร์ปัดเศษที่เจ้าของตั้งคู่กับราคา (config/licenses.php usd_hints) — แสดงอย่างเดียว ไม่ได้คิดเงินเป็นดอลลาร์
+    $usdHints = config('licenses.usd_hints.cluadex-ai-coding-assistant', []);
     $firstTerm = array_key_first($prices);
 
     // ปุ่มซื้อต้องมีเสมอ — แอปส่งลูกค้ามาหน้านี้เพื่อซื้อ และ 1 คีย์ใช้ได้ 1 เครื่อง คนที่ซื้อแล้วก็ซื้อให้เครื่องอื่นได้
@@ -26,6 +28,31 @@
     // ภาพหน้าจอ: ภาพจริงที่แอปเรนเดอร์เองด้วยข้อมูลตัวอย่าง (tests/themetest ของ CluadeX) — เบลอป้ายเวอร์ชันทดสอบและพาธแล้ว
     // สร้างใหม่ได้ด้วย scripts/product-mockups/build.py cluadex
     $shot = fn (string $file) => asset('images/products/cluadex/v2/' . $file);
+    // ชุด v3 (2026-11-12): เรนเดอร์จาก CluadeX 3.0.319 ตัวจริงด้วย tests/themetest — ข้อมูลในภาพเป็นตัวอย่าง ไม่มีของลูกค้า
+    $shot3 = fn (string $file) => asset('images/products/cluadex/v3/' . $file);
+
+    // คลิปโฆษณา v2b (9:16, 3:12) อยู่ใน storage ของเซิร์ฟเวอร์ — ไฟล์ใหญ่เกินจะเก็บใน git (แบบเดียวกับคลิป WinXTools)
+    $clip = [
+        'hd' => asset('storage/videos/cluadex/cluadex-ad-1080p.mp4'),
+        'sd' => asset('storage/videos/cluadex/cluadex-ad-720p.mp4'),
+        'poster' => $shot3('clip/poster.webp'),
+    ];
+    // วินาทีที่แต่ละช่วงในคลิปเริ่ม (ตาราง shot ใน xmanstudio-campaign-media/cluadex-ad/README.md) — ภาพย่อคือภาพนิ่งจากคลิป
+    // ไม่มีช่วง 2:02 "เครือข่ายสมองทั่วโลก": แอปยังไม่มีฟีเจอร์นั้น หน้านี้จึงไม่พาไปที่ช่วงนั้น
+    $chapters = [
+        [53, '01', 'ประหยัด token ตั้งแต่ราก', 'Prompt cache'],
+        [64, '02', 'งานง่ายโมเดลเล็ก งานยากตัวท็อป', 'Routing · Batch'],
+        [73, '03', 'Skill · Auto · Effort', 'Skills'],
+        [86, '04', 'เห็นโค้ดถูกเขียนสด ๆ', 'Live edits'],
+        [92, '05', 'เอเจนต์หลายตัวทำพร้อมกัน', 'Agent map'],
+        [100, '06', 'วางแผน → ตรวจจริง → สรุป', 'Plan · verify'],
+        [109, '07', 'คำสั่งเสี่ยงต้องอนุมัติ', 'Approvals'],
+        [117, '08', 'สมอง BrainX จำทุกบทเรียน', 'BrainX'],
+        [132, '10', 'สลับผู้ให้บริการคลิกเดียว', 'Providers'],
+        [138, '11', 'Local AI · DGX Spark', 'Local AI'],
+        [145, '12', 'สาว ๆ อ่านคำตอบให้ฟัง', 'Voice'],
+        [150, '13', 'ตั้งเวลางาน · Telegram', 'Routines'],
+    ];
 
     $plans = [
         'monthly' => ['name' => 'รายเดือน', 'en' => 'Monthly', 'unit' => '/ เดือน', 'note' => 'ซื้อทีละ 30 วัน ไม่ตัดเงินอัตโนมัติ', 'days' => '30 วัน'],
@@ -64,32 +91,95 @@
             'img' => $shot('models.webp'), 'name' => 'โมเดลในเครื่อง ฟรีและเป็นส่วนตัว', 'eyebrow' => 'Local models', 'tier' => 'free',
             'th' => 'Model Manager ดูการ์ดจอและ RAM ของเครื่อง แล้วแนะนำโมเดล GGUF ที่เหมาะ บอกว่าแต่ละตัวรันได้เร็วแค่ไหน แล้วดาวน์โหลดจาก Hugging Face ให้ หรือใช้โมเดลผ่าน Ollama ก็ได้ — รันในเครื่อง โค้ดไม่ออกนอกเครื่อง',
             'en' => 'Picks GGUF models that fit your GPU and RAM, estimates their speed and downloads them from Hugging Face — or use Ollama. Nothing leaves your PC.',
-            'points' => ['ใช้การ์ดจอ NVIDIA (CUDA 12) ถ้ามี ไม่มีก็รันด้วย CPU ได้', 'โหลดไฟล์ GGUF ที่มีอยู่แล้วเข้ามาเองได้'],
+            'points' => ['ใช้การ์ดจอ NVIDIA (CUDA 12) ถ้ามี ไม่มีก็รันด้วย CPU ได้', 'โหลดไฟล์ GGUF ที่มีอยู่แล้วเข้ามาเองได้', 'ต่อเซิร์ฟเวอร์ในเครื่องได้ด้วย: llama.cpp server · LM Studio · vLLM', 'รองรับ NVIDIA DGX Spark: เลือก ดาวน์โหลด และใช้โมเดลบน Ollama ของ Spark ได้จากหน้าต่างในแอป'],
             'alt' => 'หน้า Model Manager ของ CluadeX แสดงสเปกเครื่อง และโมเดลที่แนะนำพร้อมความเร็วโดยประมาณ',
         ],
         [
-            'img' => $shot('skills.webp'), 'name' => 'Skill · Subagent · MCP', 'eyebrow' => 'Make it yours', 'tier' => 'free',
-            'th' => 'Skill คือคำสั่งลัดแบบ /ชื่อ ที่เรียกจากแชทได้ มีให้ในตัว 18 ตัว (commit, deep-research, e2e-testing ฯลฯ) และเขียนเพิ่มเองได้ในโฟลเดอร์ skills ต่อเซิร์ฟเวอร์ MCP ติดตั้งปลั๊กอิน และตั้งฮุกได้จากในแอป',
-            'en' => 'Reusable slash-command skills (18 built in, add your own), MCP servers, plugins and hooks.',
-            'points' => ['ส่งงานย่อยให้ subagent เฉพาะทาง เช่น รีวิวโค้ด', 'สแกนความปลอดภัยโค้ดแบบ OWASP ในตัว'],
-            'alt' => 'หน้า Skills ของ CluadeX รายการ skill ในตัวและรายละเอียดของ skill ที่เลือก',
+            'img' => $shot3('skills.webp'), 'name' => 'Skill เยอะ แต่เลือกให้เองตามงาน', 'eyebrow' => 'Skills · Auto pick · Effort', 'tier' => 'free',
+            'th' => 'Skill คือคำสั่งลัดแบบ /ชื่อ มีในตัวพร้อมใช้ กด “Get more skills” ดาวน์โหลดเพิ่มจาก GitHub (เช่นคลัง anthropics/skills) หรือเขียนเองก็ได้ — เปิด “เลือก skill ให้แต่ละงาน” แล้วแต่ละรอบจะได้เฉพาะ skill ที่เข้ากับงานนั้น ไม่เปลือง token ไปกับรายการทั้งหมด',
+            'en' => 'Built-in skills, more from GitHub (e.g. anthropics/skills) or your own — and Auto pick hands each turn only the skills that fit.',
+            'points' => ['ตั้งระดับความพยายาม (Effort) เองได้ตั้งแต่ low ถึง max หรือปล่อยเป็น Auto', 'ต่อเซิร์ฟเวอร์ MCP ติดตั้งปลั๊กอิน และตั้งฮุกได้จากในแอป', 'สแกนความปลอดภัยโค้ดแบบ OWASP ในตัว'],
+            'alt' => 'หน้า Skills ของ CluadeX: รายการ skill สวิตช์เลือก skill ให้แต่ละงาน และแถบ token ที่ skill ใช้',
+        ],
+    ];
+
+    // ทำงานเป็นทีม เห็นทุกขั้น (ฟรี) — คลิปช่วง 1:26–1:49 · เช็กกับโค้ดแอปแล้ว (AgentGraphView, plan card, auto-build, change marks)
+    $teamRows = [
+        [
+            'img' => $shot3('agents.webp'), 'name' => 'เอเจนต์ผู้เชี่ยวชาญ ทำงานพร้อมกัน', 'eyebrow' => 'Plan · agents in parallel', 'tier' => 'free',
+            'th' => 'งานใหญ่ถูกวางแผนเป็นเช็กลิสต์ก่อนลงมือ แล้วแบ่งให้เอเจนต์ย่อยเฉพาะทาง (สำรวจโค้ด เขียนหน้าเว็บ เขียนเทสต์ ตรวจความปลอดภัย) ทำพร้อมกัน เห็นเป็นแผนผังโหนดสด ๆ กดที่โหนดไหนก็เปิดดูได้ว่าตัวนั้นกำลังทำอะไร',
+            'en' => 'A plan first, then specialist agents working in parallel on a live node map — click a node to see what it is doing.',
+            'points' => ['เอเจนต์ย่อยแต่ละตัวใช้โมเดลที่เหมาะกับงาน — อ่าน/ค้นหาใช้รุ่นเล็ก งานยากใช้รุ่นท็อป', 'ลาก ซูม และจัดแผนผังเองได้'],
+            'alt' => 'แชทของ CluadeX: แผนงาน 5 ขั้นกำลังทำขั้นที่ 3 และแผนผังเอเจนต์ 4 ตัวที่ทำงานพร้อมกัน (ข้อมูลตัวอย่าง)',
+        ],
+        [
+            'img' => $shot3('live-code.webp'), 'name' => 'เห็นโค้ดถูกเขียนสด ๆ', 'eyebrow' => 'Live edits', 'tier' => 'free',
+            'th' => 'ติ๊ก Follow edits แล้วอีดิเตอร์เปิดไฟล์ที่ AI กำลังแก้ให้เอง บรรทัดที่เพิ่มหรือแก้มีแถบสีกำกับที่ขอบ เห็นทุกบรรทัดทุกไฟล์ตอนที่มันเกิดขึ้น ไม่ต้องรอดู diff ตอนจบ',
+            'en' => 'Follow edits opens each file as the AI changes it, with every added or changed line marked.',
+            'points' => [],
+            'alt' => 'อีดิเตอร์ของ CluadeX: บรรทัดที่ AI เพิ่มและแก้มีแถบสีที่ขอบซ้าย',
+        ],
+    ];
+
+    // ประหยัด token และเงิน — ใช้กับ Claude / OpenAI API จึงเป็น Pro · คลิปช่วง 0:53–1:13
+    $smartRows = [
+        [
+            'img' => $shot3('prompt-cache.webp'), 'name' => 'ประหยัด token ตั้งแต่ราก', 'eyebrow' => 'Prompt cache · tools on demand', 'tier' => 'pro',
+            'th' => 'ส่วนที่ส่งซ้ำทุกรอบ (คำสั่งระบบและรายการเครื่องมือ) ถูกแคชไว้ที่ Claude API ส่วนที่อ่านจากแคชคิดราคาราว 10% ของปกติ — และเครื่องมือ MCP ไม่ถูกยัดใส่ทุกรอบ โหลดมาเฉพาะตัวที่ต้องใช้จริง',
+            'en' => 'Repeated parts come from the Claude prompt cache (about 90% cheaper to read), and MCP tools load only when they are needed.',
+            'points' => ['สวิตช์ แคชพรอมต์ อยู่ในหน้า การเชื่อมต่อ AI'],
+            'alt' => 'หน้าการเชื่อมต่อ AI ของ CluadeX: เลือก Anthropic (Claude API) และติ๊กแคชพรอมต์ (Prompt caching)',
+            'phone' => true,
+        ],
+        [
+            'img' => $shot3('agent-settings.webp'), 'name' => 'งานง่ายใช้โมเดลเล็ก งานยากใช้ตัวท็อป', 'eyebrow' => 'Model routing · Batch', 'tier' => 'pro',
+            'th' => 'เอเจนต์ย่อยเลือกโมเดลเองตามงาน ถ้าผลงานอ่อนหรือหาไม่เจอ จะส่งขึ้นไปทำใหม่ในระดับที่เก่งกว่าเอง — ส่วนงานที่ไม่รีบ ส่งผ่าน Batch API ได้ในราคาครึ่งเดียว แล้วคำตอบกลับเข้าแชทเดิมเมื่อเสร็จ',
+            'en' => 'Sub-agents pick the model for the job and escalate weak work to a stronger tier; non-urgent work goes through the Batch API at half price.',
+            'points' => ['Batch ใช้ได้กับ Anthropic และ OpenAI — ส่วนลด 50% ตามราคาของผู้ให้บริการ', 'build อัตโนมัติหลังแก้ไข แล้วส่ง error กลับให้ AI แก้ต่อ ไม่มีคำว่า “เสร็จ” ลอย ๆ'],
+            'alt' => 'หน้าตั้งค่าเอเจนต์ของ CluadeX: เลือกโมเดลเอเจนต์ย่อยอัตโนมัติ ผลงานอ่อนให้ขึ้นไปทำใหม่ระดับบน และ build อัตโนมัติหลังแก้ไข',
+        ],
+    ];
+
+    // ยิ่งใช้ยิ่งเก่ง และทำงานแม้คุณไม่อยู่ (ฟรี — ไม่มีด่าน IsFeatureUnlocked) · คลิปช่วง 1:57 และ 2:25–2:30
+    $moreRows = [
+        [
+            'img' => $shot3('brainx-memory.webp'), 'name' => 'สมอง BrainX จำทุกบทเรียน', 'eyebrow' => 'BrainX memory · MCP', 'tier' => 'free',
+            'th' => 'ต่อ BrainX ผ่าน MCP แล้วก่อนตอบ CluadeX จะค้นสิ่งที่เคยจดไว้ — วิธีแก้บั๊ก การตัดสินใจ ข้อควรระวังของแต่ละโปรเจกต์ — และเก็บบทเรียนจากแชทที่จบแล้วไว้เอง ยิ่งใช้ยิ่งรู้จักงานของคุณ',
+            'en' => 'Connect BrainX over MCP: CluadeX recalls past fixes and decisions before it answers, and keeps the lessons of each finished chat.',
+            'points' => ['ค้นหาเชิงความหมายด้วยโมเดล embedding ใน Ollama บนเครื่องคุณ', 'ใช้สมองเดียวกันได้ทุกเครื่องด้วย BrainX Cloud (แยกขาย)'],
+            'alt' => 'หน้าตั้งค่าความจำของ CluadeX: ดึงความรู้จาก BrainX ก่อนตอบอัตโนมัติ และเรียนรู้จากเซสชันที่จบแล้ว',
+        ],
+        [
+            'img' => $shot3('voice.webp'), 'name' => 'สาว ๆ ในแอปอ่านคำตอบให้ฟัง', 'eyebrow' => 'Read-aloud voices', 'tier' => 'free',
+            'th' => 'ผู้ช่วยแต่ละคนอ่านคำตอบออกเสียงด้วยน้ำเสียงของตัวเอง เลือกเอนจินได้ 5 แบบ: เสียง Edge (ฟรี ไม่ต้องใช้คีย์ มีเสียงไทยธรรมชาติ) · เสียงของเบราว์เซอร์ (ฟรี) · เสียง Windows (ฟรี ใช้ออฟไลน์ได้) · ElevenLabs และ OpenAI (ใช้คีย์ของคุณ)',
+            'en' => 'Each assistant reads her answers aloud: Edge voices (free, natural Thai), browser and Windows voices (free), or ElevenLabs and OpenAI with your key.',
+            'points' => [],
+            'alt' => 'หน้าตั้งค่าเสียงของ CluadeX: เลือกเอนจินเสียงและเสียงของผู้ช่วยแต่ละคน',
+            'phone' => true,
+        ],
+        [
+            'img' => $shot3('routines.webp'), 'name' => 'ตั้งเวลาให้ทำงานเอง แจ้งเตือนทาง Telegram', 'eyebrow' => 'Routines · Telegram', 'tier' => 'free',
+            'th' => 'ตั้งงานประจำให้รันเองทุกวัน ทุกกี่ชั่วโมง ครั้งเดียว หรือเมื่อเกิดเหตุการณ์ (CI ล้ม มีคอมเมนต์ใน pull request มี issue ใหม่ ไฟล์เปลี่ยน) แล้วผูก Telegram bot ของคุณ — งานจบส่งสรุปมาให้ งานที่ต้องอนุมัติมีปุ่ม Allow / Deny ในโทรศัพท์',
+            'en' => 'Routines run on a schedule or on events (CI failed, PR comment, new issue, file changed); your Telegram bot gets the summary and Allow / Deny for approvals.',
+            'points' => ['สั่งงานจาก Telegram ได้ด้วย: ข้อความที่พิมพ์เข้าแชท CluadeX และคำตอบส่งกลับมา', 'จับคู่ bot กับแชทส่วนตัวของคุณด้วยรหัส 6 หลัก คนอื่นที่ทักมาไม่มีผล'],
+            'alt' => 'หน้า Routines ของ CluadeX: รายการงานตั้งเวลา และการเชื่อม Telegram (ข้อมูลตัวอย่าง)',
         ],
     ];
 
     // Pro — ทุกข้อเช็กกับด่าน IsFeatureUnlocked / IsActivated ในโค้ดแอป
     $proTools = [
         [
-            'key' => 'cloud', 'name' => 'Claude · GPT · Gemini', 'short' => 'ใช้ API key ของคุณเอง', 'tier' => 'pro',
+            'key' => 'cloud', 'name' => 'Claude · GPT · Gemini · Grok', 'short' => 'ใช้ API key ของคุณเอง', 'tier' => 'pro',
             'img' => $shot('features.webp'),
-            'th' => 'ต่อโมเดลบนคลาวด์ของ Anthropic, OpenAI และ Google Gemini ด้วย API key ของคุณเอง ค่าใช้งานโมเดลจ่ายกับผู้ให้บริการโดยตรง CluadeX ไม่ได้รวมค่า AI ไว้ในคีย์',
-            'en' => 'Anthropic, OpenAI and Google Gemini with your own API key. Model usage is billed by the provider, not included in the licence.',
-            'points' => ['เห็นค่าใช้จ่ายต่อขั้นก่อนส่ง ตั้งงบต่อรอบและต่อวันได้ เกินงบแล้วถามก่อนทำต่อ', 'API key เก็บเข้ารหัสด้วย Windows (DPAPI) เฉพาะผู้ใช้ Windows ของคุณ'],
+            'th' => 'ต่อโมเดลบนคลาวด์ของ Anthropic, OpenAI, Google Gemini และ xAI Grok ด้วย API key ของคุณเอง รวมถึง OpenRouter, DeepSeek, Mistral, Groq และผู้ให้บริการที่เข้ากันได้กับ OpenAI อีกหลายเจ้า ค่าใช้งานโมเดลจ่ายกับผู้ให้บริการโดยตรง CluadeX ไม่ได้รวมค่า AI ไว้ในคีย์',
+            'en' => 'Anthropic, OpenAI, Google Gemini, xAI Grok and many OpenAI-compatible services with your own API key. Model usage is billed by the provider.',
+            'points' => ['สลับผู้ให้บริการได้ในคลิกเดียวจากช่องโมเดลในแชท — แม้งานกำลังทำอยู่ ก็หยุดแล้วทำต่อด้วยโมเดลใหม่ทันที', 'เห็นค่าใช้จ่ายต่อขั้นก่อนส่ง ตั้งงบต่อรอบและต่อวันได้ เกินงบแล้วถามก่อนทำต่อ', 'API key เก็บเข้ารหัสด้วย Windows (DPAPI) เฉพาะผู้ใช้ Windows ของคุณ'],
             'alt' => 'หน้า Features ของ CluadeX: ฟีเจอร์ฟรีเปิดอยู่ และ Multi-Provider AI ที่ต้องใช้คีย์',
         ],
         [
-            'key' => 'cli', 'name' => 'ต่อ CLI ที่ล็อกอินไว้', 'short' => 'Claude Code · Codex · Gemini CLI', 'tier' => 'pro',
-            'th' => 'มี Claude Code, Codex, Gemini CLI หรือ Antigravity ติดตั้งและล็อกอินไว้แล้ว? เลือกเป็นโมเดลของแชทได้เลย ไม่ต้องใส่ API key ใช้สิทธิ์จากบัญชีที่คุณล็อกอินอยู่',
-            'en' => 'Already signed in to Claude Code, Codex, Gemini CLI or Antigravity? Pick it as the chat model — no API key needed.',
+            'key' => 'cli', 'name' => 'ต่อ CLI ที่ล็อกอินไว้', 'short' => 'Claude Code · Codex · Gemini · Grok', 'tier' => 'pro',
+            'th' => 'มี Claude Code, Codex, Gemini CLI, Antigravity หรือ Grok Build ติดตั้งและล็อกอินไว้แล้ว? เลือกเป็นโมเดลของแชทได้เลย ไม่ต้องใส่ API key ใช้สิทธิ์จากบัญชีที่คุณล็อกอินอยู่',
+            'en' => 'Already signed in to Claude Code, Codex, Gemini CLI, Antigravity or Grok Build? Pick it as the chat model — no API key needed.',
             'points' => [],
         ],
         [
@@ -116,14 +206,20 @@
     $compare = [
         ['โมเดล AI · Models', [
             ['โมเดล GGUF ในเครื่อง (GPU / CPU) + ดาวน์โหลดจาก Hugging Face', false],
-            ['Ollama', false],
-            ['Anthropic Claude · OpenAI · Google Gemini (API key ของคุณ)', true],
-            ['Claude Code · Codex · Gemini CLI · Antigravity ที่ล็อกอินไว้', true],
+            ['Ollama · llama.cpp server · LM Studio · vLLM', false],
+            ['NVIDIA DGX Spark (โมเดลบน Ollama ของ Spark)', false],
+            ['Anthropic Claude · OpenAI · Google Gemini · xAI Grok (API key ของคุณ)', true],
+            ['OpenRouter · DeepSeek · Mistral · Groq และบริการที่เข้ากันได้กับ OpenAI', true],
+            ['Claude Code · Codex · Gemini CLI · Antigravity · Grok Build ที่ล็อกอินไว้', true],
+            ['แคชพรอมต์ · Batch API ครึ่งราคา (Claude / OpenAI)', true],
         ]],
         ['เอเจนต์และเครื่องมือ · Agent & tools', [
             ['อ่าน/แก้ไฟล์ · รันคำสั่ง · อีดิเตอร์โค้ด', false],
             ['Git ในเครื่อง (commit, branch, merge, diff, stash)', false],
             ['Skill · Subagent · MCP · ปลั๊กอิน · ฮุก', false],
+            ['แผนงาน · แผนผังเอเจนต์ · build อัตโนมัติหลังแก้ไข', false],
+            ['สมอง BrainX ผ่าน MCP', false],
+            ['อ่านคำตอบออกเสียง · ตั้งเวลางาน (Routines) · Telegram', false],
             ['บันทึกแชท · ย้อนเวลาโปรเจกต์ (Time Machine)', false],
             ['ระบบสิทธิ์ · บล็อกคำสั่งอันตราย', false],
             ['GitHub: push · pull request · issues', true],
@@ -210,6 +306,96 @@
         </x-slot:visual>
     </x-xp.hero>
 
+    {{-- ============================ CLIP ============================ --}}
+    {{-- คลิปโฆษณา v2b แนวตั้ง เสียงพากย์ไทย + ซับไทยฝังในคลิป · preload=none: 68 MB ไม่โหลดจนกว่าจะกดดู · จอเล็กได้ไฟล์ 720p --}}
+    <style>
+        .cx-clip { position: relative; aspect-ratio: 9 / 16; width: 100%; max-width: 22rem; margin: 0 auto; border-radius: 1.75rem; padding: 1px;
+            background: linear-gradient(160deg, rgb(var(--xp-glow) / .7), rgba(255, 255, 255, .08) 50%, color-mix(in srgb, var(--xp-a) 50%, transparent));
+            box-shadow: 0 30px 80px -20px rgb(var(--xp-glow) / .45); }
+        .cx-clip > div { position: relative; width: 100%; height: 100%; border-radius: calc(1.75rem - 1px); overflow: hidden; background: #000; }
+        .cx-clip video { width: 100%; height: 100%; object-fit: cover; display: block; background: #000; }
+        .cx-play { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: .75rem; padding-bottom: 4.5rem;
+            border: 0; cursor: pointer; color: #fff; background: linear-gradient(180deg, rgba(4, 6, 13, 0) 40%, rgba(4, 6, 13, .85) 100%); }
+        .cx-play[hidden] { display: none; }
+        .cx-play .ring { width: 5rem; height: 5rem; border-radius: 9999px; display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(140deg, var(--xp-a), var(--xp-b)); box-shadow: 0 0 0 10px rgb(var(--xp-glow) / .18); transition: transform .2s; }
+        .cx-play:hover .ring, .cx-play:focus-visible .ring { transform: scale(1.08); }
+        .cx-chapters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
+        @media (min-width: 640px) { .cx-chapters { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+        .cx-chap { display: flex; align-items: center; gap: .7rem; text-align: left; padding: .45rem; border-radius: .9rem; cursor: pointer;
+            background: rgba(255, 255, 255, .03); border: 1px solid rgba(255, 255, 255, .07); color: #d7dce5; transition: background .15s, border-color .15s; }
+        .cx-chap:hover, .cx-chap:focus-visible { background: rgba(255, 255, 255, .07); border-color: rgb(var(--xp-glow) / .5); }
+        .cx-chap[aria-current="true"] { border-color: var(--xp-a); background: rgb(var(--xp-glow) / .12); }
+        .cx-chap img { width: 2.6rem; height: 3.65rem; object-fit: cover; border-radius: .5rem; flex: none; }
+        .cx-chap b { display: block; font-size: .8rem; line-height: 1.25; color: #fff; }
+        .cx-chap small { display: block; font-size: .7rem; color: var(--xp-c); font-variant-numeric: tabular-nums; }
+    </style>
+    <section class="relative py-20 scroll-mt-20" id="clip">
+        <div class="xp-glow w-[30rem] h-[30rem] left-0 top-10" style="background: rgb(var(--xp-glow) / .14)"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-xp.head class="mb-12" eyebrow="Watch · 3 นาที" title="ดู CluadeX" title2="ทำงานจริง"
+                       sub="คลิปสั้นพาดูทุกอย่างที่อยู่ในหน้านี้ — กดหัวข้อด้านข้างเพื่อกระโดดไปช่วงที่สนใจ (เสียงพากย์และซับไตเติลภาษาไทย)"
+                       en="A three-minute tour of everything on this page. Pick a chapter to jump to it (Thai voice-over and subtitles)." />
+            <div class="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+                <div class="lg:col-span-5">
+                    <div class="cx-clip">
+                        <div>
+                            <video id="cx-clip-video" controls playsinline preload="none" poster="{{ $clip['poster'] }}" aria-label="คลิปแนะนำ CluadeX">
+                                <source src="{{ $clip['sd'] }}" type="video/mp4" media="(max-width: 767px)">
+                                <source src="{{ $clip['hd'] }}" type="video/mp4">
+                            </video>
+                            <button type="button" class="cx-play" id="cx-clip-play" aria-label="เล่นคลิปแนะนำ CluadeX">
+                                <span class="ring"><svg class="w-8 h-8 ml-1 text-gray-950" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
+                                <span class="font-bold text-sm tracking-wide">เล่นคลิป · 3:12</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="lg:col-span-7">
+                    <p class="xp-eyebrow mb-4">ไปที่ช่วง · Chapters</p>
+                    <div class="cx-chapters" id="cx-clip-chapters">
+                        @foreach($chapters as [$sec, $still, $label, $labelEn])
+                            <button type="button" class="cx-chap" data-seek="{{ $sec }}">
+                                <img src="{{ $shot3('clip/' . $still . '.webp') }}" alt="" width="240" height="338" loading="lazy">
+                                <span><small>{{ intdiv($sec, 60) }}:{{ str_pad($sec % 60, 2, '0', STR_PAD_LEFT) }} · {{ $labelEn }}</small><b>{{ $label }}</b></span>
+                            </button>
+                        @endforeach
+                    </div>
+                    <p class="mt-5 text-xs text-gray-500">ตัวเลขค่า token ค่าใช้จ่าย และหน้าจอในคลิปเป็นภาพประกอบ · ภาพหน้าจอในหน้านี้เป็นภาพจากโปรแกรมจริง (ข้อมูลตัวอย่าง)</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <script>
+        (() => {
+            const video = document.getElementById('cx-clip-video');
+            const play = document.getElementById('cx-clip-play');
+            const chaps = document.querySelectorAll('#cx-clip-chapters [data-seek]');
+            if (!video || !play) return;
+            const start = (at) => {
+                play.hidden = true;
+                if (at !== undefined) {
+                    // preload=none: the time can only be set once the file's metadata is in
+                    if (video.readyState >= 1) video.currentTime = at;
+                    else video.addEventListener('loadedmetadata', () => { video.currentTime = at; }, { once: true });
+                }
+                video.play().catch(() => {});
+            };
+            play.addEventListener('click', () => start());
+            video.addEventListener('play', () => { play.hidden = true; });
+            chaps.forEach((b) => b.addEventListener('click', () => {
+                start(Number(b.dataset.seek));
+                if (window.innerWidth < 1024) video.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }));
+            // the chapter being watched is outlined
+            video.addEventListener('timeupdate', () => {
+                let current = null;
+                chaps.forEach((b) => { if (video.currentTime >= Number(b.dataset.seek)) current = b; });
+                chaps.forEach((b) => b.setAttribute('aria-current', b === current ? 'true' : 'false'));
+            });
+        })();
+    </script>
+
     {{-- ========================== FREE ========================== --}}
     <section class="relative py-20" id="features">
         <div class="xp-glow w-[34rem] h-[34rem] -right-40 top-10" style="background: rgb(var(--xp-glow) / .12)"></div>
@@ -221,14 +407,47 @@
         </div>
     </section>
 
+    {{-- ========================== TEAM ========================== --}}
+    <section class="relative py-20">
+        <div class="xp-glow w-[34rem] h-[34rem] -left-40 top-20" style="background: rgb(var(--xp-glow) / .1)"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-xp.head class="mb-16" eyebrow="Plan · work · verify" title="ทำงานเป็นทีม" title2="เห็นทุกขั้น ไม่มีเสร็จปลอม"
+                       sub="วางแผนก่อน แบ่งงานให้เอเจนต์เฉพาะทาง ตรวจด้วย build และเทสต์จริง แล้วสรุปว่าทำอะไรไป ยังขาดอะไร — ทั้งหมดนี้อยู่ในรุ่นฟรี"
+                       en="A plan first, specialist agents in parallel, real builds and tests, then a summary of what is done and what is not — all in the free edition." />
+            <x-xp.rows :items="$teamRows" />
+        </div>
+    </section>
+
+    {{-- ========================== SMART ========================== --}}
+    <section class="relative py-20">
+        <div class="xp-glow w-[34rem] h-[34rem] -right-40 top-10 bg-amber-500/10"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-xp.head class="mb-16" eyebrow="Spend less per task" title="คุ้มทุก token" title2="ที่จ่ายให้โมเดลบนคลาวด์"
+                       sub="ต่อ Claude หรือ OpenAI ด้วย Pro แล้ว CluadeX ช่วยลดค่าใช้จ่ายที่ต้นทาง: แคช เลือกโมเดลตามงาน และส่งงานไม่รีบเป็น Batch"
+                       en="With Claude or OpenAI on Pro, CluadeX cuts the bill at the source: caching, the right model per job, and Batch for work that can wait." />
+            <x-xp.rows :items="$smartRows" />
+        </div>
+    </section>
+
     {{-- =========================== PRO =========================== --}}
     <section class="relative py-20 isolate">
         <x-xp.art :src="$shot('art-2.webp')" class="top-0 w-[130%] opacity-35 left-[-30%] lg:left-[-14%] lg:w-[68%] lg:opacity-80" />
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <x-xp.head align="right" class="mb-10" eyebrow="Pro · cloud models & more" title="ต่อโมเดลระดับท็อป" title2="แล้วปล่อยให้ทำงานจริง"
-                       sub="Pro ปลดผู้ให้บริการ AI บนคลาวด์และ CLI รวมถึง GitHub, Web fetch และ Dev Preview"
-                       en="Pro unlocks the cloud and CLI providers, GitHub, web fetch and Dev Preview." />
+                       sub="Pro ปลดผู้ให้บริการ AI บนคลาวด์และ CLI (Claude · Codex · Gemini · Grok และอีกหลายเจ้า) สลับได้ในคลิกเดียว รวมถึง GitHub, Web fetch และ Dev Preview"
+                       en="Pro unlocks the cloud and CLI providers — switch in one click — plus GitHub, web fetch and Dev Preview." />
             <x-xp.explorer id="pro" label="ฟีเจอร์ Pro ของ CluadeX" :tools="$proTools" />
+        </div>
+    </section>
+
+    {{-- ========================== MORE ========================== --}}
+    <section class="relative py-20">
+        <div class="xp-glow w-[34rem] h-[34rem] -left-40 top-24" style="background: rgb(var(--xp-glow) / .1)"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <x-xp.head class="mb-16" eyebrow="Memory · voice · routines" title="ยิ่งใช้ยิ่งเก่ง" title2="และทำงานแม้คุณไม่อยู่"
+                       sub="จำบทเรียนจากงานที่ผ่านมา อ่านคำตอบให้ฟัง และรันงานตามเวลาพร้อมส่งเรื่องที่ต้องตัดสินใจไปที่มือถือคุณ"
+                       en="It remembers what past work taught it, reads answers aloud, and runs on a schedule — sending the decisions to your phone." />
+            <x-xp.rows :items="$moreRows" />
         </div>
     </section>
 
@@ -242,11 +461,13 @@
             <x-xp.cards :items="[
                 ['icon' => 'user', 'title' => 'ถามก่อนทุกครั้ง', 'body' => 'ค่าเริ่มต้นคือทุกอย่างที่เปลี่ยนแปลงเครื่องต้องถามก่อน ผ่อนเป็น “แก้ไฟล์ในโปรเจกต์ได้เลย” ได้ โดยคำสั่งและไฟล์นอกโปรเจกต์ยังถาม', 'en' => 'Everything that changes your PC asks first'],
                 ['icon' => 'bug', 'title' => 'กล่องแดงก่อนลบของสำคัญ', 'body' => 'คำสั่งที่ลบไดรฟ์ โฟลเดอร์ home หรือโฟลเดอร์ระบบ ต้องให้คุณกดเองทุกครั้ง แม้เปิดอนุญาตทั้งหมดไว้ก็ตาม และคำสั่งอันตรายที่รู้จักถูกบล็อกให้', 'en' => 'Deleting a drive or system folder always needs your click'],
+                ['icon' => 'shield', 'title' => 'งานเสี่ยงทำในพื้นที่แยก', 'body' => 'งานระดับความพยายามสูง เอเจนต์ย่อยแต่ละตัวทำใน git worktree ของตัวเอง ไม่แตะโค้ดที่คุณเปิดอยู่ ตรวจก่อนแล้วค่อยรวมกลับ', 'en' => 'Risky work runs in a separate git worktree'],
                 ['icon' => 'undo', 'title' => 'ย้อนเวลาได้', 'body' => 'Time Machine พาโปรเจกต์กลับไปที่ commit ไหนก็ได้ และเก็บงานที่ยังไม่ commit ไว้ให้ก่อนย้อน (auto-stash)', 'en' => 'Rewind to any commit, with auto-stash'],
                 ['icon' => 'lock', 'title' => 'คีย์เข้ารหัสในเครื่อง', 'body' => 'API key ที่บันทึกไว้เข้ารหัสด้วย Windows (DPAPI) เปิดได้เฉพาะบัญชี Windows ของคุณบนเครื่องนี้', 'en' => 'Saved API keys are encrypted by Windows'],
                 ['icon' => 'chip', 'title' => 'โมเดลในเครื่อง = โค้ดอยู่ในเครื่อง', 'body' => 'ใช้โมเดล GGUF หรือ Ollama โค้ดไม่ถูกส่งออกไปไหน ถ้าเลือกโมเดลบนคลาวด์ ข้อความจะส่งไปที่ผู้ให้บริการที่คุณเลือกเท่านั้น', 'en' => 'Local models keep your code on your PC'],
                 ['icon' => 'chart', 'title' => 'คุมงบโมเดลบนคลาวด์', 'body' => 'เห็นค่าใช้จ่ายโดยประมาณต่อขั้นก่อนส่ง ตั้งงบต่อรอบและต่อวัน ถึงงบแล้วถามก่อนทำต่อ', 'en' => 'Per-run and daily spend limits'],
-            ]" />
+                ['icon' => 'bolt', 'title' => 'ไม่มีคำว่า “เสร็จ” ลอย ๆ', 'body' => 'หลังแก้ไฟล์ CluadeX build โปรเจกต์เอง error ที่เจอส่งกลับให้ AI แก้ต่อ และรายงานตอนจบบอกตรง ๆ ว่าอะไรยังไม่ได้ตรวจ', 'en' => 'Builds after edits and says what was not verified'],
+            ]" :cols="4" />
         </div>
     </section>
 
@@ -262,7 +483,7 @@
                 <p class="max-w-3xl mx-auto mb-8 xp-card px-5 py-3 text-center text-emerald-200">{{ session('success') }}</p>
             @endif
 
-            <div class="grid md:grid-cols-3 gap-5 max-w-5xl mx-auto">
+            <div class="grid gap-5 mx-auto {{ count($prices) >= 3 ? 'md:grid-cols-2 xl:grid-cols-4 max-w-6xl' : 'md:grid-cols-3 max-w-5xl' }}">
                 <div class="xp-card p-7 flex flex-col">
                     <div class="flex items-center justify-between mb-1">
                         <h3 class="text-2xl font-black text-white">Free</h3>
@@ -292,8 +513,13 @@
                                 <span class="text-5xl font-black text-white">฿{{ number_format($prices[$term]) }}</span>
                                 <span class="text-gray-300">{{ $plan['unit'] }}</span>
                             </div>
-                            <x-tpix-price variant="detail" :thb="$prices[$term]" class="-mt-4 mb-6" />
-                            <x-xp.ticks pro class="!space-y-2.5 text-sm mb-8 flex-1" :items="['ทุกอย่างในรุ่นฟรี', 'Claude · GPT · Gemini (API key ของคุณ)', 'Claude Code · Codex · Gemini CLI', 'GitHub · Web fetch · Dev Preview', 'อายุ License: ' . $plan['days']]" />
+                            @if(isset($usdHints[$term]))
+                                <p class="-mt-4 mb-5 text-sm font-semibold text-emerald-300">≈ ${{ $usdHints[$term] }}{{ str_replace(' ', '', $plan['unit']) }} (ค่ากาแฟ)</p>
+                            @elseif($term === 'yearly' && ($save = \App\Support\LicensePlans::yearlySaving('cluadex-ai-coding-assistant')))
+                                <p class="-mt-4 mb-5 text-sm font-semibold text-emerald-300">เฉลี่ย ฿{{ number_format(round($prices[$term] / 12)) }}/เดือน · ถูกกว่ารายเดือน {{ $save }}%</p>
+                            @endif
+                            <x-tpix-price variant="detail" :thb="$prices[$term]" class="-mt-3 mb-6" />
+                            <x-xp.ticks pro class="!space-y-2.5 text-sm mb-8 flex-1" :items="['ทุกอย่างในรุ่นฟรี', 'Claude · GPT · Gemini · Grok (API key ของคุณ)', 'Claude Code · Codex · Gemini CLI', 'แคชพรอมต์ · Batch ครึ่งราคา', 'GitHub · Web fetch · Dev Preview', 'อายุ License: ' . $plan['days']]" />
                             @if($csDownload)
                                 {{-- Coming Soon: ซื้อไม่ได้ (ComingSoonPurchase) — ไม่มีฟอร์มให้กด --}}
                                 <span class="xp-btn-ghost xp-btn-off block w-full py-3.5 text-center rounded-xl font-extrabold" role="status" aria-disabled="true" data-coming-soon>Coming Soon — ยังไม่เปิดขาย</span>
@@ -341,7 +567,7 @@
 
     <x-xp.faq :items="[
         ['ฟรีจริงไหม?', 'ฟรีจริง ใช้โมเดล GGUF ในเครื่องหรือ Ollama กับเอเจนต์ อีดิเตอร์ Git ในเครื่อง Skill MCP และปลั๊กอินได้ไม่จำกัดเวลา ดาวน์โหลดได้เลยโดยไม่ต้องล็อกอิน'],
-        ['Pro ได้อะไรเพิ่ม?', 'ต่อโมเดลบนคลาวด์ (Anthropic Claude, OpenAI, Google Gemini) ด้วย API key ของคุณ หรือใช้ Claude Code, Codex, Gemini CLI, Antigravity ที่ล็อกอินไว้ บวก GitHub (push, pull request, issues), Web fetch และ Dev Preview'],
+        ['Pro ได้อะไรเพิ่ม?', 'ต่อโมเดลบนคลาวด์ (Anthropic Claude, OpenAI, Google Gemini, xAI Grok และบริการที่เข้ากันได้กับ OpenAI) ด้วย API key ของคุณ หรือใช้ Claude Code, Codex, Gemini CLI, Antigravity, Grok Build ที่ล็อกอินไว้ บวกแคชพรอมต์ งาน Batch ครึ่งราคา GitHub (push, pull request, issues), Web fetch และ Dev Preview'],
         ['ราคาเท่าไร ใช้ได้กี่เครื่อง?', collect($prices)->map(fn ($p, $t) => ($plans[$t]['name'] ?? $t) . ' ฿' . number_format($p))->implode(' · ') . ' — 1 คีย์ใช้ได้ 1 เครื่อง มีหลายเครื่องซื้อคีย์เพิ่มได้ และย้ายคีย์ไปเครื่องใหม่ได้'],
         ['ค่า Claude / GPT รวมในคีย์ไหม?', 'ไม่รวม คีย์ CluadeX ปลดให้ต่อผู้ให้บริการได้ ส่วนค่าใช้งานโมเดลจ่ายกับผู้ให้บริการโดยตรงด้วย API key ของคุณ (หรือสิทธิ์ของบัญชีที่ล็อกอิน CLI ไว้) ตั้งงบต่อรอบและต่อวันในโปรแกรมได้'],
         ['ทดลอง Pro ทำอย่างไร?', 'เปิดโปรแกรมครั้งแรกบนเครื่องใหม่ตอนต่อเน็ต จะได้คีย์ทดลอง Pro 24 ชั่วโมงอัตโนมัติ หมดแล้วทุกอย่างในรุ่นฟรียังใช้ต่อได้ตามปกติ'],

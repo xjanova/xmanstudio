@@ -35,6 +35,8 @@
                     <div class="text-gray-500 mt-1">{{ $planKey === 'lifetime' ? 'จ่ายครั้งเดียว' : '/' . ($planKey === 'monthly' ? 'เดือน' : 'ปี') }}</div>
                     @if($planKey === 'yearly')
                     <div class="text-green-400 text-sm mt-1">≈ ฿{{ number_format(round($plan['price']/12)) }}/เดือน</div>
+                    @elseif($planKey === 'monthly' && ($usd = config('licenses.usd_hints.cluadex-ai-coding-assistant.monthly')))
+                    <div class="text-green-400 text-sm mt-1">≈ ${{ $usd }}/เดือน (ค่ากาแฟ)</div>
                     @endif
                 </div>
 
