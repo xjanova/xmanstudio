@@ -297,6 +297,20 @@
                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">แสดงป้ายยอดนิยม</p>
                         </div>
                     </label>
+
+                    @if($package?->product_key)
+                        {{-- Product packages (XMAN MLM) arrive with first-round proposal prices. --}}
+                        <label class="relative flex items-center p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl cursor-pointer">
+                            <input type="hidden" name="price_is_proposal" value="0">
+                            <input type="checkbox" name="price_is_proposal" value="1"
+                                   {{ old('price_is_proposal', $package->price_is_proposal) ? 'checked' : '' }}
+                                   class="w-5 h-5 text-pink-600 border-gray-300 dark:border-gray-600 rounded focus:ring-pink-500 dark:bg-gray-600">
+                            <div class="ml-4">
+                                <span class="text-sm font-medium text-gray-900 dark:text-white">ยังเป็นราคาเสนอรอบแรก</span>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">เอาติ๊กออกเมื่อยืนยันราคาแล้ว ({{ $package->product_key }} · {{ $package->code }})</p>
+                            </div>
+                        </label>
+                    @endif
                 </div>
 
                 <div class="mt-6">

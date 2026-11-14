@@ -245,6 +245,12 @@ Route::get('/auth/xdreamer/authorize', [XdreamerSsoController::class, 'authorize
     ->middleware('auth')
     ->name('auth.xdreamer.authorize');
 
+// The same action under a name that is not X-DREAMER's: every other XMAN ID client
+// (mlm.xman4289.com, …) sends client_id here. The old URL above keeps working for aixman.
+Route::get('/auth/sso/authorize', [XdreamerSsoController::class, 'authorize'])
+    ->middleware('auth')
+    ->name('auth.sso.authorize');
+
 // Home (with setup check)
 Route::get('/', function () {
     if (SetupController::isSetupRequired()) {
@@ -795,6 +801,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/rental/status', [RentalController::class, 'status'])->name('rental.status');
     Route::post('/rental/validate-promo', [RentalController::class, 'validatePromo'])->name('rental.validate-promo');
     Route::post('/rental/{rental}/cancel', [RentalController::class, 'cancel'])->name('rental.cancel');
+    // Product rentals (XMAN MLM, …): one more cycle with every add-on, and add-ons bought part-way
+    // through a cycle (prorated to the days left). The MLM site links to both by rental id.
+    Route::get('/rental/{rental}/renew', [RentalController::class, 'renew'])->whereNumber('rental')->name('rental.renew');
+    Route::post('/rental/{rental}/renew', [RentalController::class, 'processRenew'])->whereNumber('rental')
+        ->middleware('throttle:10,1,rental-renew')->name('rental.renew.process');
+    Route::get('/rental/{rental}/addons', [RentalController::class, 'addons'])->whereNumber('rental')->name('rental.addons');
+    Route::post('/rental/{rental}/addons', [RentalController::class, 'processAddons'])->whereNumber('rental')
+        ->middleware('throttle:10,1,rental-addons')->name('rental.addons.process');
     Route::get('/rental/invoices', [RentalController::class, 'invoices'])->name('rental.invoices');
 
     // Checkout & Orders
@@ -1083,6 +1097,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::put('/rentals/packages/{package}', [AdminRentalController::class, 'updatePackage'])->name('rentals.packages.update');
     Route::post('/rentals/packages/{package}/toggle', [AdminRentalController::class, 'togglePackage'])->name('rentals.packages.toggle');
     Route::get('/rentals/reports', [AdminRentalController::class, 'reports'])->name('rentals.reports');
+    // Add-on catalogue of product rentals (XMAN MLM): prices and on/off
+    Route::get('/rentals/addons', [AdminRentalController::class, 'addons'])->name('rentals.addons');
+    Route::put('/rentals/addons/{addon}', [AdminRentalController::class, 'updateAddon'])->name('rentals.addons.update');
     // Confirm / refuse a rental payment — the buttons on admin.rentals.payments. (These used to be
     // /payments/{payment}/approve → a controller method that never existed, while the page posted to
     // URLs no route answered, so no rental payment could be confirmed from the website.)

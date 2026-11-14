@@ -390,6 +390,17 @@ Schedule::command('security:prune')
         Log::error('[Security] login log prune failed');
     });
 
+// แพ็กเช่า: ตั้งสถานะ "หมดอายุ" ให้รายการที่เลยวันหมดอายุแล้ว — เดิมไม่มีใครเรียกเลย
+// แถวจึงค้าง active ในฐานข้อมูล · แพ็ก XMAN MLM จะส่ง rental.expired ไปที่ mlm.xman4289.com ด้วย
+// ทุกชั่วโมง: ร้าน MLM ต้องปิดภายในชั่วโมงที่หมด ไม่ใช่รอถึงพรุ่งนี้
+Schedule::command('rentals:expire')
+    ->hourly()
+    ->withoutOverlapping(30)
+    ->runInBackground()
+    ->onFailure(function () {
+        Log::error('[Rentals] expiry run failed');
+    });
+
 // TPIX: ราคาจากพูล DEX บนเชน + หาธุรกรรมที่ลูกค้าโอนเข้ามา แล้วปิดบิลให้อัตโนมัติ
 // ทุกนาที — ลูกค้าโอนผ่าน QR หรือแอปกระเป๋าโดยไม่ได้วางเลขธุรกรรม ต้องได้ของภายในนาทีเดียว
 // ล็อกกันรันซ้อนหมดอายุในห้านาที (ค่าเริ่มต้น 24 ชม. = รอบที่ถูกฆ่ากลางทางจะหยุดรับเงินทั้งวัน)

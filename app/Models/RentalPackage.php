@@ -13,6 +13,11 @@ class RentalPackage extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        // Which product this package rents ("mlm"); null = the original generic rental.
+        'product_key',
+        // Stable name across cycles ("mlm-core"): the monthly and yearly rows share it.
+        'code',
+        'price_is_proposal',
         'name',
         'name_th',
         'description',
@@ -41,6 +46,7 @@ class RentalPackage extends Model
         'is_featured' => 'boolean',
         'is_popular' => 'boolean',
         'has_trial' => 'boolean',
+        'price_is_proposal' => 'boolean',
     ];
 
     protected $appends = ['display_name', 'duration_text', 'discount_percentage'];
@@ -67,6 +73,64 @@ class RentalPackage extends Model
     public function scopeFeatured($query)
     {
         return $query->where('is_featured', true);
+    }
+
+    /**
+     * The add-ons this package's product offers (none for a generic package).
+     */
+    public function addons(): HasMany
+    {
+        return $this->hasMany(RentalAddon::class, 'product_key', 'product_key');
+    }
+
+    public function isProduct(string $productKey): bool
+    {
+        return $this->product_key === $productKey;
+    }
+
+    /**
+     * "monthly" | "yearly" for a one-month / one-year package — the cycle add-on prices and the
+     * MLM webhook speak in. Anything else (a 3-month package, a daily one) has no such cycle.
+     */
+    public function billingCycle(): ?string
+    {
+        if ((int) $this->duration_value !== 1) {
+            return null;
+        }
+
+        return in_array($this->duration_type, ['monthly', 'yearly'], true) ? $this->duration_type : null;
+    }
+
+    /**
+     * The active package a checkout link names: an id (every old link), or a code with an optional
+     * cycle — /rental/checkout/mlm-core?cycle=yearly. A code without a cycle picks monthly first.
+     */
+    public static function findForCheckout(string $key, ?string $cycle = null): ?self
+    {
+        if (ctype_digit($key)) {
+            return self::find((int) $key);
+        }
+
+        $candidates = self::where('code', $key)->where('duration_value', 1)
+            ->whereIn('duration_type', ['monthly', 'yearly'])
+            ->orderByDesc('is_active')->orderBy('id')->get();
+
+        if (in_array($cycle, ['monthly', 'yearly'], true)) {
+            return $candidates->firstWhere('duration_type', $cycle);
+        }
+
+        return $candidates->firstWhere('duration_type', 'monthly') ?? $candidates->first();
+    }
+
+    /** The other-cycle row of the same code (monthly ↔ yearly), if there is one. */
+    public function sibling(string $cycle): ?self
+    {
+        if (! $this->code) {
+            return null;
+        }
+
+        return self::where('code', $this->code)->where('duration_type', $cycle)->where('duration_value', 1)
+            ->orderByDesc('is_active')->orderBy('id')->first();
     }
 
     /**

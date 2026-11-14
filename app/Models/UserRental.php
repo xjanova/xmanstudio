@@ -7,15 +7,19 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class UserRental extends Model
 {
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'uuid',
         'user_id',
         'rental_package_id',
         'starts_at',
+        // When the cycle now being paid for began: first activation, then each renewal.
+        'period_starts_at',
         'expires_at',
         'cancelled_at',
         'status',
@@ -32,6 +36,7 @@ class UserRental extends Model
 
     protected $casts = [
         'starts_at' => 'datetime',
+        'period_starts_at' => 'datetime',
         'expires_at' => 'datetime',
         'cancelled_at' => 'datetime',
         'next_renewal_at' => 'datetime',
@@ -52,6 +57,37 @@ class UserRental extends Model
     const STATUS_CANCELLED = 'cancelled';
 
     const STATUS_SUSPENDED = 'suspended';
+
+    protected static function booted(): void
+    {
+        static::creating(function (UserRental $rental) {
+            if (! $rental->uuid) {
+                $rental->uuid = (string) Str::uuid();
+            }
+        });
+    }
+
+    /**
+     * Add-ons bought for this rental (any status).
+     */
+    public function addons(): HasMany
+    {
+        return $this->hasMany(UserRentalAddon::class);
+    }
+
+    /** The product this rental is for ("mlm"), null for a generic rental. */
+    public function productKey(): ?string
+    {
+        return $this->rentalPackage()->withTrashed()->value('product_key');
+    }
+
+    /** "monthly" | "yearly", from the package (see RentalPackage::billingCycle). */
+    public function billingCycle(): ?string
+    {
+        $package = $this->rentalPackage ?? $this->rentalPackage()->withTrashed()->first();
+
+        return $package?->billingCycle();
+    }
 
     /**
      * Get the user that owns the rental
@@ -160,8 +196,37 @@ class UserRental extends Model
         $this->update([
             'status' => self::STATUS_ACTIVE,
             'starts_at' => now(),
+            'period_starts_at' => now(),
             'expires_at' => $this->rentalPackage->calculateExpiryDate(now()),
         ]);
+
+        return true;
+    }
+
+    /**
+     * Pay for one more cycle: from the current expiry if it is still ahead (nothing lost by
+     * renewing early), from now if it has passed. A different package of the same product (monthly
+     * → yearly) can be given; the rental moves onto it.
+     *
+     * Only an active or expired rental renews — a cancelled or suspended one is left as it is.
+     */
+    public function renew(?RentalPackage $package = null): bool
+    {
+        if (! in_array($this->status, [self::STATUS_ACTIVE, self::STATUS_EXPIRED], true)) {
+            return false;
+        }
+
+        $package ??= $this->rentalPackage;
+        $base = $this->expires_at && $this->expires_at->isFuture() ? $this->expires_at->copy() : now();
+
+        $this->update([
+            'rental_package_id' => $package->id,
+            'status' => self::STATUS_ACTIVE,
+            'starts_at' => $this->starts_at ?? $base,
+            'period_starts_at' => $base,
+            'expires_at' => $package->calculateExpiryDate($base),
+        ]);
+        $this->setRelation('rentalPackage', $package);
 
         return true;
     }

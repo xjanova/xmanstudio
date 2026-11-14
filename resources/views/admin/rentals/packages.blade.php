@@ -49,6 +49,10 @@
                 </svg>
                 กลับ
             </a>
+            <a href="{{ route('admin.rentals.addons') }}"
+               class="inline-flex items-center px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-xl hover:bg-white/30 transition-all font-medium">
+                ตัวเลือกเสริม
+            </a>
             <a href="{{ route('admin.rentals.packages.create') }}"
                class="inline-flex items-center px-4 py-2 bg-white text-pink-600 rounded-xl hover:bg-gray-100 transition-all font-medium shadow-lg hover:shadow-xl transform hover:scale-105">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -148,7 +152,15 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <div class="text-sm font-semibold text-gray-900 dark:text-white">{{ $package->display_name }}</div>
+                                    <div class="text-sm font-semibold text-gray-900 dark:text-white">
+                                        {{ $package->display_name }}
+                                        @if($package->product_key)
+                                            <span class="ml-1 font-mono text-xs text-gray-500">{{ $package->product_key }} · {{ $package->code }}</span>
+                                        @endif
+                                        @if($package->price_is_proposal)
+                                            <span class="ml-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs">ราคาเสนอรอบแรก</span>
+                                        @endif
+                                    </div>
                                     <div class="text-sm text-gray-500 dark:text-gray-400">{{ Str::limit($package->display_description, 50) }}</div>
                                 </div>
                                 @if($package->is_featured)

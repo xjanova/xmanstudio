@@ -87,11 +87,11 @@
                     </div>
                     <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
                         <dt class="text-sm text-gray-500 dark:text-gray-400">วันที่เริ่ม</dt>
-                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ $rental->starts_at->format('d/m/Y H:i') }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ $rental->starts_at?->format('d/m/Y H:i') ?? '-' }}</dd>
                     </div>
                     <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
                         <dt class="text-sm text-gray-500 dark:text-gray-400">วันหมดอายุ</dt>
-                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ $rental->expires_at->format('d/m/Y H:i') }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ $rental->expires_at?->format('d/m/Y H:i') ?? '-' }}</dd>
                     </div>
                     <div class="bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-900/30 dark:to-rose-900/30 rounded-xl p-4 border border-pink-100 dark:border-pink-800">
                         <dt class="text-sm text-pink-600 dark:text-pink-400">เหลืออีก</dt>
@@ -104,6 +104,35 @@
                         <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ $rental->auto_renew ? 'เปิด' : 'ปิด' }}</dd>
                     </div>
                 </dl>
+
+                @if($rental->rentalPackage?->product_key)
+                    {{-- Product rental (XMAN MLM, …): its id for the outside system, the reservation, add-ons --}}
+                    <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 space-y-3">
+                        <div class="text-sm text-gray-500 dark:text-gray-400">
+                            สินค้า <span class="font-semibold text-gray-900 dark:text-white">{{ $rental->rentalPackage->product_key }}</span>
+                            · uuid <span class="font-mono text-xs text-gray-900 dark:text-white">{{ $rental->uuid }}</span>
+                            @if(!empty($rental->metadata['mlm_reservation']))
+                                · รหัสจองชื่อเว็บ <span class="font-mono text-xs text-gray-900 dark:text-white">{{ $rental->metadata['mlm_reservation'] }}</span>
+                            @endif
+                        </div>
+                        <dt class="text-sm text-gray-500 dark:text-gray-400">ตัวเลือกเสริม</dt>
+                        @forelse($rental->addons as $rentalAddon)
+                            <div class="flex justify-between text-sm bg-gray-50 dark:bg-gray-700/50 rounded-xl px-4 py-2">
+                                <span class="text-gray-900 dark:text-white">
+                                    {{ $rentalAddon->addon?->display_name ?? '-' }}@if($rentalAddon->quantity > 1) × {{ $rentalAddon->quantity }}@endif
+                                    <span class="text-xs text-gray-500">({{ $rentalAddon->status_label }})</span>
+                                </span>
+                                <span class="text-gray-500 dark:text-gray-400">
+                                    {{ \App\Services\Rentals\RentalAddons::money((int) $rentalAddon->price_satang) }}
+                                    @if($rentalAddon->days_charged) · {{ $rentalAddon->days_charged }}/{{ $rentalAddon->cycle_days }} วัน @endif
+                                    · ถึง {{ $rentalAddon->expires_at?->format('d/m/Y') ?? '-' }}
+                                </span>
+                            </div>
+                        @empty
+                            <dd class="text-sm text-gray-500">ไม่มี</dd>
+                        @endforelse
+                    </div>
+                @endif
 
                 @if($rental->notes)
                     <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
@@ -142,8 +171,11 @@
                                 <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">{{ $payment->created_at->format('d/m/Y H:i') }}</td>
                                 <td class="px-6 py-4">
                                     <span class="text-sm font-bold text-gray-900 dark:text-white bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 px-3 py-1 rounded-lg">
-                                        ฿{{ number_format($payment->amount) }}
+                                        {{ \App\Services\Rentals\RentalAddons::money(\App\Support\Satang::fromBaht((string) $payment->amount)) }}
                                     </span>
+                                    @if($payment->kind !== 'initial')
+                                        <span class="ml-1 text-xs text-gray-500">{{ $payment->kind === 'renewal' ? 'ต่ออายุ' : 'ตัวเลือกเสริม' }}</span>
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{{ $payment->payment_method }}</td>
                                 <td class="px-6 py-4">

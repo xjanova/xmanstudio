@@ -219,4 +219,41 @@ return [
         ))),
     ],
 
+    // "Sign in with XMAN ID" for every app other than aixman. Each client has its own secret and
+    // its own exact-match redirect allowlist, and a code minted for one client cannot be redeemed
+    // by another (App\Support\Auth\XmanIdClients).
+    //
+    // aixman — the X-DREAMER app and ai.xman4289.com — is the default client, the one assumed when
+    // a request names none. Its secret and allowlist stay under services.aixman above, so its env
+    // (XDREAMER_SSO_SECRET / XDREAMER_SSO_REDIRECT_URIS) and every existing login are unchanged.
+    'xman_id' => [
+        'clients' => [
+            // mlm.xman4289.com — the MLM SaaS (repo xmanstudio-mlm). Its .env holds the same secret.
+            // No secret → its exchange answers 503 (fails closed), aixman is unaffected.
+            'mlm' => [
+                'secret' => env('XMAN_ID_MLM_SECRET'),
+                'redirect_uris' => array_values(array_filter(array_map(
+                    'trim',
+                    explode(',', (string) env(
+                        'XMAN_ID_MLM_REDIRECT_URIS',
+                        'https://mlm.xman4289.com/auth/xman/callback'
+                    ))
+                ))),
+            ],
+        ],
+    ],
+
+    // MLM SaaS (mlm.xman4289.com) rents through /rental like any other product; its packages and
+    // add-ons carry product_key "mlm". When one of its rentals starts, renews, expires, is
+    // cancelled or gains an add-on, SendMlmWebhook POSTs a signed event to webhook_url
+    // (X-Xman-Signature: t=<unix>,v1=hex(hmac_sha256(t . "." . body, webhook_secret))).
+    // Either value missing → nothing is sent and the log says why.
+    'mlm' => [
+        'product_key' => 'mlm',
+        'site_url' => env('MLM_SITE_URL', 'https://mlm.xman4289.com'),
+        'webhook_url' => env('MLM_WEBHOOK_URL'),
+        'webhook_secret' => env('MLM_WEBHOOK_SECRET'),
+        'webhook_timeout' => (int) env('MLM_WEBHOOK_TIMEOUT', 10),
+    ],
+
 ];

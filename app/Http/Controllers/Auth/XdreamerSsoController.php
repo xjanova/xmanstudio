@@ -8,12 +8,18 @@ use App\Support\Alerts\Alert;
 use App\Support\Alerts\SecurityAlerts;
 use App\Support\Alerts\SystemAlerts;
 use App\Support\Auth\TwoFactor;
+use App\Support\Auth\XmanIdClients;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * "Sign in with XMAN ID" for the X-DREAMER mobile app.
+ * "Sign in with XMAN ID" — first for the X-DREAMER mobile app, now for every app in the
+ * XmanIdClients registry (aixman, mlm.xman4289.com, …).
+ *
+ * A request that names no client is aixman's, exactly as before: no client_id on authorize, no
+ * X-Sso-Client header on exchange. Any other app sends both, and a code only ever redeems for the
+ * client it was minted for.
  *
  * The mirror image of the existing device-login bridge. That one turns an API
  * token into a web session; this one turns a web session into a one-time code
@@ -40,7 +46,8 @@ class XdreamerSsoController extends Controller
     private const CACHE_PREFIX = 'xdreamer_sso:';
 
     /**
-     * GET /auth/xdreamer/authorize
+     * GET /auth/sso/authorize       (any client)
+     * GET /auth/xdreamer/authorize  (the original URL — still answers, same action)
      *
      * Behind `auth`. By the time the body runs, we have a user.
      */
@@ -53,17 +60,25 @@ class XdreamerSsoController extends Controller
         }
 
         $validated = $request->validate([
+            // Absent = aixman, which never sent one.
+            'client_id' => ['nullable', 'string', 'max:32'],
             'redirect_uri' => ['required', 'string', 'max:255'],
             'state' => ['required', 'string', 'max:255'],
             // PKCE S256: base64url(sha256(verifier)), so 43 chars unpadded.
             'code_challenge' => ['required', 'string', 'min:43', 'max:128'],
         ]);
 
+        $client = XmanIdClients::find($validated['client_id'] ?? null);
+        if ($client === null) {
+            abort(400, 'client_id is not registered');
+        }
+
         $redirectUri = $validated['redirect_uri'];
 
         // An open redirector here would let anyone turn an XMAN session into a
-        // code delivered to a URL of their choosing.
-        if (! in_array($redirectUri, $this->allowedRedirectUris(), true)) {
+        // code delivered to a URL of their choosing. Each client has its own list:
+        // aixman's callback is not a valid destination for an mlm code.
+        if (! in_array($redirectUri, $client['redirect_uris'], true)) {
             abort(400, 'redirect_uri is not registered for this client');
         }
 
@@ -73,6 +88,7 @@ class XdreamerSsoController extends Controller
             self::CACHE_PREFIX . $code,
             [
                 'user_id' => $request->user()->id,
+                'client_id' => $client['id'],
                 'code_challenge' => $validated['code_challenge'],
                 'redirect_uri' => $redirectUri,
             ],
@@ -92,16 +108,25 @@ class XdreamerSsoController extends Controller
     /**
      * POST /api/v1/auth/sso/exchange
      *
-     * Server to server. The app never calls this; aixman does, holding the
-     * shared secret, and then issues its own tokens for the user we name here.
+     * Server to server. The app never calls this; the client's own server does,
+     * holding its shared secret, and then issues its own tokens for the user we
+     * name here. Headers: X-Sso-Client (absent = aixman) and X-Sso-Secret.
      */
     public function exchange(Request $request): JsonResponse
     {
-        $secret = (string) config('services.aixman.sso_secret');
+        $client = XmanIdClients::find((string) $request->header('X-Sso-Client', ''));
+
+        if ($client === null) {
+            SecurityAlerts::forged('XMAN ID SSO', 'ขอแลกโค้ดในนามแอปที่ไม่ได้ลงทะเบียน', $request->ip(), [], Alert::WARNING);
+
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $secret = $client['secret'];
 
         if ($secret === '') {
-            // Fails closed — and, until this alert, silently: every SSO login dies right here.
-            SystemAlerts::ssoNotConfigured();
+            // Fails closed — and, until this alert, silently: every SSO login of this client dies right here.
+            SystemAlerts::ssoNotConfigured($client['id']);
 
             return response()->json(['success' => false, 'message' => 'SSO is not configured'], 503);
         }
@@ -109,8 +134,8 @@ class XdreamerSsoController extends Controller
         // hash_equals, not ===, so a wrong secret does not leak its length or
         // its matching prefix through response timing.
         if (! hash_equals($secret, (string) $request->header('X-Sso-Secret'))) {
-            // Someone guessing, or aixman's XMAN_SSO_SECRET drifted from ours: logins fail either way.
-            SecurityAlerts::forged('XMAN ID SSO', 'ขอแลกโค้ดด้วย secret ที่ไม่ถูกต้อง', $request->ip(), [], Alert::WARNING);
+            // Someone guessing, or the client's copy of the secret drifted from ours: logins fail either way.
+            SecurityAlerts::forged('XMAN ID SSO', 'ขอแลกโค้ดด้วย secret ที่ไม่ถูกต้อง (แอป ' . $client['id'] . ')', $request->ip(), [], Alert::WARNING);
 
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
         }
@@ -127,6 +152,12 @@ class XdreamerSsoController extends Controller
 
         if (! is_array($entry)) {
             return response()->json(['success' => false, 'message' => 'Code is invalid or expired'], 400);
+        }
+
+        // A code minted before clients existed carries no client_id; those were all aixman's.
+        // The code is already spent above, so a client fishing with another's code burns it.
+        if (($entry['client_id'] ?? XmanIdClients::DEFAULT) !== $client['id']) {
+            return response()->json(['success' => false, 'message' => 'Code was not issued to this client'], 400);
         }
 
         $expected = rtrim(strtr(base64_encode(hash('sha256', $validated['code_verifier'], true)), '+/', '-_'), '=');
@@ -151,13 +182,5 @@ class XdreamerSsoController extends Controller
                 'role' => $user->role,
             ],
         ]);
-    }
-
-    /** @return array<int, string> */
-    private function allowedRedirectUris(): array
-    {
-        $configured = config('services.aixman.sso_redirect_uris');
-
-        return is_array($configured) ? array_values(array_filter($configured)) : [];
     }
 }

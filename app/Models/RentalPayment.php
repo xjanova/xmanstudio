@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\Rentals\RentalLifecycle;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -166,10 +167,8 @@ class RentalPayment extends Model
             'paid_at' => now(),
         ]);
 
-        // Activate the rental if exists
-        if ($this->userRental) {
-            $this->userRental->activate();
-        }
+        // Start the rental, renew it, or switch on the add-ons — whatever this payment was for.
+        app(RentalLifecycle::class)->settle($this);
 
         return true;
     }
@@ -187,12 +186,27 @@ class RentalPayment extends Model
             'admin_notes' => $notes,
         ]);
 
-        // Activate the rental
-        if ($this->userRental) {
-            $this->userRental->activate();
-        }
+        app(RentalLifecycle::class)->settle($this);
 
         return true;
+    }
+
+    /** "initial" | "renewal" | "addon" — what this payment buys (RentalLifecycle). */
+    public function getKindAttribute(): string
+    {
+        return RentalLifecycle::kindOf($this);
+    }
+
+    /**
+     * What this payment is for, line by line ([] for a payment made before lines existed).
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public function lines(): array
+    {
+        $metadata = is_array($this->metadata) ? $this->metadata : [];
+
+        return is_array($metadata['lines'] ?? null) ? $metadata['lines'] : [];
     }
 
     /**

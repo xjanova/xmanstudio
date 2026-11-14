@@ -3,6 +3,7 @@
 namespace App\Support\Alerts;
 
 use App\Models\Setting;
+use App\Support\Auth\XmanIdClients;
 use Throwable;
 
 /**
@@ -41,7 +42,8 @@ final class Redact
             (string) config('database.connections.' . config('database.default') . '.password'),
             (string) config('mail.mailers.smtp.password'),
             (string) config('services.aixman.webhook_secret'),
-            (string) config('services.aixman.sso_secret'),
+            (string) config('services.mlm.webhook_secret'),
+            ...XmanIdClients::secrets(),
         ];
         foreach (Setting::encryptedKeys() as $key) {
             try {

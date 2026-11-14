@@ -23,15 +23,41 @@
 
         <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
             <div class="p-8">
+                @if(session('info'))
+                    <div class="mb-6 bg-blue-50 border border-blue-200 text-blue-900 px-4 py-3 rounded text-sm">{{ session('info') }}</div>
+                @endif
+
                 <div class="text-center mb-8">
                     <h2 class="text-2xl font-bold text-gray-900"><x-bi k="common.payment" /></h2>
                     <p class="mt-2 text-gray-600">
-                        <x-bi th="แพ็กเกจ" en="Package" />: <span class="font-semibold">{{ $payment->userRental->rentalPackage->display_name }}</span>
+                        <x-bi th="แพ็กเกจ" en="Package" />: <span class="font-semibold">{{ $payment->userRental?->rentalPackage?->display_name ?? $payment->description }}</span>
                     </p>
                     <p class="text-3xl font-bold text-primary-600 mt-4">
-                        ฿{{ number_format($payment->amount) }}
+                        {{-- Satang shown when there are any: a prorated add-on is ฿1,461.91, not ฿1,462 --}}
+                        {{ \App\Services\Rentals\RentalAddons::money(\App\Support\Satang::fromBaht((string) $payment->amount)) }}
                     </p>
                 </div>
+
+                @if($payment->lines() !== [])
+                    <div class="mb-8 p-4 bg-gray-50 rounded-xl text-sm space-y-2">
+                        @foreach($payment->lines() as $line)
+                            <div class="flex justify-between gap-3">
+                                <span class="text-gray-600">
+                                    {{ $line['name'] ?? '' }}@if(($line['quantity'] ?? 1) > 1) × {{ $line['quantity'] }}@endif
+                                    @if(!empty($line['days']) && !empty($line['cycle_days']))
+                                        <span class="text-xs text-gray-400">({{ $line['days'] }}/{{ $line['cycle_days'] }} วัน)</span>
+                                    @endif
+                                </span>
+                                <span class="text-gray-900 whitespace-nowrap">{{ \App\Services\Rentals\RentalAddons::money((int) ($line['amount_satang'] ?? 0)) }}</span>
+                            </div>
+                        @endforeach
+                        @if($payment->kind === 'addon')
+                            <p class="pt-2 text-xs text-gray-500 border-t border-gray-200">
+                                <x-bi th="ราคาตัวเลือกเสริมคิดตามวันที่เหลือของแพ็กหลัก ณ วันนี้ — ถ้าชำระวันอื่น เปิดหน้านี้ใหม่วันนั้นเพื่อดูยอดที่ถูกต้อง" en="Add-on price is for today's remaining days — if you pay on another day, reopen this page that day for the right amount" />
+                            </p>
+                        @endif
+                    </div>
+                @endif
 
                 @if($payment->payment_method === 'promptpay')
                     <!-- PromptPay QR Code -->

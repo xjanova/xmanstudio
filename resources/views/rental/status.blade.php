@@ -26,6 +26,79 @@
             </div>
         @endif
 
+        @if(session('warning'))
+            <div class="mb-6 bg-amber-50 border border-amber-300 text-amber-800 px-4 py-3 rounded">
+                {{ session('warning') }}
+            </div>
+        @endif
+
+        {{-- Product rentals (XMAN MLM, …): their own card each, with add-ons, renew and add-on buttons. --}}
+        @foreach($productRentals ?? [] as $productRental)
+            @php
+                $productPackage = $productRental->rentalPackage;
+                $isRunning = $productRental->is_active;
+                $productReservation = $productRental->metadata['mlm_reservation'] ?? null;
+            @endphp
+            <div class="bg-white rounded-2xl shadow-xl overflow-hidden mb-8">
+                <div class="bg-gradient-to-r from-primary-600 to-primary-800 p-6">
+                    <div class="flex items-center justify-between gap-4">
+                        <div>
+                            <p class="text-primary-100 text-sm">{{ $productPackage?->billingCycle() === 'yearly' ? 'รายปี' : 'รายเดือน' }}</p>
+                            <h2 class="text-2xl font-bold text-white">{{ $productPackage?->display_name ?? '-' }}</h2>
+                        </div>
+                        <span class="inline-flex px-3 py-1 rounded-full text-sm font-semibold text-white {{ $isRunning ? 'bg-green-500' : 'bg-yellow-500' }}">
+                            {{ $isRunning ? $productRental->status_label : ($productRental->status === 'active' ? 'หมดอายุ' : $productRental->status_label) }}
+                        </span>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
+                        <div>
+                            <p class="text-sm text-gray-500">วันหมดอายุ</p>
+                            <p class="font-semibold text-gray-900">{{ $productRental->expires_at?->timezone('Asia/Bangkok')->format('d/m/Y') ?? '-' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">เหลืออีก</p>
+                            <p class="font-semibold {{ $productRental->days_remaining <= 7 ? 'text-red-600' : 'text-gray-900' }}">{{ $productRental->days_remaining }} วัน</p>
+                        </div>
+                        @if($productReservation)
+                            <div>
+                                <p class="text-sm text-gray-500">รหัสจองชื่อเว็บ</p>
+                                <p class="font-mono text-xs text-gray-700 break-all">{{ $productReservation }}</p>
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="mt-6 pt-6 border-t border-gray-200">
+                        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">ตัวเลือกเสริม</h3>
+                        @forelse($productRental->addons as $rentalAddon)
+                            <div class="flex justify-between text-sm py-1">
+                                <span class="text-gray-900">{{ $rentalAddon->addon?->display_name ?? '-' }}@if($rentalAddon->quantity > 1) × {{ $rentalAddon->quantity }}@endif</span>
+                                <span class="text-gray-500">ถึง {{ $rentalAddon->expires_at?->timezone('Asia/Bangkok')->format('d/m/Y') ?? '-' }}</span>
+                            </div>
+                        @empty
+                            <p class="text-sm text-gray-500">ยังไม่มี</p>
+                        @endforelse
+                    </div>
+
+                    <div class="mt-6 pt-6 border-t border-gray-200 flex flex-wrap gap-4">
+                        @if(in_array($productRental->status, ['active', 'expired'], true))
+                            <a href="{{ route('rental.renew', $productRental) }}"
+                               class="px-6 py-2 rounded-lg text-white bg-primary-600 hover:bg-primary-700 transition-colors">
+                                ต่ออายุ
+                            </a>
+                        @endif
+                        @if($isRunning)
+                            <a href="{{ route('rental.addons', $productRental) }}"
+                               class="px-6 py-2 rounded-lg border border-primary-600 text-primary-600 hover:bg-primary-50 transition-colors">
+                                เพิ่มตัวเลือกเสริม
+                            </a>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        @endforeach
+
         @if($activeRental)
             <!-- Active Rental Card -->
             <div class="bg-white rounded-2xl shadow-xl overflow-hidden mb-8">
@@ -128,7 +201,7 @@
                     </div>
                 </div>
             </div>
-        @else
+        @elseif(($productRentals ?? collect())->isEmpty())
             <!-- No Active Rental -->
             <div class="bg-white rounded-2xl shadow-xl p-8 text-center mb-8">
                 <svg class="w-16 h-16 text-gray-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -203,9 +276,14 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     {{ $payment->userRental?->rentalPackage?->display_name ?? '-' }}
+                                    @if($payment->kind === 'renewal')
+                                        <span class="text-xs text-gray-500">· ต่ออายุ</span>
+                                    @elseif($payment->kind === 'addon')
+                                        <span class="text-xs text-gray-500">· ตัวเลือกเสริม</span>
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    ฿{{ number_format($payment->amount) }}
+                                    {{ \App\Services\Rentals\RentalAddons::money(\App\Support\Satang::fromBaht((string) $payment->amount)) }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span class="inline-flex px-2 py-1 rounded text-xs font-semibold
@@ -218,9 +296,16 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
                                     @if($payment->status === 'completed' && $payment->invoice)
-                                        <a href="{{ route('rental.invoice', $payment->invoice) }}"
+                                        {{-- There is no route "rental.invoice" (this link used to 500 the page); the
+                                             customer portal lists rental receipts. --}}
+                                        <a href="{{ route('customer.invoices') }}"
                                            class="text-primary-600 hover:underline">
                                             ดูใบเสร็จ
+                                        </a>
+                                    @elseif($payment->status === 'pending')
+                                        <a href="{{ route('rental.payment', $payment->uuid) }}"
+                                           class="text-primary-600 hover:underline">
+                                            ชำระเงิน
                                         </a>
                                     @endif
                                 </td>
