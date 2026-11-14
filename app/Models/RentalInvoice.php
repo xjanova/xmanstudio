@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Satang;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -152,7 +153,34 @@ class RentalInvoice extends Model
         $total = $subtotal + $vat;
 
         $lineItems = [];
-        if ($package) {
+        if ($payment->lines() !== []) {
+            // Package + add-ons as the customer was shown them (RentalAddons lines, in satang).
+            $linesTotal = 0;
+            foreach ($payment->lines() as $line) {
+                $amount = (int) ($line['amount_satang'] ?? 0);
+                $linesTotal += $amount;
+                $description = (string) ($line['name'] ?? '');
+                if (! empty($line['days']) && ! empty($line['cycle_days'])) {
+                    $description .= " (คิด {$line['days']}/{$line['cycle_days']} วันของรอบ)";
+                }
+                $lineItems[] = [
+                    'description' => $description,
+                    'quantity' => (int) ($line['quantity'] ?? 1),
+                    'unit_price' => Satang::toBaht((int) ($line['unit_satang'] ?? $amount)),
+                    'amount' => Satang::toBaht($amount),
+                ];
+            }
+
+            $discount = $linesTotal - Satang::fromBaht((string) $payment->amount);
+            if ($discount > 0) {
+                $lineItems[] = [
+                    'description' => 'ส่วนลด',
+                    'quantity' => 1,
+                    'unit_price' => Satang::toBaht(-$discount),
+                    'amount' => Satang::toBaht(-$discount),
+                ];
+            }
+        } elseif ($package) {
             $lineItems[] = [
                 'description' => "แพ็กเกจ {$package->display_name} ({$package->duration_text})",
                 'quantity' => 1,

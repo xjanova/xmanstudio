@@ -224,10 +224,10 @@ Route::prefix('v1/auth')->middleware(['throttle:10,1,api-auth'])->group(function
         Route::post('/web-login-token', [AuthController::class, 'webLoginToken']);
     });
 
-    // Server-to-server: aixman redeems an authorization code minted by
-    // /auth/xdreamer/authorize. Authenticated by a shared secret header rather
-    // than a user token — there is no user session on the calling side, only
-    // the code and its PKCE verifier.
+    // Server-to-server: an XMAN ID client (aixman, mlm, …) redeems an authorization
+    // code minted by /auth/sso/authorize (or the older /auth/xdreamer/authorize).
+    // Authenticated by X-Sso-Client + X-Sso-Secret rather than a user token —
+    // there is no user session on the calling side, only the code and its PKCE verifier.
     Route::post('/sso/exchange', [XdreamerSsoController::class, 'exchange']);
 });
 

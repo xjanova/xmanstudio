@@ -137,7 +137,8 @@ class StripeWebhookController extends Controller
 
     protected function confirmRentalPayment($paymentIntent): void
     {
-        $payment = RentalPayment::where('stripe_payment_intent_id', $paymentIntent->id)->first();
+        $payment = RentalPayment::where('stripe_payment_intent_id', $paymentIntent->id)->first()
+            ?? $this->rentalPaymentForSupersededIntent($paymentIntent);
 
         if (! $payment) {
             Log::error('Rental payment not found for Stripe PI', ['pi' => $paymentIntent->id]);
@@ -157,6 +158,34 @@ class StripeWebhookController extends Controller
             ],
         ]);
         $payment->markAsCompleted();
+    }
+
+    /**
+     * An add-on quote priced again on a later day drops its old intent
+     * (RentalService::refreshAddonQuote) but keeps its id. A customer who paid that intent anyway
+     * — an old tab — has paid; the payment it was made for is the one that recorded it.
+     */
+    protected function rentalPaymentForSupersededIntent($paymentIntent): ?RentalPayment
+    {
+        $paymentId = $paymentIntent->metadata->payment_id ?? null;
+        if (! is_numeric($paymentId)) {
+            return null;
+        }
+
+        $payment = RentalPayment::find((int) $paymentId);
+        $superseded = (array) ($payment?->metadata['stripe_superseded_intents'] ?? []);
+        if (! $payment || ! in_array($paymentIntent->id, $superseded, true)) {
+            return null;
+        }
+
+        Log::warning('Rental payment paid through a superseded Stripe intent (an earlier quote)', [
+            'pi' => $paymentIntent->id,
+            'payment_id' => $payment->id,
+            'amount_received' => $paymentIntent->amount_received ?? null,
+            'amount_now' => $payment->amount,
+        ]);
+
+        return $payment;
     }
 
     protected function handlePaymentIntentFailed($paymentIntent): void

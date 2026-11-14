@@ -39,8 +39,27 @@ final class SystemAlerts
      * dead in production, unnoticed, until 2026-09-01. Every login from ai.xman4289.com and the
      * X-DREAMER app fails while this is true.
      */
-    public static function ssoNotConfigured(): void
+    public static function ssoNotConfigured(string $client = 'aixman'): void
     {
+        if ($client !== 'aixman') {
+            // Another app (mlm.xman4289.com, …): only its own logins are dead, aixman's still work.
+            try {
+                $env = 'XMAN_ID_' . strtoupper(str_replace('-', '_', $client)) . '_SECRET';
+                AdminAlerts::send(new Alert(
+                    key: 'sso-not-configured:' . $client,
+                    level: Alert::CRITICAL,
+                    title: 'ล็อกอินด้วย XMAN ID ของแอป ' . $client . ' ใช้งานไม่ได้',
+                    body: 'แอป ' . $client . " ขอแลกโค้ดล็อกอิน แต่เซิร์ฟเวอร์ตอบ 503\n"
+                        . 'สาเหตุ: ไม่ได้ตั้ง ' . $env . ' ใน .env (ฝั่งแอปต้องถือค่าเดียวกัน)',
+                    facts: ['ผลกระทบ' => 'ล็อกอิน SSO ของแอป ' . $client, 'ตัวแปร' => $env],
+                    category: 'system',
+                ), 360);
+            } catch (Throwable) {
+            }
+
+            return;
+        }
+
         try {
             AdminAlerts::send(new Alert(
                 key: 'sso-not-configured',

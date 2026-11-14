@@ -3,16 +3,20 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\RentalAddon;
 use App\Models\RentalPackage;
 use App\Models\RentalPayment;
 use App\Models\UserRental;
+use App\Services\Rentals\RentalLifecycle;
 use App\Services\RentalService;
+use App\Support\Satang;
 use Illuminate\Http\Request;
 
 class RentalController extends Controller
 {
     public function __construct(
-        protected RentalService $rentalService
+        protected RentalService $rentalService,
+        protected RentalLifecycle $lifecycle,
     ) {}
 
     /**
@@ -56,7 +60,7 @@ class RentalController extends Controller
      */
     public function show(UserRental $rental)
     {
-        $rental->load(['user', 'rentalPackage', 'payments']);
+        $rental->load(['user', 'rentalPackage', 'payments', 'addons.addon']);
 
         return view('admin.rentals.show', compact('rental'));
     }
@@ -82,7 +86,63 @@ class RentalController extends Controller
                 '[' . now()->format('Y-m-d H:i') . "] ขยายเวลา {$request->days} วัน: {$request->reason}",
         ]);
 
+        // Add-ons follow the new expiry; an MLM rental's site hears about it (rental.renewed).
+        $this->lifecycle->extended($rental);
+
         return back()->with('success', "ขยายเวลาสำเร็จ {$request->days} วัน");
+    }
+
+    // ==================== Add-ons ====================
+
+    /**
+     * Add-on catalogue (XMAN MLM, …): prices per month and per year, on/off.
+     * GET /admin/rentals/addons
+     */
+    public function addons()
+    {
+        $addons = RentalAddon::withCount([
+            'subscriptions as active_count' => fn ($q) => $q->where('status', 'active'),
+        ])->orderBy('product_key')->orderBy('sort_order')->orderBy('id')->get();
+
+        return view('admin.rentals.addons', compact('addons'));
+    }
+
+    /**
+     * PUT /admin/rentals/addons/{addon}
+     *
+     * Prices are typed in baht and stored in satang. A change applies to new purchases and to the
+     * next renewal; what customers already paid is not touched.
+     */
+    public function updateAddon(Request $request, RentalAddon $addon)
+    {
+        $validated = $request->validate([
+            'name_th' => 'required|string|max:255',
+            'description_th' => 'nullable|string|max:500',
+            'price_monthly' => 'required|string|max:20',
+            'price_yearly' => 'required|string|max:20',
+            'max_quantity' => 'required|integer|min:1|max:99',
+            'sort_order' => 'nullable|integer',
+        ]);
+
+        $monthly = Satang::parseInput($validated['price_monthly']);
+        $yearly = Satang::parseInput($validated['price_yearly']);
+        if ($monthly === null || $yearly === null) {
+            return back()->withInput()->with('error', 'ราคาไม่ถูกต้อง — ใส่เป็นบาท เช่น 190 หรือ 190.50');
+        }
+
+        $addon->update([
+            'name_th' => $validated['name_th'],
+            'description_th' => $validated['description_th'] ?? null,
+            'price_monthly_satang' => $monthly,
+            'price_yearly_satang' => $yearly,
+            'max_quantity' => (int) $validated['max_quantity'],
+            'sort_order' => (int) ($validated['sort_order'] ?? $addon->sort_order),
+            'is_active' => $request->boolean('is_active'),
+            // Saving a price here is the admin settling it.
+            'price_is_proposal' => $request->boolean('price_is_proposal'),
+        ]);
+
+        return back()->with('success', "บันทึก {$addon->name_th} แล้ว");
     }
 
     /**
@@ -276,6 +336,8 @@ class RentalController extends Controller
             'is_featured' => 'boolean',
             'is_popular' => 'boolean',
             'sort_order' => 'nullable|integer',
+            // Only product packages show this box; for the others the key is absent and untouched.
+            'price_is_proposal' => 'nullable|boolean',
         ]);
 
         $package->update($validated);

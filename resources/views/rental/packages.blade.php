@@ -26,6 +26,82 @@
             </div>
         @endif
 
+        {{-- Products (XMAN MLM, …): the package's cycles and its add-on price list. --}}
+        @foreach($productSections ?? [] as $productKey => $section)
+            @php
+                $productActive = ($activeRentals ?? collect())->first(fn ($r) => $r->rentalPackage?->product_key === $productKey);
+                $sectionTitle = $productKey === 'mlm' ? 'XMAN MLM — ระบบธุรกิจเครือข่ายของคุณเอง' : strtoupper($productKey);
+            @endphp
+            <div class="mb-16">
+                <h2 class="text-2xl font-extrabold text-gray-900 dark:text-white mb-2">{{ $sectionTitle }}</h2>
+                @if($section['packages']->contains(fn ($p) => $p->price_is_proposal))
+                    <p class="text-sm text-amber-600 mb-6">ราคาเปิดตัวรอบแรก</p>
+                @endif
+                <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+                    @foreach($section['packages'] as $package)
+                        <div class="relative bg-white rounded-2xl shadow-xl {{ $package->is_featured ? 'ring-2 ring-primary-500' : '' }}">
+                            <div class="p-8">
+                                <h3 class="text-2xl font-bold text-gray-900">{{ $package->display_name }}</h3>
+                                <p class="mt-2 text-gray-500">{{ $package->description_th ?: $package->description }}</p>
+                                <div class="mt-6 flex items-baseline">
+                                    <span class="text-4xl font-extrabold text-gray-900">฿{{ number_format($package->price) }}</span>
+                                    <span class="ml-2 text-gray-500">/ {{ $package->duration_text }}</span>
+                                </div>
+                                <ul class="mt-8 space-y-4">
+                                    @foreach($package->features ?? [] as $feature)
+                                        <li class="flex items-start">
+                                            <svg class="flex-shrink-0 w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                            </svg>
+                                            <span class="ml-3 text-gray-600">{{ $feature }}</span>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                                <div class="mt-8">
+                                    @auth
+                                        @if($productActive)
+                                            <a href="{{ route('rental.status') }}"
+                                               class="block w-full text-center py-3 px-6 rounded-lg text-primary-600 border border-primary-600 hover:bg-primary-50 transition-colors font-semibold">
+                                                กำลังใช้งานอยู่ — ดูสถานะ
+                                            </a>
+                                        @else
+                                            <a href="{{ route('rental.checkout', $package) }}"
+                                               class="block w-full text-center py-3 px-6 rounded-lg text-white bg-primary-600 hover:bg-primary-700 transition-colors font-semibold">
+                                                เลือกแพ็กเกจนี้
+                                            </a>
+                                        @endif
+                                    @else
+                                        <a href="{{ route('login') }}"
+                                           class="block w-full text-center py-3 px-6 rounded-lg text-white bg-primary-600 hover:bg-primary-700 transition-colors font-semibold">
+                                            เข้าสู่ระบบเพื่อสมัคร
+                                        </a>
+                                    @endauth
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+
+                    @if($section['addons']->isNotEmpty())
+                        <div class="bg-white rounded-2xl shadow-xl p-8 md:col-span-2 lg:col-span-1">
+                            <h3 class="text-xl font-bold text-gray-900">ตัวเลือกเสริม</h3>
+                            <p class="mt-1 text-sm text-gray-500">เลือกตอนสมัครหรือเพิ่มทีหลัง — เพิ่มทีหลังคิดตามวันที่เหลือ แล้วต่ออายุพร้อมแพ็กหลัก</p>
+                            <ul class="mt-6 divide-y divide-gray-100 text-sm">
+                                @foreach($section['addons'] as $addon)
+                                    <li class="py-2 flex justify-between gap-3">
+                                        <span class="text-gray-700">{{ $addon->display_name }}</span>
+                                        <span class="text-gray-900 whitespace-nowrap">
+                                            {{ \App\Services\Rentals\RentalAddons::money($addon->price_monthly_satang) }}/เดือน{{ $addon->unit_label_th ? '/' . $addon->unit_label_th : '' }}
+                                        </span>
+                                    </li>
+                                @endforeach
+                            </ul>
+                            <p class="mt-4 text-xs text-gray-500">รายปีคิด 10 เท่าของรายเดือน</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        @endforeach
+
         <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
             @forelse($packages as $package)
                 <div class="relative bg-white rounded-2xl shadow-xl {{ $package->is_featured ? 'ring-2 ring-primary-500' : '' }}">
@@ -117,9 +193,11 @@
                     </div>
                 </div>
             @empty
-                <div class="col-span-full text-center py-12">
-                    <p class="text-gray-500">ยังไม่มีแพ็กเกจในขณะนี้</p>
-                </div>
+                @if(($productSections ?? collect())->isEmpty())
+                    <div class="col-span-full text-center py-12">
+                        <p class="text-gray-500">ยังไม่มีแพ็กเกจในขณะนี้</p>
+                    </div>
+                @endif
             @endforelse
         </div>
     </div>
